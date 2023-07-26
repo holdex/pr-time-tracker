@@ -1,6 +1,6 @@
 import { App } from 'octokit'
 import config from '$lib/server/config'
-import type { PullRequestEvent, IssuesEvent, PullRequestReviewEvent } from '@octokit/webhooks-types'
+import type { PullRequestEvent, IssuesEvent, PullRequestReviewEvent, InstallationEvent } from '@octokit/webhooks-types'
 
 const app = new App({
     appId: config.github.appId,
@@ -10,5 +10,5 @@ const app = new App({
     }
 })
 
-export type { PullRequestEvent, IssuesEvent, PullRequestReviewEvent }
+export type { PullRequestEvent, IssuesEvent, PullRequestReviewEvent, InstallationEvent }
 export default app
