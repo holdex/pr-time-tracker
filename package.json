@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "vite dev",
+		"pre-dev": "npx vercel env pull .env",
+		"dev": "npm run pre-dev && vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -20,6 +21,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"mongodb": "^5.7.0"
+		"mongodb": "^5.7.0",
+		"octokit": "^3.0.0"
 	}
 }
