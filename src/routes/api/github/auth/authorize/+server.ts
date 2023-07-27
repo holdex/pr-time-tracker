@@ -1,17 +1,22 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { json, redirect } from '@sveltejs/kit';
-import app from '$lib/server/github';
+import { redirect } from '@sveltejs/kit';
+import { exchangeWebFlowCode, type GitHubAppAuthenticationWithRefreshToken } from '$lib/server/github';
+import { names, serializeCookie } from '$lib/CookieManager';
 
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, cookies }) => {
     const code = url.searchParams.get("code") as string;
-    const state = url.searchParams.get("state") as string;
 
-    const result = await app.oauth.createToken({
-        code,
-        state,
-    })
-    console.log('result', result);
-    return json({ message: "success" }, { status: 200 })
-    return redirect(307, "/")
+    const response = await exchangeWebFlowCode(code).catch(err => {
+        throw redirect(302, `/?error=${JSON.stringify(err)}`)
+    });
+
+    const authentication = response.authentication as GitHubAppAuthenticationWithRefreshToken;
+    cookies.set(names.accessTokenCookieName, authentication.token, serializeCookie({
+        expires: new Date(authentication.expiresAt)
+    }))
+    cookies.set(names.refreshTokenCookieName, authentication.refreshToken, serializeCookie({
+        expires: new Date(authentication.refreshTokenExpiresAt)
+    }))
+    throw redirect(302, "/")
 }
