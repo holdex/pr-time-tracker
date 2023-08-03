@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { goto, invalidate } from "$app/navigation";
-  import { invalidations } from "$lib/config";
-  import { genAuthUrl } from "$lib/github";
-  import type { PageData } from "./$types";
+  import { goto, invalidate } from '$app/navigation';
+  import { invalidations } from '$lib/config';
+  import { genAuthUrl } from '$lib/github';
+  import type { PageData } from './$types';
 
   export let data: PageData;
 
@@ -14,7 +14,7 @@
 
   const logout = async () => {
     isRequesting = true;
-    return fetch("/api/github/auth/logout")
+    return fetch('/api/github/auth/logout')
       .then((r) => r.json())
       .then(() => {
         isRequesting = false;
@@ -32,11 +32,8 @@
 </p>
 {#if data.user}
   <p>Hello <b>{data.user.name}</b></p>
-  <button on:click|preventDefault={logout} disabled={isRequesting}
-    >Logout</button
-  >
+  <button on:click|preventDefault={logout} disabled={isRequesting}>Logout</button>
 {:else}
   <button on:click|preventDefault={loginWithGithub} disabled={isRequesting}
-    >Log in with Github</button
-  >
+    >Log in with Github</button>
 {/if}
