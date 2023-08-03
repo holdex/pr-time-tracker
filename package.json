@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"pre-dev": "npx vercel env pull .env",
+		"pre-dev": "node pull-env.js",
 		"dev": "npm run pre-dev && vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
@@ -15,6 +15,7 @@
 		"@sveltejs/adapter-auto": "^2.0.0",
 		"@sveltejs/kit": "^1.20.4",
 		"ngrok": "^5.0.0-beta.2",
+		"node-fetch": "^3.3.2",
 		"svelte": "^4.0.5",
 		"svelte-check": "^3.4.3",
 		"tslib": "^2.4.1",
@@ -23,6 +24,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"fs-extra": "^11.1.1",
 		"mongodb": "^5.7.0",
 		"octokit": "^3.0.0",
 		"universal-cookie": "^4.0.4"
