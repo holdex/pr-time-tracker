@@ -1,0 +1,5 @@
+@mixin createVariables($list) {
+  @each $key, $value in $list {
+    --#{$key}: #{$value};
+  }
+}
