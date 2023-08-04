@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "postinstall": "npx husky install",
     "pre-dev": "node pull-env.js",
     "dev": "npm run pre-dev && vite dev",
     "build": "vite build",
@@ -10,10 +11,13 @@
     "format": "npx prettier . --write --ignore-path .gitignore --plugin prettier-plugin-svelte --plugin @prettier/plugin-pug",
     "lint": "npx eslint --ext js,ts,cjs,svelte --ignore-path .eslintignore > eslint-debug.log --fix .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "type-check": "tsc --project ./tsconfig.json --pretty --noEmit",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "proxy": "npx ngrok config add-authtoken 2T98NpdbPildowmwFLNYeB1JHQi_3hNtGwx8YQC1R3jEkYsDd && ngrok http --domain=alert-seemingly-moccasin.ngrok-free.app 5173"
   },
   "dependencies": {
+    "@octokit/oauth-methods": "^4.0.0",
+    "@octokit/webhooks-types": "^7.1.0",
     "cookie": "^0.5.0",
     "fs-extra": "^11.1.1",
     "mongodb": "^5.7.0",
@@ -32,8 +36,11 @@
     "eslint-plugin-import": "^2.28.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-svelte3": "^4.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
     "ngrok": "^5.0.0-beta.2",
     "node-fetch": "^3.3.2",
+    "oauth-methods": "link:@types/@octokit/oauth-methods",
     "prettier": "^3.0.1",
     "prettier-plugin-svelte": "^3.0.3",
     "svelte": "^4.0.5",
@@ -42,5 +49,13 @@
     "typescript": "^5.0.0",
     "vite": "^4.4.2"
   },
-  "type": "module"
+  "type": "module",
+  "lint-staged": {
+    "**/*.{js,ts,cjs,svelte,pug,scss,css,json}": [
+      "npx prettier --write --ignore-path .prettierignore"
+    ],
+    "**/*.{js,ts,cjs,svelte}": [
+      "npx eslint --fix --ignore-path .eslintignore"
+    ]
+  }
 }

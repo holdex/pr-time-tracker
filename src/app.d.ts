@@ -7,6 +7,20 @@ declare global {
     // interface PageData {}
     // interface Platform {}
   }
+
+  interface Global {
+    _mongoClientPromise: any;
+  }
+}
+
+declare namespace NodeJS {
+  interface Global {
+    _mongoClientPromise: any;
+  }
+}
+
+interface Global {
+  _mongoClientPromise: any;
 }
 
 export {};

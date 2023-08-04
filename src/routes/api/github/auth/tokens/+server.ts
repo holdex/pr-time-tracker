@@ -18,14 +18,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
     cookies.set(
       names.accessTokenCookieName,
-      accessToken,
+      accessToken || '',
       serializeCookie({
         expires: new Date(authentication.expiresAt)
       })
     );
     cookies.set(
       names.refreshTokenCookieName,
-      refreshToken,
+      refreshToken || '',
       serializeCookie({
         expires: new Date(authentication.refreshTokenExpiresAt)
       })
