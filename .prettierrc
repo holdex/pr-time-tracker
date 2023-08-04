@@ -8,7 +8,6 @@
   "arrowParens": "always",
   "bracketSpacing": true,
   "plugins": ["prettier-plugin-svelte", "@prettier/plugin-pug"],
-  "pluginSearchDirs": ["."],
   "bracketSameLine": true,
   "svelteAllowShorthand": true,
   "svelteSortOrder": "options-scripts-markup-styles",
