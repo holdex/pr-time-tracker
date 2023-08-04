@@ -1,7 +1,6 @@
 import { App } from 'octokit';
-import config from '$lib/server/config';
-import { default as clientConfig } from '$lib/config';
 import oauthMethods from '@octokit/oauth-methods';
+
 import type {
   PullRequestEvent,
   IssuesEvent,
@@ -9,6 +8,9 @@ import type {
   InstallationEvent,
   User
 } from '@octokit/webhooks-types';
+
+import config from '$lib/server/config';
+import { default as clientConfig } from '$lib/config';
 
 const app = new App({
   appId: config.github.appId,

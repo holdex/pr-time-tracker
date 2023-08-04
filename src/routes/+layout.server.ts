@@ -1,6 +1,7 @@
+import type { LayoutServerLoad } from './$types';
+
 import { invalidations } from '$lib/config';
 import type { User } from '$lib/server/github';
-import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ fetch, depends }) => {
   depends(invalidations.user);

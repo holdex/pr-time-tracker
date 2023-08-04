@@ -1,8 +1,10 @@
 <script lang="ts">
   import { goto, invalidate } from '$app/navigation';
+  
+  import type { PageData } from './$types';
+  
   import { invalidations } from '$lib/config';
   import { genAuthUrl } from '$lib/github';
-  import type { PageData } from './$types';
 
   export let data: PageData;
 

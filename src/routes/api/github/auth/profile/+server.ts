@@ -1,7 +1,9 @@
 import { json } from '@sveltejs/kit';
+
+import type { RequestHandler } from '@sveltejs/kit';
+
 import { type User, refreshUserToken } from '$lib/server/github';
 import { names, serializeCookie } from '$lib/CookieManager';
-import type { RequestHandler } from '@sveltejs/kit';
 import config from '$lib/config';
 
 export const GET: RequestHandler = async ({ cookies }) => {

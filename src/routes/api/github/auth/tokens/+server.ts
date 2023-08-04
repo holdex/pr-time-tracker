@@ -1,5 +1,7 @@
-import type { RequestHandler } from '@sveltejs/kit';
 import { json, redirect } from '@sveltejs/kit';
+
+import type { RequestHandler } from '@sveltejs/kit';
+
 import { names, serializeCookie } from '$lib/CookieManager';
 import { refreshUserToken } from '$lib/server/github';
 

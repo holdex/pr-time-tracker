@@ -1,0 +1,46 @@
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/lib/config/index.ts
+  29:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/lib/server/config/index.ts
+  31:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/lib/server/github/index.ts
+  59:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/lib/server/mongo/index.ts
+  18:3  error    Do not use "@ts-ignore" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+  21:5  error    Do not use "@ts-ignore" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+  24:3  error    Do not use "@ts-ignore" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+  30:8  warning  Prefer named exports                                          import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/auth/authorize/+server.ts
+  15:20  warning  No magic number: 302  no-magic-numbers
+  33:18  warning  No magic number: 302  no-magic-numbers
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/auth/tokens/+server.ts
+  35:20  warning  No magic number: 307  no-magic-numbers
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/webhooks/+server.ts
+  20:17  warning  No magic number: 400  no-magic-numbers
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/webhooks/installation.ts
+  3:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/webhooks/issues.ts
+  3:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/webhooks/pull-request-review.ts
+  3:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/src/routes/api/github/webhooks/pull-requests.ts
+  3:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/svelte.config.js
+  21:8  warning  Prefer named exports  import/no-default-export
+
+/Users/macbook/code.ly/Holdex/autoinvoice/vite.config.ts
+  4:8  warning  Prefer named exports  import/no-default-export
+
+✖ 17 problems (3 errors, 14 warnings)
+

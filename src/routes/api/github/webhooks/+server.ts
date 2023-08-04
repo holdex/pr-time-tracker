@@ -1,5 +1,7 @@
-import type { RequestHandler } from '@sveltejs/kit';
 import { error, json } from '@sveltejs/kit';
+
+import type { RequestHandler } from '@sveltejs/kit';
+
 import app from '$lib/server/github';
 
 import parseInstallationEvents from './installation';
