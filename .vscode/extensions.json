@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "syler.sass-indented",
+    "dbaeumer.vscode-eslint",
+    "rvest.vs-code-prettier-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "amandeepmittal.pug",
+    "svelte.svelte-vscode"
+  ]
+}
