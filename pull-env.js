@@ -7,8 +7,8 @@ const fetchEnvs = async () => {
   let result = await fetch(apiEndPt, {
     method: 'GET',
     headers: {
-      'x-holdex-authorization': 'Bearer XtKojAp1',
-    },
+      'x-holdex-authorization': 'Bearer XtKojAp1'
+    }
   });
 
   return await result.json();
@@ -17,8 +17,8 @@ const fetchEnvs = async () => {
 const escapeValue = (value) =>
   value
     ? value
-      .replace(new RegExp('\\n', 'g'), '\\n') // combine newlines (unix) into one line
-      .replace(new RegExp('\\r', 'g'), '\\r') // combine newlines (windows) into one line
+        .replace(new RegExp('\\n', 'g'), '\\n') // combine newlines (unix) into one line
+        .replace(new RegExp('\\r', 'g'), '\\r') // combine newlines (windows) into one line
     : '';
 
 const updateEnvs = async () => {
