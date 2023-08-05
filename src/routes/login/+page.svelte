@@ -36,6 +36,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
     background: rgba(16, 20, 31, 1);
   }
 
@@ -61,13 +62,26 @@
   .button:hover {
     background: rgba(84, 204, 255, 1);
   }
+
+  .greeting { 
+    font-weight: bold;
+    font-family: "Inter", sans-serif;
+    font-size: 32px;
+    box-shadow:
+      0px 4px 8px 0px rgba(0, 0, 0, 0.16),
+      0px 0px 0px 2px rgba(0, 0, 0, 0.2);
+    margin-bottom: 50px;
+    color: rgba(0, 204, 255, 1);
+  }
 </style>
 
 <div class="container">
   {#if data.user}
-    <p>Hello <b>{data.user.name}</b></p>
+    <p class="greeting">Hello <b>{data.user.name}</b></p>
     <button class="button" on:click|preventDefault={logout} disabled={isRequesting}>Logout</button>
   {:else}
+    <!--Uncomment the line to see how the inscription "greetings" will look like-->
+    <!--<p class="greeting">Hello CTAPCKPIM</p>-->
     <button class="button" on:click|preventDefault={loginWithGithub} disabled={isRequesting}
       >Log in with Github</button>
   {/if}
