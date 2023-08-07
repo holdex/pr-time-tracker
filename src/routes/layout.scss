@@ -1,5 +1,9 @@
 @import '../lib/styles/theme.scss';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('/fonts/mono/mono-semibold.woff2') format('woff2');
