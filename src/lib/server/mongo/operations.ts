@@ -13,14 +13,14 @@ const collections = {
 };
 
 type ItemCollection = {
-  id: ObjectId;
+  id: number;
   org: string;
   repo: string;
   owner: string;
   type: string;
   url: string;
-  hours: string;
-  experince: 'positive' | 'negative';
+  hours?: string;
+  experience?: 'positive' | 'negative';
 };
 
 async function getCollectionInfo<T extends Document>(
