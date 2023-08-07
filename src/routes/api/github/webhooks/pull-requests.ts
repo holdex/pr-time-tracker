@@ -28,7 +28,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       { upsert: true }
     );
 
-    console.log('Successfully stored pr close in DB.');
+    console.log('Successfully stored pr close in DB.', res);
   }
 };
 
