@@ -18,8 +18,8 @@ type ItemCollection = {
   owner: string;
   type: string;
   url: string;
-  hours: string;
-  experience: 'positive' | 'negative';
+  hours?: string;
+  experience?: 'positive' | 'negative';
 };
 
 async function getCollectionInfo<T extends Document>(

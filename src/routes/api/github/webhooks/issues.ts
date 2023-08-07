@@ -3,7 +3,6 @@ import type { ItemCollection } from '$lib/server/mongo/operations';
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import { collections, updateCollectionInfo } from '$lib/server/mongo/operations';
-import { HOUR_IN_MILISECOND, FIXED_DECIMAL_HOUR } from '$lib/constants/constants';
 
 const parseIssuesEvents = async (event: IssuesEvent) => {
   const { action, issue, repository, organization, sender } = event;
@@ -17,12 +16,7 @@ const parseIssuesEvents = async (event: IssuesEvent) => {
       org: organization?.login || 'holdex',
       repo: repository.name,
       owner: issue.user.login || sender.login,
-      url: issue.url,
-      hours: (
-        (Date.parse(issue.closed_at) - Date.parse(issue.created_at)) /
-        HOUR_IN_MILISECOND
-      ).toFixed(FIXED_DECIMAL_HOUR),
-      experience: 'positive'
+      url: issue.url
     };
 
     const res = await updateCollectionInfo(
@@ -33,7 +27,7 @@ const parseIssuesEvents = async (event: IssuesEvent) => {
       { upsert: true }
     );
 
-    console.log('Successfully stored issue close in DB.');
+    console.log('Successfully stored issue close in DB.', { res });
   }
 };
 
