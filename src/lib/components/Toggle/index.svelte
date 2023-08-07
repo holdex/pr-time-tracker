@@ -1,8 +1,10 @@
 <script lang="ts">
   /** types */
   import type { ButtonProps, IconProps } from '../types';
+  import type { HTMLAttributes } from 'svelte/elements';
 
   /** siblings */
+
   import Button from '../Button/index.svelte';
 
   /** props */
@@ -30,13 +32,14 @@
     rightButtonProps?: ButtonProps;
     activeButton?: typeof activeButton;
     isReactionToggle?: boolean;
-  };
+  } & HTMLAttributes<HTMLSpanElement>;
 </script>
 
 <span
+  {...$$restProps}
   class={`flex border border-l4 rounded-xl m-3 overflow-clip w-fit ${
     isReactionToggle ? 'h-8 shadow-toggle' : ''
-  }`}>
+  } ${className || ''}`}>
   <Button
     {...leftButtonProps}
     variant={rightButtonProps.variant || 'secondary'}

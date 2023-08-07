@@ -1,4 +1,4 @@
-import type { HTMLButtonAttributes, SVGAttributes, SvelteHTMLElements } from 'svelte/elements';
+import type { HTMLButtonAttributes, SVGAttributes } from 'svelte/elements';
 
 /** Button */
 export interface ButtonProps extends HTMLButtonAttributes {

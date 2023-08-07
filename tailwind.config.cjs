@@ -3,7 +3,7 @@ const defaultTheme = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{html,svelte,sass,scss,css,pug}'],
+  content: ['./src/**/*.{html,svelte,sass,scss,pug}'],
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     ...defaultTheme,
@@ -226,7 +226,6 @@ module.exports = {
     },
     extend: {
       spacing: {
-        // ...defaultTheme.spacing,
         0.75: '0.1875rem',
         1.25: '0.3125rem',
         1.75: '0.4375rem',
