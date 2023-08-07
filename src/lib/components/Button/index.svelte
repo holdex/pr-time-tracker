@@ -15,6 +15,7 @@
   export let href: ButtonProps['href'] = undefined;
   export let fixedTo: ButtonProps['fixedTo'] = undefined;
   export let icon: ButtonProps['icon'] = undefined;
+  export let iconProps: ButtonProps['iconProps'] = undefined;
   // Used for control DOM element from outside
   export let forwardRef: ButtonProps['forwardRef'] = undefined;
   export let disabled: ButtonProps['disabled'] = false;
@@ -48,7 +49,7 @@
     bind:this={forwardRef}
     class="{btnClass} no-underline"
     {href}>
-    <Content {icon} {iconSize} {label} {text}>
+    <Content {icon} {iconSize} {label} {text} {iconProps}>
       <slot />
     </Content>
   </a>
@@ -62,7 +63,7 @@
     class={btnClass}
     type={btnType}
     on:click={clickHandler}>
-    <Content {icon} {iconSize} {label} {text}>
+    <Content {icon} {iconSize} {label} {text} {iconProps}>
       <slot />
     </Content>
   </button>

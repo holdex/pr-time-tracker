@@ -45,5 +45,7 @@
   else
     <Button size="large" variant="secondary" onClick={loginWithGithub} disabled={isRequesting}>
       <Icon name="exclamation-triangle" isOutlined class="mr-2" /> Log in with Github
-    </Button>
-  <Toggle leftButtonProps={{ text: 'Unsubmitted' }} rightButtonProps={{ text: 'Submitted' }} /></template>
+    </Button></template>
+
+<Toggle leftButtonProps={{ text: 'Unsubmitted' }} rightButtonProps={{ text: 'Submitted' }} />
+<Toggle isReactionToggle />

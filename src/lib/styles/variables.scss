@@ -39,3 +39,38 @@ $dark-colors: (
   t3: toSpacedRgb(#a2a7b8),
   t4: toSpacedRgb(#10141f)
 );
+
+$tw-dark: (
+  colors-blue: toSpacedRgb(#3291ff),
+  colors-purple: toSpacedRgb(#be00ff),
+  accents-1: toSpacedRgb(#111111),
+  accents-2: toSpacedRgb(#333333),
+  accents-3: toSpacedRgb(#444444),
+  accents-4: toSpacedRgb(#666666),
+  accents-5: toSpacedRgb(#888888),
+  bg-color: toSpacedRgb(#000000),
+  link-color: toSpacedRgb(#1d9bf0),
+  poll-bar-color: toSpacedRgb(#1d9bf0),
+  inline-code-color: toSpacedRgb(#be00ff),
+  code-color: toSpacedRgb(#9efeff),
+  code-bg-color: toSpacedRgb(#1e1e3f),
+  shadow-button-ring-alpha: 0.2,
+  shadow-input-alpha: 0.16
+);
+
+$tw-light: (
+  colors-blue: toSpacedRgb(#0c00ff),
+  colors-purple: toSpacedRgb(#be00ff),
+  accents-1: toSpacedRgb(#fafafa),
+  accents-2: toSpacedRgb(#eaeaea),
+  accents-3: toSpacedRgb(#999999),
+  accents-4: toSpacedRgb(#888888),
+  accents-5: toSpacedRgb(#666666),
+  bg-color: toSpacedRgb(#ffffff),
+  link-color: toSpacedRgb(#0c00ff),
+  poll-bar-color: toSpacedRgb(#0c00ff),
+  inline-code-color: toSpacedRgb(#0c00ff),
+  code-bg-color: toSpacedRgb(#1e1e3f),
+  shadow-button-ring-alpha: 0.04,
+  shadow-input-alpha: 0
+);

@@ -1,12 +1,16 @@
 .btn {
-  @apply relative flex items-center justify-center cursor-pointer border-0 max-w-full bg-transparent;
+  @apply relative flex items-center justify-center cursor-pointer max-w-full bg-transparent text-cta;
+
+  &:not(.toggle-button) {
+    @apply rounded-xl;
+  }
 
   & > * {
     @apply pointer-events-none;
   }
 
   &--large {
-    @apply py-2 px-4 text-cta rounded-xl;
+    @apply py-2 px-4;
 
     &.btn--secondary {
       @apply py-1.75 px-3.75;
@@ -14,7 +18,7 @@
   }
 
   &--medium {
-    @apply py-1 px-4 text-cta rounded-xl;
+    @apply py-1 px-4;
 
     &.btn--secondary {
       @apply py-0.75 px-3.75;
@@ -26,7 +30,7 @@
   }
 
   &--small {
-    @apply py-0 px-3 text-cta rounded-xl;
+    @apply py-0 px-3;
 
     &.btn--solo {
       @apply p-1.25;
@@ -55,14 +59,28 @@
   }
 
   &--secondary {
-    @apply text-t1 bg-l3 border border-solid border-l3 transition-all shadow-secondary-button;
+    @apply bg-l3 transition-all;
+
+    &:not(.toggle-button) {
+      @apply text-t1 border border-solid border-l3 shadow-secondary-button;
+
+      &.active {
+        @apply dark:shadow-secondary-button-active;
+      }
+    }
+
+    &.active {
+      @apply bg-l4 text-accent1-default;
+    }
 
     &:not(.btn__disabled) &:hover,
+    &:hover,
     &:focus {
-      @apply bg-l4 border-l4 dark:shadow-secondary-button-hover;
-    }
-    &.active {
-      @apply bg-l3 border-accent1-default dark:shadow-secondary-button-active;
+      @apply bg-l5 border-l4;
+
+      &:not(.toggle-button) {
+        @apply dark:shadow-secondary-button-hover;
+      }
     }
 
     &.btn__disabled {

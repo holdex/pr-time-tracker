@@ -1,29 +1,60 @@
 <script lang="ts">
   /** types */
-  import type { ButtonProps } from '../types';
+  import type { ButtonProps, IconProps } from '../types';
 
   /** siblings */
-  import Button from '$lib/components/Button/index.svelte';
+  import Button from '../Button/index.svelte';
 
   /** props */
   let className: ButtonProps['class'] = '';
   export { className as class };
   export let leftButtonProps: ButtonProps = {};
   export let rightButtonProps: ButtonProps = {};
+  export let activeButton: 'left' | 'right' = 'left';
+  export let isReactionToggle = false;
+
+  /** vars */
+  const commonClassNames = `${isReactionToggle ? ' !px-2 !py-1' : ''}`;
+  const iconProps: IconProps = { name: 'hand-thumb-up', width: '1.125rem', height: '1.125rem' };
 
   /** funcs */
+  const handleToggle = (button: typeof activeButton) => () => {
+    activeButton = button;
+  };
 
   /** react-ibles */
 
   /** props type */
-  type $$Props = { leftButtonProps: ButtonProps; rightButtonProps: ButtonProps };
+  type $$Props = {
+    leftButtonProps?: ButtonProps;
+    rightButtonProps?: ButtonProps;
+    activeButton?: typeof activeButton;
+    isReactionToggle?: boolean;
+  };
 </script>
 
-<div class="flex borde p-3">
-  <Button {...leftButtonProps} variant="secondary" class="text-t3 !rounded-none">
+<span
+  class={`flex border border-l4 rounded-xl m-3 overflow-clip w-fit ${
+    isReactionToggle ? 'h-8 shadow-toggle' : ''
+  }`}>
+  <Button
+    {...leftButtonProps}
+    variant={rightButtonProps.variant || 'secondary'}
+    iconProps={isReactionToggle ? iconProps : undefined}
+    class={`toggle-button ${
+      activeButton === 'left' ? 'active' : 'text-t3'
+    } rounded-l-lg border-r border-r-l4 ${commonClassNames}`}
+    onClick={handleToggle('left')}>
     <slot name="content1" />
   </Button>
-  <Button {...rightButtonProps} class="">
+  <Button
+    {...rightButtonProps}
+    variant={rightButtonProps.variant || 'secondary'}
+    iconProps={isReactionToggle ? { ...iconProps, name: 'hand-thumb-down' } : undefined}
+    class={`toggle-button ${
+      activeButton === 'right' ? 'active' : 'text-t3'
+    } rounded-r-lg ${commonClassNames}`}
+    onClick={handleToggle('right')}>
     <slot name="content2" />
   </Button>
-</div>
+</span>

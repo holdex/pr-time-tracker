@@ -9,7 +9,9 @@ export interface ButtonProps extends HTMLButtonAttributes {
   label?: string;
   href?: string;
   fixedTo?: string;
+  /** @deprecated - Use `iconProps` instead. */
   icon?: IconName | undefined;
+  iconProps?: IconProps;
   /** Used for control DOM element from outside */
   forwardRef?: HTMLButtonElement | HTMLAnchorElement;
   disabled?: boolean;
@@ -22,8 +24,6 @@ export interface ButtonProps extends HTMLButtonAttributes {
 /** Icon */
 export interface IconProps extends SVGAttributes<SVGElement> {
   name: IconName;
-  width?: number;
-  height?: number;
   isOutlined?: boolean;
   colorInherit?: boolean;
 }
@@ -41,4 +41,4 @@ type IconThemeSource = {
 type AllowedTags = 'path' | 'circle' | 'rect' | 'polygon' | 'polyline' | 'line';
 
 /** Add names of icons you use (or include) here (for stricter typing and intellisense [name suggestions]). */
-export type IconName = 'exclamation-triangle' | '';
+export type IconName = 'exclamation-triangle' | 'hand-thumb-up' | 'hand-thumb-down' | '';

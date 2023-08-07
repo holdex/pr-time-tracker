@@ -259,6 +259,7 @@ module.exports = {
         sans: ['Inter', ...defaultTheme.fontFamily.sans]
       },
       boxShadow: {
+        toggle: '0 0.25rem 0.5rem 0 rgba(0, 0, 0, 0.16), 0 0 0 0.125rem rgba(0, 0, 0, 0.20)',
         input:
           '0 0 0 0.125rem rgba(0, 0, 0, var(--shadow-button-ring-alpha)), 0 0.25rem 0.5rem rgba(0, 0, 0, var(--shadow-input-alpha))',
         tag: '0 0.25rem 0.5rem rgba(0, 0, 0, 0.16)',

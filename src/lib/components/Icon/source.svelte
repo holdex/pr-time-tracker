@@ -6,8 +6,8 @@
   let className: IconSouceProps['class'] = '';
   export { className as class };
   export let src: IconSouceProps['src'];
-  export let width = 24;
-  export let height = 24;
+  export let width: IconSouceProps['width'] = 24;
+  export let height: IconSouceProps['height'] = 24;
   export let isOutlined = false;
   export let colorInherit = false;
 
