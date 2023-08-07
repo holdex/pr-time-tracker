@@ -5,7 +5,6 @@ import config from '$lib/server/config';
 import { collections, updateCollectionInfo } from '$lib/server/mongo/operations';
 
 const parsePullRequestEvents = async (event: PullRequestEvent) => {
-  console.log('parsing pull_request_event', event);
   const { action, pull_request, repository, organization, sender } = event;
 
   if (action === 'closed') {
