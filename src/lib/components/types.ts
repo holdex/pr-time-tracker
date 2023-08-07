@@ -1,9 +1,11 @@
-import type { HTMLButtonAttributes, SVGAttributes } from 'svelte/elements';
+import type { HTMLButtonAttributes, SVGAttributes, SvelteHTMLElements } from 'svelte/elements';
 
 /** Button */
 export interface ButtonProps extends HTMLButtonAttributes {
-  size: 'small' | 'medium' | 'large';
-  variant: 'primary' | 'secondary' | 'solo';
+  text?: string | number | null;
+  size?: 'small' | 'medium' | 'large';
+  variant?: 'primary' | 'secondary' | 'solo';
+  /** @deprecated - Use `text` instead. */
   label?: string;
   href?: string;
   fixedTo?: string;

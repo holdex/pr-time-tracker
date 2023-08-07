@@ -4,6 +4,7 @@
   import type { PageData } from './$types';
 
   import Icon from '$lib/components/Icon/index.svelte';
+  import Toggle from '$lib/components/Toggle/index.svelte';
   import Button from '$lib/components/Button/index.svelte';
   import { invalidations } from '$lib/config';
   import { genAuthUrl } from '$lib/github';
@@ -44,4 +45,5 @@
   else
     <Button size="large" variant="secondary" onClick={loginWithGithub} disabled={isRequesting}>
       <Icon name="exclamation-triangle" isOutlined class="mr-2" /> Log in with Github
-    </Button></template>
+    </Button>
+  <Toggle leftButtonProps={{ text: 'Unsubmitted' }} rightButtonProps={{ text: 'Submitted' }} /></template>
