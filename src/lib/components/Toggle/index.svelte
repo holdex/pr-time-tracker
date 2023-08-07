@@ -4,7 +4,6 @@
   import type { HTMLAttributes } from 'svelte/elements';
 
   /** siblings */
-
   import Button from '../Button/index.svelte';
 
   /** props */
@@ -16,7 +15,7 @@
   export let isReactionToggle = false;
 
   /** vars */
-  const commonClassNames = `${isReactionToggle ? ' !px-2 !py-1' : ''}`;
+  const commonClassNames = `toggle-button ${isReactionToggle ? ' !px-2 !py-1' : ''}`;
   const iconProps: IconProps = { name: 'hand-thumb-up', width: '1.125rem', height: '1.125rem' };
 
   /** funcs */
@@ -44,9 +43,9 @@
     {...leftButtonProps}
     variant={rightButtonProps.variant || 'secondary'}
     iconProps={isReactionToggle ? iconProps : undefined}
-    class={`toggle-button ${
+    class={`${commonClassNames} ${
       activeButton === 'left' ? 'active' : 'text-t3'
-    } rounded-l-lg border-r border-r-l4 ${commonClassNames}`}
+    } rounded-l-lg border-r border-r-l4`}
     onClick={handleToggle('left')}>
     <slot name="content1" />
   </Button>
@@ -54,9 +53,7 @@
     {...rightButtonProps}
     variant={rightButtonProps.variant || 'secondary'}
     iconProps={isReactionToggle ? { ...iconProps, name: 'hand-thumb-down' } : undefined}
-    class={`toggle-button ${
-      activeButton === 'right' ? 'active' : 'text-t3'
-    } rounded-r-lg ${commonClassNames}`}
+    class={`${commonClassNames} ${activeButton === 'right' ? 'active' : 'text-t3'} rounded-r-lg`}
     onClick={handleToggle('right')}>
     <slot name="content2" />
   </Button>
