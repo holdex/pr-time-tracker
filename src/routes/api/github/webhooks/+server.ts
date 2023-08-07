@@ -21,6 +21,7 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const eventName = request.headers.get('x-github-event') as string;
+
   switch (eventName) {
     case 'installation': {
       parseInstallationEvents(body);

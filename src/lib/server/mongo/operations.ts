@@ -4,8 +4,7 @@ import type {
   Document,
   UpdateOptions,
   UpdateFilter,
-  FindOneAndUpdateOptions,
-  ObjectId
+  FindOneAndUpdateOptions
 } from 'mongodb';
 
 const collections = {
@@ -13,14 +12,14 @@ const collections = {
 };
 
 type ItemCollection = {
-  id: ObjectId;
+  id: number;
   org: string;
   repo: string;
   owner: string;
   type: string;
   url: string;
   hours: string;
-  experince: 'positive' | 'negative';
+  experience: 'positive' | 'negative';
 };
 
 async function getCollectionInfo<T extends Document>(
