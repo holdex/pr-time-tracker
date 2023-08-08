@@ -1,8 +1,20 @@
 <script lang="ts">
-  import { goto, invalidate } from '$app/navigation';
+  /*import { goto, invalidate } from '$app/navigation';
   import { invalidations } from '$lib/config';
   import { genAuthUrl } from '$lib/github';
   import type { PageData } from './$types';
+
+  import Button from '$lib/components/Button/index.svelte';*/
+
+  import { goto, invalidate } from '$app/navigation';
+
+  import type { PageData } from './$types';
+
+  import Icon from '$lib/components/Icon/index.svelte';
+  import Toggle from '$lib/components/Toggle/index.svelte';
+  import Button from '$lib/components/Button/index.svelte';
+  import { invalidations } from '$lib/config';
+  import { genAuthUrl } from '$lib/github';
 
   export let data: PageData;
 
@@ -26,6 +38,17 @@
   };
 </script>
 
+<div class="container">
+  {#if data.user}
+    <p>Hello <b>{data.user.name}</b></p>
+    <button class="button" on:click|preventDefault={logout} disabled={isRequesting}>Logout</button>
+  {:else}
+    <Button size="large" variant="secondary" onClick={loginWithGithub} disabled={isRequesting}>
+      <Icon name="exclamation-triangle" isOutlined class="mr-2" /> Log in with Github
+    </Button>
+  {/if}
+</div>
+
 <style lang="sass">
   @tailwind base
   @tailwind components
@@ -40,7 +63,6 @@
     display: flex
     justify-content: center
     align-items: center
-    flex-direction: column
     background: rgba(16, 20, 31, 1)
   
   /*.button 
@@ -66,13 +88,3 @@
   .button:hover
     background: rgba(84, 204, 255, 1)
 </style>
-
-<div class="container">
-  {#if data.user}
-    <p>Hello <b>{data.user.name}</b></p>
-    <button class="button" on:click|preventDefault={logout} disabled={isRequesting}>Logout</button>
-  {:else}
-    <button class="button" on:click|preventDefault={loginWithGithub} disabled={isRequesting}
-      >Log in with Github</button>
-  {/if}
-</div>
