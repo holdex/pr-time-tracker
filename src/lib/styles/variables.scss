@@ -4,10 +4,7 @@ $common-colors: (
   accent2-default: toSpacedRgb(#00e5a1),
   accent2-active: toSpacedRgb(#53e6b9),
   accent3-default: toSpacedRgb(#ce7aff),
-  accent3-active: toSpacedRgb(#dda3ff),
-  rating-a: toSpacedRgb(#00e5a1),
-  rating-b: toSpacedRgb(#ffb35c),
-  rating-c: toSpacedRgb(#fe706f)
+  accent3-active: toSpacedRgb(#dda3ff)
 );
 
 $light-colors: (
@@ -38,4 +35,14 @@ $dark-colors: (
   t2: toSpacedRgb(#d7dae0),
   t3: toSpacedRgb(#a2a7b8),
   t4: toSpacedRgb(#10141f)
+);
+
+$tw-dark: (
+  shadow-button-ring-alpha: 0.2,
+  shadow-input-alpha: 0.16
+);
+
+$tw-light: (
+  shadow-button-ring-alpha: 0.04,
+  shadow-input-alpha: 0
 );

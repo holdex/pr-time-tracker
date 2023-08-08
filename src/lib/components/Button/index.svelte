@@ -8,12 +8,14 @@
   /** props */
   let className: ButtonProps['class'] = '';
   export { className as class };
+  export let text: ButtonProps['text'] = '';
   export let label: ButtonProps['label'] = undefined;
   export let size: ButtonProps['size'] = 'medium';
   export let variant: ButtonProps['variant'] = 'primary';
   export let href: ButtonProps['href'] = undefined;
   export let fixedTo: ButtonProps['fixedTo'] = undefined;
   export let icon: ButtonProps['icon'] = undefined;
+  export let iconProps: ButtonProps['iconProps'] = undefined;
   // Used for control DOM element from outside
   export let forwardRef: ButtonProps['forwardRef'] = undefined;
   export let disabled: ButtonProps['disabled'] = false;
@@ -34,7 +36,6 @@
   $: btnType = isSubmitBtn ? 'submit' : 'button';
   $: iconSize = size === 'small' ? 20 : 24;
   $: btnClass = `btn ${variantClass} ${sizeClass} ${className || ''} ${disabledClass}`;
-
   /** props type */
   type $$Props = ButtonProps;
 </script>
@@ -48,7 +49,7 @@
     bind:this={forwardRef}
     class="{btnClass} no-underline"
     {href}>
-    <Content {icon} {iconSize} {label}>
+    <Content {icon} {iconSize} {label} {text} {iconProps}>
       <slot />
     </Content>
   </a>
@@ -62,7 +63,7 @@
     class={btnClass}
     type={btnType}
     on:click={clickHandler}>
-    <Content {icon} {iconSize} {label}>
+    <Content {icon} {iconSize} {label} {text} {iconProps}>
       <slot />
     </Content>
   </button>

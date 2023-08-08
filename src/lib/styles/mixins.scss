@@ -10,10 +10,12 @@
   @if $scheme == 'light' {
     @include createVariables($common-colors);
     @include createVariables($light-colors);
+    @include createVariables($tw-light);
     background-color: theme('colors.l2');
   } @else {
     @include createVariables($common-colors);
     @include createVariables($dark-colors);
+    @include createVariables($tw-dark);
     background-color: theme('colors.l1');
   }
 

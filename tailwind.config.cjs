@@ -42,25 +42,7 @@ module.exports = {
       'accent2-default': 'rgb(var(--accent2-default) / <alpha-value>)',
       'accent2-active': 'rgb(var(--accent2-active) / <alpha-value>)',
       'accent3-default': 'rgb(var(--accent3-default) / <alpha-value>)',
-      'accent3-active': 'rgb(var(--accent3-active) / <alpha-value>)',
-
-      'rating-a': 'rgb(var(--rating-a) / <alpha-value>)',
-      'rating-b': 'rgb(var(--rating-b) / <alpha-value>)',
-      'rating-c': 'rgb(var(--rating-c) / <alpha-value>)',
-
-      'tw-colors-blue': 'rgb(var(--colors-blue) / <alpha-value>)',
-      'tw-colors-purple': 'rgb(var(--colors-purple) / <alpha-value>)',
-      'tw-accents-1': 'rgb(var(--accents-1) / <alpha-value>)',
-      'tw-accents-2': 'rgb(var(--accents-2) / <alpha-value>)',
-      'tw-accents-3': 'rgb(var(--accents-3) / <alpha-value>)',
-      'tw-accents-4': 'rgb(var(--accents-4) / <alpha-value>)',
-      'tw-accents-5': 'rgb(var(--accents-5) / <alpha-value>)',
-      'tw-bg-color': 'rgb(var(--bg-color) / <alpha-value>)',
-      'tw-link-color': 'rgb(var(--link-color) / <alpha-value>)',
-      'tw-poll-bar-color': 'rgb(var(--poll-bar-color) / <alpha-value>)',
-      'tw-inline-code-color': 'rgb(var(--inline-code-color) / <alpha-value>)',
-      'tw-code-color': 'rgb(var(--code-color) / <alpha-value>)',
-      'tw-code-bg-color': 'rgb(var(--code-bg-color) / <alpha-value>)'
+      'accent3-active': 'rgb(var(--accent3-active) / <alpha-value>)'
     },
     fontSize: {
       ...defaultTheme.fontSize,
@@ -258,6 +240,7 @@ module.exports = {
         sans: ['Inter', ...defaultTheme.fontFamily.sans]
       },
       boxShadow: {
+        toggle: '0 0.25rem 0.5rem 0 rgba(0, 0, 0, 0.16), 0 0 0 0.125rem rgba(0, 0, 0, 0.20)',
         input:
           '0 0 0 0.125rem rgba(0, 0, 0, var(--shadow-button-ring-alpha)), 0 0.25rem 0.5rem rgba(0, 0, 0, var(--shadow-input-alpha))',
         tag: '0 0.25rem 0.5rem rgba(0, 0, 0, 0.16)',
