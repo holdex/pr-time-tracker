@@ -31,7 +31,7 @@
   };
 </script>
 
-<div class="container">
+<div class="container flex items-center justify-center w-full h-screen bg-l1">
   {#if data.user}
     <p>Hello <b>{data.user.name}</b></p>
     <Button size="large" variant="secondary" onClick={logout} disabled={isRequesting}>
@@ -43,20 +43,3 @@
     </Button>
   {/if}
 </div>
-
-<style lang="sass">
-  @tailwind base
-  @tailwind components
-  @tailwind utilities
-
-  .container 
-    position: relative /*position: absolute */
-    /*top: 0*/
-    /*left: 0*/
-    width: 100%
-    height: 100vh  /*height: 100%*/
-    display: flex
-    justify-content: center
-    align-items: center
-    background: rgba(16, 20, 31, 1)
-</style>
