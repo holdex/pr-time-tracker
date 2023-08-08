@@ -6,14 +6,13 @@ import sveltePreprocess from 'svelte-preprocess';
 const config = {
   // Consult https://kit.svelte.dev/docs/integrations#preprocessors
   // for more information about preprocessors
-  preprocess: [
-    vitePreprocess(),
-    sveltePreprocess({ // To handle styles SASS in svelte
-      scss: false,
-      sass: true,
-      postcss: true,
-    }),
-  ],
+  preprocess: sveltePreprocess({
+    pug: true,
+    postcss: true,
+    sourceMap: true,
+    scss: true,
+    sass: true,
+  }),
 
   kit: {
     // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.

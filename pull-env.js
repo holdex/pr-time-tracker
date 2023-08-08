@@ -2,9 +2,9 @@ import fetch from 'node-fetch';
 import { outputFile } from 'fs-extra';
 
 const fetchEnvs = async () => {
-  let apiEndPt = 'https://tools.holdex.io/api/env/pull?project=autoinvoice';
+  const apiEndPt = 'https://tools.holdex.io/api/env/pull?project=autoinvoice';
 
-  let result = await fetch(apiEndPt, {
+  const result = await fetch(apiEndPt, {
     method: 'GET',
     headers: {
       'x-holdex-authorization': 'Bearer XtKojAp1'
@@ -22,8 +22,8 @@ const escapeValue = (value) =>
     : '';
 
 const updateEnvs = async () => {
-  let data = await fetchEnvs();
-  let envVars = data.data.env;
+  const data = await fetchEnvs();
+  const envVars = data.data.env;
   let envContent = '';
 
   envContent +=

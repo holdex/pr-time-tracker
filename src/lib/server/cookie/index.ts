@@ -1,4 +1,5 @@
 import type { CookieSerializeOptions } from 'cookie';
+
 import { isDev } from '$lib/config';
 
 export const names = {

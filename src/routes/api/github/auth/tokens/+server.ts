@@ -1,6 +1,8 @@
-import type { RequestHandler } from '@sveltejs/kit';
 import { json, redirect } from '@sveltejs/kit';
-import { names, serializeCookie } from '$lib/CookieManager';
+
+import type { RequestHandler } from '@sveltejs/kit';
+
+import { names, serializeCookie } from '$lib/server/cookie';
 import { refreshUserToken } from '$lib/server/github';
 
 export const GET: RequestHandler = async ({ cookies }) => {
@@ -16,14 +18,14 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
     cookies.set(
       names.accessTokenCookieName,
-      accessToken,
+      accessToken || '',
       serializeCookie({
         expires: new Date(authentication.expiresAt)
       })
     );
     cookies.set(
       names.refreshTokenCookieName,
-      refreshToken,
+      refreshToken || '',
       serializeCookie({
         expires: new Date(authentication.refreshTokenExpiresAt)
       })

@@ -1,5 +1,6 @@
-import config from '$lib/config';
 import { getWebFlowAuthorizationUrl } from '@octokit/oauth-methods';
+
+import config from '$lib/config';
 
 export function genAuthUrl() {
   return getWebFlowAuthorizationUrl({

@@ -1,8 +1,13 @@
 <script lang="ts">
   import { goto, invalidate } from '$app/navigation';
+
+  import type { PageData } from './$types';
+
+  import Icon from '$lib/components/Icon/index.svelte';
+  import Toggle from '$lib/components/Toggle/index.svelte';
+  import Button from '$lib/components/Button/index.svelte';
   import { invalidations } from '$lib/config';
   import { genAuthUrl } from '$lib/github';
-  import type { PageData } from './$types';
 
   export let data: PageData;
 
@@ -26,14 +31,21 @@
   };
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>
-  Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation
-</p>
-{#if data.user}
-  <p>Hello <b>{data.user.name}</b></p>
-  <button on:click|preventDefault={logout} disabled={isRequesting}>Logout</button>
-{:else}
-  <button on:click|preventDefault={loginWithGithub} disabled={isRequesting}
-    >Log in with Github</button>
-{/if}
+<template lang="pug">
+  h1 Welcome to SvelteKit
+  p
+    | Visit&nbsp;
+    a(href="https://kit.svelte.dev") kit.svelte.dev&nbsp;
+    | to read the documentation
+  if data && data.user
+    p Hello
+      |
+      b {data.user.name}
+    button(on:click|preventDefault={logout} disabled={isRequesting}) Logout
+  else
+    <Button size="large" variant="secondary" onClick={loginWithGithub} disabled={isRequesting}>
+      <Icon name="exclamation-triangle" isOutlined class="mr-2" /> Log in with Github
+    </Button></template>
+
+<Toggle leftButtonProps={{ text: 'Unsubmitted' }} rightButtonProps={{ text: 'Submitted' }} />
+<Toggle isReactionToggle />
