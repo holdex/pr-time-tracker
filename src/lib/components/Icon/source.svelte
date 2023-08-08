@@ -1,13 +1,13 @@
 <script lang="ts">
   /** types */
-  import type { IconSouceProps } from '../types';
+  import type { IconSourceProps } from '../types';
 
   /** props */
-  let className: IconSouceProps['class'] = '';
+  let className: IconSourceProps['class'] = '';
   export { className as class };
-  export let src: IconSouceProps['src'];
-  export let width: IconSouceProps['width'] = 24;
-  export let height: IconSouceProps['height'] = 24;
+  export let src: IconSourceProps['src'];
+  export let width: IconSourceProps['width'] = 24;
+  export let height: IconSourceProps['height'] = 24;
   export let isOutlined = false;
   export let colorInherit = false;
 
@@ -15,7 +15,7 @@
   const iconSrc = src[isOutlined ? 'default' : 'solid'];
 
   /** props type */
-  type $$Props = IconSouceProps;
+  type $$Props = IconSourceProps;
 </script>
 
 <svg

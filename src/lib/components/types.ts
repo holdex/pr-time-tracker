@@ -4,7 +4,7 @@ import type { HTMLButtonAttributes, SVGAttributes } from 'svelte/elements';
 export interface ButtonProps extends HTMLButtonAttributes {
   text?: string | number | null;
   size?: 'small' | 'medium' | 'large';
-  variant?: 'primary' | 'secondary' | 'solo';
+  variant?: 'primary' | 'secondary' | 'solo' | 'icon';
   /** @deprecated - Use `text` instead. */
   label?: string;
   href?: string;
@@ -28,7 +28,7 @@ export interface IconProps extends SVGAttributes<SVGElement> {
   colorInherit?: boolean;
 }
 
-export interface IconSouceProps extends Omit<IconProps, 'name'> {
+export interface IconSourceProps extends Omit<IconProps, 'name'> {
   src: { solid?: IconThemeSource } & { default: IconThemeSource };
 }
 
@@ -41,4 +41,4 @@ type IconThemeSource = {
 type AllowedTags = 'path' | 'circle' | 'rect' | 'polygon' | 'polyline' | 'line';
 
 /** Add names of icons you use (or include) here (for stricter typing and intellisense [name suggestions]). */
-export type IconName = 'exclamation-triangle' | 'hand-thumb-up' | 'hand-thumb-down' | '';
+export type IconName = 'github' | 'exclamation-triangle' | 'hand-thumb-up' | 'hand-thumb-down' | '';

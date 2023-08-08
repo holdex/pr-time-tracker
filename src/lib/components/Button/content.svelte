@@ -19,8 +19,8 @@
 {#if icon || iconProps}
   <Icon
     name={icon || ''}
-    width={iconSize}
-    height={iconSize}
+    width={iconProps?.height || iconSize}
+    height={iconProps?.width || iconSize}
     colorInherit
     isOutlined={$$restProps.isOutlined}
     {...iconProps} />

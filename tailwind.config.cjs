@@ -207,6 +207,9 @@ module.exports = {
       mono: ['"JetBrains Mono"']
     },
     extend: {
+      maxWidth: {
+        container: '37.75rem'
+      },
       spacing: {
         0.75: '0.1875rem',
         1.25: '0.3125rem',

@@ -36,9 +36,9 @@
 
 <span
   {...$$restProps}
-  class={`flex border border-l4 rounded-xl m-3 overflow-clip w-fit ${
+  class={`flex border border-l4 rounded-xl overflow-clip w-fit ${
     isReactionToggle ? 'h-8 shadow-toggle' : ''
-  } ${className || ''}`}>
+  } ${className || ''} hover:border-accent1-default focus-within:border-accent1-default`}>
   <Button
     {...leftButtonProps}
     variant={rightButtonProps.variant || 'secondary'}
