@@ -16,7 +16,10 @@ const parseIssuesEvents = async (event: IssuesEvent) => {
       org: organization?.login || 'holdex',
       repo: repository.name,
       owner: issue.user.login || sender.login,
-      url: issue.url
+      url: issue.url,
+      createdAt: issue.created_at,
+      updatedAt: issue.updated_at,
+      closedAt: issue.closed_at
     };
 
     const res = await updateCollectionInfo(

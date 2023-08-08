@@ -18,6 +18,9 @@ type ItemCollection = {
   owner: string;
   type: string;
   url: string;
+  createdAt?: string;
+  updatedAt?: string;
+  closedAt?: string;
   hours?: string;
   experience?: 'positive' | 'negative';
 };
