@@ -9,7 +9,6 @@ export enum GitHubEventName {
 }
 
 export enum ItemType {
-  UNDEFINED = 'undefined',
   PULL_REQUEST = 'pull_request',
   ISSUES = 'issue'
 }
