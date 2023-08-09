@@ -4,7 +4,7 @@
   import Toggle from '$lib/components/Toggle/index.svelte';
   /** vars */
   let displayAvatarFallback = false;
-
+  /** functs */
   const handleAvatarError = () => {
     displayAvatarFallback = true;
   };
