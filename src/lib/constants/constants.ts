@@ -9,6 +9,7 @@ export enum GitHubEventName {
 }
 
 export enum ItemType {
+  UNDEFINED = 'undefined',
   PULL_REQUEST = 'pull_request',
   ISSUES = 'issue'
 }
@@ -17,4 +18,9 @@ export enum ItemState {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected'
+}
+
+export enum SubmitState {
+  SUBMITTED = 'true',
+  UNSUBMITTED = 'false'
 }

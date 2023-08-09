@@ -25,6 +25,7 @@ type ItemCollection = {
   experience?: 'positive' | 'negative';
   approved?: boolean;
   rejected?: boolean;
+  submitted?: boolean;
 };
 
 async function getCollectionInfo<T extends Document>(

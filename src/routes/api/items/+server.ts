@@ -7,26 +7,83 @@ import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ItemCollection } from '$lib/server/mongo/operations';
 import { collections, getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
-import { ItemType, ItemState } from '$lib/constants/constants';
+import { ItemType, ItemState, SubmitState } from '$lib/constants/constants';
+
+const generateFilter = (
+  type: ItemType,
+  state: ItemState,
+  owner: string,
+  submitted: SubmitState
+) => {
+  let filter: any = {};
+
+  if (type) {
+    filter = {
+      ...filter,
+      type
+    };
+  }
+
+  if (state === ItemState.PENDING) {
+    filter = {
+      ...filter,
+      $and: [
+        {
+          $or: [
+            { [ItemState.APPROVED]: { $exists: false } },
+            { [ItemState.APPROVED]: { $eq: false } }
+          ]
+        },
+        {
+          $or: [
+            { [ItemState.REJECTED]: { $exists: false } },
+            { [ItemState.REJECTED]: { $eq: false } }
+          ]
+        }
+      ]
+    };
+  } else {
+    filter = {
+      ...filter,
+      [state]: true
+    };
+  }
+
+  if (owner) {
+    filter = {
+      ...filter,
+      owner
+    };
+  }
+
+  if (submitted) {
+    if (submitted === SubmitState.SUBMITTED) {
+      filter = {
+        ...filter,
+        submitted: submitted === SubmitState.SUBMITTED
+      };
+    } else {
+      filter = {
+        ...filter,
+        $or: [{ submitted: { $exists: false } }, { submitted: { $eq: false } }]
+      };
+    }
+  }
+
+  return filter;
+};
 
 export const GET: RequestHandler = async ({ url }) => {
   const { searchParams } = url;
 
-  const requestType = searchParams.get('type') ?? ItemType.PULL_REQUEST;
-  const requestedState = searchParams.get('state') ?? ItemState.PENDING;
+  const type = searchParams.get('type') as ItemType;
+  const state = (searchParams.get('state') as ItemState) ?? ItemState.PENDING;
+  const owner = searchParams.get('owner') as string;
+  const submitted = searchParams.get('submitted') as SubmitState;
+
+  const filter = generateFilter(type, state, owner, submitted);
 
   const mongoDB = await clientPromise;
-  const filter =
-    requestedState === ItemState.PENDING
-      ? {
-          type: requestType,
-          [ItemState.APPROVED]: { $exists: false },
-          [ItemState.REJECTED]: { $exists: false }
-        }
-      : {
-          type: requestType,
-          [requestedState]: { $exists: true }
-        };
 
   const documents = await (
     await getDocumentsInfo(mongoDB.db(config.mongoDBName), collections.items, filter)
