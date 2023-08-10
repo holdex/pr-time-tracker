@@ -65,19 +65,6 @@ export const getDocumentsInfo = async <T extends Document>(
   }
 };
 
-export const getListOfField = async <T extends Document>(
-  db: Db,
-  collectionName: string,
-  field: string
-) => {
-  try {
-    const collection = db.collection<T>(collectionName);
-    return collection.distinct(field);
-  } catch (error) {
-    throw new Error('Failed to get list of field:\n' + error);
-  }
-};
-
 export const updateCollectionInfo = async <T extends Document>(
   db: Db,
   collectionName: string,
