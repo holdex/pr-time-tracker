@@ -7,13 +7,20 @@ import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ItemCollection } from '$lib/server/mongo/operations';
 import { collections, getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
-import { ItemType, ItemState, SubmitState } from '$lib/constants/constants';
+import {
+  ONE_MONTH,
+  ItemType,
+  ItemState,
+  SubmitState,
+  ArchiveState
+} from '$lib/constants/constants';
 
 const generateFilter = (
   type: ItemType,
   state: ItemState,
   owner: string,
-  submitted: SubmitState
+  submitted: SubmitState,
+  archived: ArchiveState
 ) => {
   let filter: any = {};
 
@@ -24,29 +31,31 @@ const generateFilter = (
     };
   }
 
-  if (state === ItemState.PENDING) {
-    filter = {
-      ...filter,
-      $and: [
-        {
-          $or: [
-            { [ItemState.APPROVED]: { $exists: false } },
-            { [ItemState.APPROVED]: { $eq: false } }
-          ]
-        },
-        {
-          $or: [
-            { [ItemState.REJECTED]: { $exists: false } },
-            { [ItemState.REJECTED]: { $eq: false } }
-          ]
-        }
-      ]
-    };
-  } else {
-    filter = {
-      ...filter,
-      [state]: true
-    };
+  if (state) {
+    if (state === ItemState.PENDING) {
+      filter = {
+        ...filter,
+        $and: [
+          {
+            $or: [
+              { [ItemState.APPROVED]: { $exists: false } },
+              { [ItemState.APPROVED]: { $eq: false } }
+            ]
+          },
+          {
+            $or: [
+              { [ItemState.REJECTED]: { $exists: false } },
+              { [ItemState.REJECTED]: { $eq: false } }
+            ]
+          }
+        ]
+      };
+    } else {
+      filter = {
+        ...filter,
+        [state]: true
+      };
+    }
   }
 
   if (owner) {
@@ -70,6 +79,16 @@ const generateFilter = (
     }
   }
 
+  if (archived && archived === ArchiveState.ARCHIVED) {
+    const deadline = new Date();
+    deadline.setMonth(deadline.getMonth() - ONE_MONTH);
+
+    filter = {
+      ...filter,
+      closedAt: { $gte: deadline }
+    };
+  }
+
   return filter;
 };
 
@@ -80,8 +99,9 @@ export const GET: RequestHandler = async ({ url }) => {
   const state = (searchParams.get('state') as ItemState) ?? ItemState.PENDING;
   const owner = searchParams.get('owner') as string;
   const submitted = searchParams.get('submitted') as SubmitState;
+  const archived = searchParams.get('archived') as ArchiveState;
 
-  const filter = generateFilter(type, state, owner, submitted);
+  const filter = generateFilter(type, state, owner, submitted, archived);
 
   const mongoDB = await clientPromise;
 

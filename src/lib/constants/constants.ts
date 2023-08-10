@@ -1,3 +1,4 @@
+export const ONE_MONTH = 1;
 export const HOUR_IN_MILISECOND = 3600000;
 export const FIXED_DECIMAL_HOUR = 2;
 
@@ -22,4 +23,9 @@ export enum ItemState {
 export enum SubmitState {
   SUBMITTED = 'true',
   UNSUBMITTED = 'false'
+}
+
+export enum ArchiveState {
+  ARCHIVED = 'true',
+  RETRIEVED = 'false'
 }
