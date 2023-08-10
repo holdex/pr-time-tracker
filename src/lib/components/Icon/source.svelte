@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { IconThemeSource } from '@steeze-ui/heroicons/dist/types';
   /** types */
   import type { IconSourceProps } from '../types';
 
@@ -12,7 +13,10 @@
   export let colorInherit = false;
 
   /** vars */
-  const iconSrc = src[isOutlined ? 'default' : 'solid'];
+  let iconSrc: IconThemeSource | undefined = undefined;
+
+  /** react-ibles */
+  $: iconSrc = src[isOutlined ? 'default' : 'solid'];
 
   /** props type */
   type $$Props = IconSourceProps;

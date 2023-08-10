@@ -2,7 +2,7 @@
   /** externals */
 
   /** types */
-  import type { HTMLAttributes } from 'svelte/elements';
+  import type { CardProps } from '../types';
 
   /** internals */
   import Button from '$lib/components/Button/index.svelte';
@@ -12,11 +12,9 @@
   /** props */
   export let isReadonly = false;
   export let isAdmin = false;
-  export let data = { hrs: 3, experience: 'Positive', approved: 'Yes' };
-
-  /** props type */
-  type $$Props = HTMLAttributes<HTMLLIElement> &
-    Partial<{ isReadonly: boolean; isAdmin: boolean; data: typeof data }>;
+  export let loading = false;
+  export let data: CardProps['data'] = { hrs: 3, experience: 'Positive', approved: 'Yes' };
+  export let onSubmit: CardProps['onSubmit'] = undefined;
 </script>
 
 <li
@@ -38,13 +36,20 @@
     Problem: It is hard to upload photos into articles
   </p>
 
-  <div class="p-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4">
+  <form
+    class="p-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4"
+    on:submit|preventDefault={async (e) => {
+      if (!onSubmit) return;
+      loading = true;
+      await onSubmit(data)(e);
+      loading = false;
+    }}>
     <span class="flex gap-1.5 items-center max-w-content">
       <span>Hour:</span>
       {#if isReadonly}
         <span class="text-t1">{data.hrs}</span>
       {:else}
-        <Input />
+        <Input required min="0.5" bind:value={data.hrs} disabled={loading} />
       {/if}
     </span>
 
@@ -56,18 +61,20 @@
         <Toggle isReactionToggle />
       {/if}
     </span>
-
+    {loading}
     {#if !isReadonly}
       <Button
+        isSubmitBtn
         size="small"
-        text={isAdmin ? 'Approve' : 'Submit'}
+        text={isAdmin ? `Approv${loading ? 'ing...' : 'e'}` : `Submit${loading ? 'ting...' : ''}`}
         variant={isAdmin ? 'primary' : 'secondary'}
-        class="w-full min-w-full sm:min-w-fit" />
+        class="w-full min-w-full sm:min-w-fit"
+        disabled={loading} />
     {:else if data.approved && !isAdmin}
       <div class="flex gap-1.5">
         <span>Approved:</span>
         <span class="text-t1">{data.approved}</span>
       </div>
     {/if}
-  </div>
+  </form>
 </li>

@@ -4,7 +4,8 @@ $common-colors: (
   accent2-default: toSpacedRgb(#00e5a1),
   accent2-active: toSpacedRgb(#53e6b9),
   accent3-default: toSpacedRgb(#ce7aff),
-  accent3-active: toSpacedRgb(#dda3ff)
+  accent3-active: toSpacedRgb(#dda3ff),
+  neg: toSpacedRgb(#fe706f)
 );
 
 $light-colors: (

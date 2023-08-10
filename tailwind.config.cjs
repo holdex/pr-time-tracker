@@ -36,6 +36,7 @@ module.exports = {
       t2: 'rgb(var(--t2) / <alpha-value>)',
       t3: 'rgb(var(--t3) / <alpha-value>)',
       t4: 'rgb(var(--t4) / <alpha-value>)',
+      neg: 'rgb(var(--neg) / <alpha-value>)',
 
       'accent1-default': 'rgb(var(--accent1-default) / <alpha-value>)',
       'accent1-active': 'rgb(var(--accent1-active) / <alpha-value>)',
@@ -158,14 +159,14 @@ module.exports = {
           fontWeight: '900'
         }
       ],
-      'paragraph-l': [
+      'p-l': [
         '1.125rem',
         {
           lineHeight: '2rem',
           fontWeight: '400'
         }
       ],
-      'paragraph-s': [
+      'p-s': [
         '1rem',
         {
           lineHeight: '2rem',
@@ -243,6 +244,7 @@ module.exports = {
         sans: ['Inter', ...defaultTheme.fontFamily.sans]
       },
       boxShadow: {
+        snackbar: '0 0.25rem 0.5rem 0 rgba(0, 0, 0, 0.16)',
         toggle: '0 0.25rem 0.5rem 0 rgba(0, 0, 0, 0.16), 0 0 0 0.125rem rgba(0, 0, 0, 0.20)',
         input:
           '0 0 0 0.125rem rgba(0, 0, 0, var(--shadow-button-ring-alpha)), 0 0.25rem 0.5rem rgba(0, 0, 0, var(--shadow-input-alpha))',

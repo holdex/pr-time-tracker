@@ -10,8 +10,8 @@
   export { className as class };
   export let leftButtonProps: ButtonProps = {};
   export let rightButtonProps: ButtonProps = {};
-  export let activeButton: 'left' | 'right' = 'left';
   export let isReactionToggle = false;
+  export let activeButton: 'left' | 'right' | '' = isReactionToggle ? '' : 'left';
 
   /** vars */
   const commonClassNames = `toggle-button ${isReactionToggle ? '!px-2 !py-1' : '!px-2.5'}`;
@@ -19,7 +19,7 @@
 
   /** funcs */
   const handleToggle = (button: typeof activeButton) => () => {
-    activeButton = button;
+    activeButton = isReactionToggle && activeButton === button ? '' : button;
   };
 
   /** props type */
