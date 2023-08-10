@@ -1,4 +1,5 @@
 import type {
+  ObjectId,
   Filter,
   Db,
   Document,
@@ -12,6 +13,7 @@ type ItemCollection = {
   org: string;
   repo: string;
   owner: string;
+  contributorIds?: (ObjectId | undefined | null)[];
   type: string;
   url: string;
   createdAt?: string;
@@ -26,6 +28,7 @@ type ItemCollection = {
 
 type ContributorCollection = {
   id: number;
+  name: string;
   login: string;
   url: string;
   avatarUrl: string;
