@@ -6,7 +6,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ItemCollection } from '$lib/server/mongo/operations';
-import { collections, getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
+import { Collections, getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
 import {
   ONE_MONTH,
   ItemType,
@@ -106,7 +106,7 @@ export const GET: RequestHandler = async ({ url }) => {
   const mongoDB = await clientPromise;
 
   const documents = await (
-    await getDocumentsInfo(mongoDB.db(config.mongoDBName), collections.items, filter)
+    await getDocumentsInfo(mongoDB.db(config.mongoDBName), Collections.ITEMS, filter)
   ).toArray();
 
   return json({ message: 'success', result: documents }, { status: StatusCode.SuccessOK });
@@ -122,7 +122,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const mongoDB = await clientPromise;
   const res = await updateCollectionInfo(
     mongoDB.db(config.mongoDBName),
-    collections.items,
+    Collections.ITEMS,
     { id: requestBody.id },
     { $set: { ...requestBody } }
   );

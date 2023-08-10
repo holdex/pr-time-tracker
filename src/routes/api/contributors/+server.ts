@@ -5,7 +5,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
-import { collections, getListOfField } from '$lib/server/mongo/operations';
+import { Collections, getListOfField } from '$lib/server/mongo/operations';
 
 export const GET: RequestHandler = async ({ url }) => {
   const { searchParams } = url;
@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
   const documents = await getListOfField(
     mongoDB.db(config.mongoDBName),
-    collections.items,
+    Collections.ITEMS,
     fieldName
   );
 

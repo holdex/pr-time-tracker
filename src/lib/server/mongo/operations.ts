@@ -7,10 +7,6 @@ import type {
   FindOneAndUpdateOptions
 } from 'mongodb';
 
-const collections = {
-  items: 'items'
-};
-
 type ItemCollection = {
   id: number;
   org: string;
@@ -28,77 +24,85 @@ type ItemCollection = {
   submitted?: boolean;
 };
 
-async function getCollectionInfo<T extends Document>(
+type ContributorCollection = {
+  id: number;
+  login: string;
+  url: string;
+  avatarUrl: string;
+};
+
+export enum Collections {
+  ITEMS = 'items',
+  CONTRIBUTORS = 'contributors'
+}
+
+export const getCollectionInfo = async <T extends Document>(
   db: Db,
   collectionName: string,
   filter: Filter<T>
-) {
+) => {
   try {
     const collection = db.collection<T>(collectionName);
     return collection.findOne(filter);
   } catch (error) {
     throw new Error('Failed to getCollection:\n' + error);
   }
-}
+};
 
-async function getDocumentsInfo<T extends Document>(
+export const getDocumentsInfo = async <T extends Document>(
   db: Db,
   collectionName: string,
   filter: Filter<T>
-) {
+) => {
   try {
     const collection = db.collection<T>(collectionName);
     return collection.find(filter);
   } catch (error) {
     throw new Error('Failed to get documents:\n' + error);
   }
-}
+};
 
-async function getListOfField<T extends Document>(db: Db, collectionName: string, field: string) {
+export const getListOfField = async <T extends Document>(
+  db: Db,
+  collectionName: string,
+  field: string
+) => {
   try {
     const collection = db.collection<T>(collectionName);
     return collection.distinct(field);
   } catch (error) {
     throw new Error('Failed to get list of field:\n' + error);
   }
-}
+};
 
-async function updateCollectionInfo<T extends Document>(
+export const updateCollectionInfo = async <T extends Document>(
   db: Db,
   collectionName: string,
   filter: Filter<T>,
   update: UpdateFilter<T>,
   options?: UpdateOptions
-) {
+) => {
   try {
     const collection = db.collection<T>(collectionName);
     return collection.updateOne(filter, update, options);
   } catch (error) {
     throw new Error('Failed to updateCollection:\n' + error);
   }
-}
+};
 
-async function findAndupdateCollectionInfo<T extends Document>(
+export const findAndupdateCollectionInfo = async <T extends Document>(
   db: Db,
   collectionName: string,
   filter: Filter<T>,
   update: UpdateFilter<T>,
   options: FindOneAndUpdateOptions
-) {
+) => {
   try {
     const collection = db.collection<T>(collectionName);
     return collection.findOneAndUpdate(filter, update, options);
   } catch (error) {
     throw new Error('Failed to findAndUpdate:\n' + error);
   }
-}
-export type { ItemCollection, Db };
-
-export {
-  collections,
-  getCollectionInfo,
-  getDocumentsInfo,
-  getListOfField,
-  updateCollectionInfo,
-  findAndupdateCollectionInfo
 };
+
+export type { ContributorCollection, ItemCollection, Db };

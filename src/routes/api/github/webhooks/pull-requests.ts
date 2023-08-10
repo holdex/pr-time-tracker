@@ -1,17 +1,17 @@
 import type { PullRequestEvent } from '$lib/server/github';
-import type { ItemCollection } from '$lib/server/mongo/operations';
+import type { ContributorCollection, ItemCollection } from '$lib/server/mongo/operations';
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
-import { collections, updateCollectionInfo } from '$lib/server/mongo/operations';
+import { Collections, updateCollectionInfo } from '$lib/server/mongo/operations';
 
-const storeClosedPRToDB = async (prInfo: ItemCollection) => {
+const upsertDataToDB = async (collection: string, data: ContributorCollection | ItemCollection) => {
   const mongoDB = await clientPromise;
 
   const res = await updateCollectionInfo(
     mongoDB.db(config.mongoDBName),
-    collections.items,
-    { id: prInfo.id },
-    { $set: prInfo },
+    collection,
+    { id: data.id },
+    { $set: data },
     { upsert: true }
   );
 
@@ -23,7 +23,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
 
   switch (action) {
     case 'closed': {
-      const requestInfo: ItemCollection = {
+      const prInfo: ItemCollection = {
         type: 'pull_request',
         id: pull_request.id,
         org: organization?.login || 'holdex',
@@ -35,8 +35,17 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         closedAt: pull_request.closed_at
       };
 
-      const res = await storeClosedPRToDB(requestInfo);
-      console.log('Closed PR has been stored in DB successfully.', res);
+      const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
+      console.log('Closed PR has been stored in DB successfully.', prRes);
+
+      const contributorInfo: ContributorCollection = {
+        id: pull_request.id,
+        login: pull_request.user.login,
+        url: pull_request.user.html_url,
+        avatarUrl: pull_request.user.avatar_url
+      };
+      const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
+      console.log('Owner of the PR has been stored in DB successfully.', contributorRes);
 
       break;
     }

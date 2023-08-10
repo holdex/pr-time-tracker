@@ -2,7 +2,7 @@ import type { IssuesEvent } from '$lib/server/github';
 import type { ItemCollection } from '$lib/server/mongo/operations';
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
-import { collections, updateCollectionInfo } from '$lib/server/mongo/operations';
+import { Collections, updateCollectionInfo } from '$lib/server/mongo/operations';
 
 const parseIssuesEvents = async (event: IssuesEvent) => {
   const { action, issue, repository, organization, sender } = event;
@@ -24,7 +24,7 @@ const parseIssuesEvents = async (event: IssuesEvent) => {
 
     const res = await updateCollectionInfo(
       mongoDB.db(config.mongoDBName),
-      collections.items,
+      Collections.ITEMS,
       { id: requestInfo.id },
       { $set: requestInfo },
       { upsert: true }
