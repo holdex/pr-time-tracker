@@ -45,7 +45,7 @@ export const getCollectionInfo = async <T extends Document>(
     const collection = db.collection<T>(collectionName);
     return collection.findOne(filter);
   } catch (error) {
-    throw new Error('Failed to getCollection:\n' + error);
+    throw new Error('failed to getCollection:\n' + error);
   }
 };
 
