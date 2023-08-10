@@ -54,6 +54,15 @@ async function getDocumentsInfo<T extends Document>(
   }
 }
 
+async function getListOfField<T extends Document>(db: Db, collectionName: string, field: string) {
+  try {
+    const collection = db.collection<T>(collectionName);
+    return collection.distinct(field);
+  } catch (error) {
+    throw new Error('Failed to get list of field:\n' + error);
+  }
+}
+
 async function updateCollectionInfo<T extends Document>(
   db: Db,
   collectionName: string,
@@ -89,6 +98,7 @@ export {
   collections,
   getCollectionInfo,
   getDocumentsInfo,
+  getListOfField,
   updateCollectionInfo,
   findAndupdateCollectionInfo
 };
