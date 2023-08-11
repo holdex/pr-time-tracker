@@ -65,7 +65,7 @@ export const getDocumentsInfo = async <T extends Document>(
   }
 };
 
-export const getAggrigation = async <T extends Document>(
+export const getAggregation = async <T extends Document>(
   db: Db,
   collectionName: string,
   pipeline: Document[]
@@ -74,7 +74,7 @@ export const getAggrigation = async <T extends Document>(
     const collection = db.collection<T>(collectionName);
     return collection.aggregate(pipeline);
   } catch (error) {
-    throw new Error('Failed to get aggrigated documents:\n' + error);
+    throw new Error('Failed to get aggregated documents:\n' + error);
   }
 };
 

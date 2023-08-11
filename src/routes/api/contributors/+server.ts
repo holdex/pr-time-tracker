@@ -6,7 +6,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { ItemState, ItemType } from '$lib/constants/constants';
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
-import { Collections, getDocumentsInfo, getAggrigation } from '$lib/server/mongo/operations';
+import { Collections, getDocumentsInfo, getAggregation } from '$lib/server/mongo/operations';
 
 const generatePipeline = (owner: string, type: ItemType, state: ItemState) => {
   const query = {
@@ -15,7 +15,7 @@ const generatePipeline = (owner: string, type: ItemType, state: ItemState) => {
       localField: 'login',
       foreignField: 'owner',
       pipeline: <any>[],
-      as: 'closedWork'
+      as: 'items'
     }
   };
 
@@ -63,7 +63,6 @@ const generatePipeline = (owner: string, type: ItemType, state: ItemState) => {
   ];
 
   pipeline.push(query);
-  console.log(pipeline);
 
   return pipeline;
 };
@@ -82,7 +81,7 @@ export const GET: RequestHandler = async ({ url }) => {
     const pipeline = generatePipeline(owner, type, state);
 
     result = await (
-      await getAggrigation(mongoDB.db(config.mongoDBName), Collections.CONTRIBUTORS, pipeline)
+      await getAggregation(mongoDB.db(config.mongoDBName), Collections.CONTRIBUTORS, pipeline)
     ).toArray();
   } else {
     result = await (
