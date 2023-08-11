@@ -8,7 +8,7 @@
   import type { User } from '@octokit/webhooks-types';
 
   /** internals */
-  import Card from '$lib/components/Card/index.svelte';
+  import PR from '$lib/components/Card/PR.svelte';
   import { snackbar } from '$lib/components/Snackbar';
   import { ItemType, ItemState, SubmitState } from '$lib/constants/constants';
   import { axios } from '$lib/utils/axios';
@@ -30,62 +30,73 @@
   /** funcs */
   const usePREffect = createEffect();
 
-  const getPRs = async (query: {
-    owner: string;
-    type?: ItemType;
-    state?: ItemState;
-    submitted?: SubmitState;
-  }) => {
+  const getPRs = async (query: { type?: ItemType; state?: ItemState; submitted?: SubmitState }) => {
     isLoading = true;
 
     try {
-      const { type, owner } = query;
-      // Use (or re-add) this when API updated  `/items?type=${type || ItemType.PULL_REQUEST}&state=${state || ItemState.PENDING}&owner=${owner}&submitted=${submitted || SubmitState.UNSUBMITTED}`
+      const { type, submitted, state } = query;
       const response = await axios.get<{ result: ItemCollection[] }>(
-        `/items?type=${type || ItemType.PULL_REQUEST}&owner=${owner}`
+        `/items?type=${type || ItemType.PULL_REQUEST}&owner=${
+          user.login
+        }&submitted=${submitted}&state=${state || ItemState.PENDING}`
       );
 
       prs[isSubmittedPrs ? 'submitted' : 'unsubmitted'] = response.data.result;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-      $snackbar = { text: e.message || e, status: 'failed' };
+      $snackbar = { text: e.message || e, type: 'error' };
     } finally {
       isLoading = false;
     }
   };
 
-  const onSubmit: CardProps['onSubmit'] = (props) => () => {
-    $snackbar = { open: true, text: 'Please, wait...', status: 'pending' };
+  const onSubmit: CardProps['onSubmit'] = (pr) => async () => {
+    $snackbar = { text: 'Please, wait...', type: 'busy' };
 
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        $snackbar = { text: `Done submitting "${props.hours} hrs" of work.`, status: 'successful' };
-        resolve();
-      }, 3000);
-    });
+    try {
+      await axios.post<{ result: ItemCollection }>(`/items`, {
+        id: pr.id,
+        hours: pr.hours,
+        experience: pr.experience,
+        submitted: true
+      } as Partial<ItemCollection>);
+      prs.unsubmitted = prs.unsubmitted.filter((submit) => submit.id !== pr.id);
+      if (!pr.submitted) prs.submitted = [pr].concat(prs.submitted);
+      $snackbar = {
+        text: `Successfully submitted #${pr.number} with "${pr.hours} hour${
+          Number(pr.hours) === 1 ? '' : 's'
+        }" of efficiency.`,
+        type: 'success'
+      };
+
+      return pr;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      $snackbar = { text: e.message || e, type: 'error' };
+      return null;
+    }
   };
 
   /** react-ibles */
   $: user = data.user!;
+  $: isSubmittedPrs = $page.url.hash.includes('submitted');
   $: usePREffect(async () => {
-    if (!user.login) return;
     await getPRs({
-      owner: user.login,
       submitted: isSubmittedPrs ? SubmitState.SUBMITTED : undefined
     });
-  }, [user.email, (isSubmittedPrs = $page.url.hash.includes('submitted'))]);
+  }, [isSubmittedPrs]);
 </script>
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
   <ul class="grid gap-4 md:gap-8">
     {#each prs[isSubmittedPrs ? 'submitted' : 'unsubmitted'] as pr}
-      <Card data={pr} {onSubmit} />
+      <PR data={pr} {onSubmit} />
     {:else}
       <li class="text-t3">
         {#if isLoading}
-          Loading your (Closed) Pull Requests...
+          Loading your {isSubmittedPrs ? '' : 'un'}submitted (Closed) Pull Requests...
         {:else}
-          You don't have any closed pull requests.
+          You don't have any ({isSubmittedPrs ? '' : 'un'}submitted) closed pull requests.
         {/if}
       </li>
     {/each}

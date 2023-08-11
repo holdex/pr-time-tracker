@@ -10,6 +10,8 @@
 @layer base {
   html {
     --main-font: 'Inter';
+    height: 100%;
+    width: 100%;
     font-family:
       #{var(--main-font)},
       system-ui,

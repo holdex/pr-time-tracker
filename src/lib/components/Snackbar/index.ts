@@ -1,9 +1,9 @@
 import { writable } from 'svelte/store';
 
-import type { SnackbarStatus } from '../types';
+import type { SnackbarType } from '../types';
 
-export const snackbar = writable<{ open?: boolean; text?: string; status?: SnackbarStatus }>({
+export const snackbar = writable<{ open?: boolean; text?: string; type?: SnackbarType }>({
   open: false,
   text: "You've successfully submitted #372.",
-  status: 'successful'
+  type: 'success'
 });

@@ -16,70 +16,66 @@ import {
 } from '$lib/constants/constants';
 
 const generateFilter = (
-  type: ItemType,
-  state: ItemState,
-  owner: string,
-  submitted: SubmitState,
-  archived: ArchiveState
+  type: ItemType | string | null,
+  state: ItemState = ItemState.PENDING,
+  owner: string | null,
+  submitted: SubmitState | null | string,
+  archived: ArchiveState | null | string
 ) => {
   let filter: any = {};
 
-  if (type) {
+  if (type !== 'undefined') {
     filter = {
       ...filter,
       type
     };
   }
 
-  if (state) {
-    if (state === ItemState.PENDING) {
-      filter = {
-        ...filter,
-        $and: [
-          {
-            $or: [
-              { [ItemState.APPROVED]: { $exists: false } },
-              { [ItemState.APPROVED]: { $eq: false } }
-            ]
-          },
-          {
-            $or: [
-              { [ItemState.REJECTED]: { $exists: false } },
-              { [ItemState.REJECTED]: { $eq: false } }
-            ]
-          }
-        ]
-      };
-    } else {
-      filter = {
-        ...filter,
-        [state]: true
-      };
-    }
+  if (state === ItemState.PENDING) {
+    filter = {
+      ...filter,
+      $and: [
+        {
+          $or: [
+            { [ItemState.APPROVED]: { $exists: false } },
+            { [ItemState.APPROVED]: { $eq: false } }
+          ]
+        },
+        {
+          $or: [
+            { [ItemState.REJECTED]: { $exists: false } },
+            { [ItemState.REJECTED]: { $eq: false } }
+          ]
+        }
+      ]
+    };
+  } else {
+    filter = {
+      ...filter,
+      [state]: true
+    };
   }
 
-  if (owner) {
+  if (owner !== 'undefined') {
     filter = {
       ...filter,
       owner
     };
   }
 
-  if (submitted) {
-    if (submitted === SubmitState.SUBMITTED) {
-      filter = {
-        ...filter,
-        submitted: submitted === SubmitState.SUBMITTED
-      };
-    } else {
-      filter = {
-        ...filter,
-        $or: [{ submitted: { $exists: false } }, { submitted: { $eq: false } }]
-      };
-    }
+  if (submitted === SubmitState.SUBMITTED) {
+    filter = {
+      ...filter,
+      submitted: submitted === SubmitState.SUBMITTED
+    };
+  } else {
+    filter = {
+      ...filter,
+      $or: [{ submitted: { $exists: false } }, { submitted: { $eq: false } }]
+    };
   }
 
-  if (archived && archived === ArchiveState.ARCHIVED) {
+  if (archived === ArchiveState.ARCHIVED) {
     const deadline = new Date();
     deadline.setMonth(deadline.getMonth() - ONE_MONTH);
 
@@ -95,14 +91,12 @@ const generateFilter = (
 export const GET: RequestHandler = async ({ url }) => {
   const { searchParams } = url;
 
-  const type = searchParams.get('type') as ItemType;
-  const state = (searchParams.get('state') as ItemState) ?? ItemState.PENDING;
+  const type = searchParams.get('type') as ItemType | string | null;
+  const state = (searchParams.get('state') as ItemState | null) ?? ItemState.PENDING;
   const owner = searchParams.get('owner') as string;
-  const submitted = searchParams.get('submitted') as SubmitState;
-  const archived = searchParams.get('archived') as ArchiveState;
-
+  const submitted = searchParams.get('submitted') as SubmitState | string | null;
+  const archived = searchParams.get('archived') as ArchiveState | string | null;
   const filter = generateFilter(type, state, owner, submitted, archived);
-
   const mongoDB = await clientPromise;
 
   const documents = await (

@@ -45,7 +45,9 @@
     {...rightButtonProps}
     variant={rightButtonProps.variant || 'secondary'}
     iconProps={isReactionToggle ? { ...iconProps, name: 'hand-thumb-down' } : undefined}
-    class={`${commonClassNames} ${activeButton === 'right' ? 'active' : 'text-t3'} rounded-r-lg`}
+    class={`${commonClassNames} ${
+      activeButton === 'right' ? `active${isReactionToggle ? ' !text-neg' : ''}` : 'text-t3'
+    } rounded-r-lg`}
     onClick={handleToggle('right')}>
     <slot name="content2" />
   </Button>

@@ -15,6 +15,7 @@
 
   /** siblings */
   import { snackbar } from '../Snackbar';
+  import Avatar from '../Avatar/index.svelte';
 
   /** props */
   export let title = 'Home';
@@ -25,7 +26,6 @@
   export let activeToggleButton: ToggleProps['activeButton'] = 'left';
 
   /** vars */
-  let displayAvatarFallback = false;
   let isArchiveRoute = false;
   let isLoading = false;
 
@@ -33,13 +33,13 @@
   const onLogout = async () => {
     try {
       isLoading = true;
-      $snackbar = { status: 'pending' };
+      $snackbar = { type: 'busy' };
       await fetch('/api/github/auth/logout');
       invalidate(invalidations.user);
-      $snackbar = { text: 'Log out successful.', status: 'successful' };
+      $snackbar = { text: 'Log out successful.', type: 'success' };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-      $snackbar = { open: true, text: e.message || e, status: 'failed' };
+      $snackbar = { text: e.message || e, type: 'error' };
     } finally {
       isLoading = false;
     }
@@ -52,20 +52,7 @@
 <header class="animate-fadeIn">
   <div class="pb-4 flex justify-between border-b border-l3 md:pb-8">
     <div class="flex gap-3 items-center">
-      <span class="grid place-items-center w-8 h-8 bg-l3 rounded-full overflow-clip text-t3">
-        {#if !displayAvatarFallback}
-          <img
-            src={user.avatar_url}
-            alt={user.name}
-            width="32"
-            height="32"
-            on:error={() => (displayAvatarFallback = true)}
-            class="object-cover object-center" />
-        {:else}
-          {user.name?.[0] || 'A'}
-        {/if}
-      </span>
-
+      <Avatar url={user.avatar_url} alt={user.name} />
       <span class="text-t3">{user.name}</span>
     </div>
 

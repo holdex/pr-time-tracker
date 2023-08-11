@@ -8,6 +8,7 @@
     ExclamationTriangle,
     HandThumbDown,
     HandThumbUp,
+    InformationCircle,
     XCircle
   } from '@steeze-ui/heroicons';
 
@@ -26,6 +27,9 @@
   /** react-ibles */
   $: {
     switch (name) {
+      case 'information-circle':
+        src = InformationCircle;
+        break;
       case 'exclamation-triangle':
         src = ExclamationTriangle;
         break;

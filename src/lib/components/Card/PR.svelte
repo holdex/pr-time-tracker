@@ -2,12 +2,14 @@
   /** externals */
 
   /** types */
-  import type { CardProps } from '../types';
+  import type { CardProps, ToggleProps } from '../types';
 
   /** internals */
   import Button from '$lib/components/Button/index.svelte';
   import Toggle from '$lib/components/Toggle/index.svelte';
   import Input from '$lib/components/Input/index.svelte';
+
+  import { snackbar } from '../Snackbar';
 
   /** props */
   export let isReadonly = false;
@@ -15,6 +17,17 @@
   export let loading = false;
   export let data: CardProps['data'];
   export let onSubmit: CardProps['onSubmit'] = undefined;
+
+  /** vars */
+  let activeReactionButton: ToggleProps['activeButton'] = !data.experience
+    ? ''
+    : data.experience === 'negative'
+    ? 'right'
+    : 'left';
+
+  /** react-ibles */
+  $: if (data.approved && !isAdmin) isReadonly = true;
+  $: data.number = Number(data.url?.split('/').slice(-1));
 </script>
 
 <li
@@ -27,7 +40,7 @@
       href={data.url.replace(/.*\/repos/, 'https://github.com').replace('pulls', 'pull')}
       target="_blank"
       class="link">
-      <h2 class="text-t3">{data.org} / {data.repo} / #{data.url.split('/').slice(-1)}</h2>
+      <h2 class="text-t3">{data.org} / {data.repo} / #{data.number}</h2>
     </a>
 
     <Button
@@ -43,12 +56,23 @@
     class="p-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4"
     on:submit|preventDefault={async (e) => {
       if (!onSubmit) return;
+
+      if (!activeReactionButton) {
+        return ($snackbar = {
+          text: `Please, rate your experience with #${data.number}.`,
+          type: 'info'
+        });
+      }
+
+      data.experience = activeReactionButton === 'left' ? 'positive' : 'negative';
       loading = true;
       await onSubmit(data)(e);
+      data.submitted = true;
       loading = false;
+      isReadonly = Boolean(data.approved);
     }}>
     <span class="flex gap-1.5 items-center max-w-content">
-      <span>Hour:</span>
+      <span>Hours:</span>
       {#if isReadonly}
         <span class="text-t1">{data.hours}</span>
       {:else}
@@ -56,27 +80,33 @@
       {/if}
     </span>
 
-    <span class="flex gap-1.5 items-center sm:mr-auto sm:ml-3">
+    <span class="flex gap-1.5 items-center sm:ml-3 {isReadonly ? 'sm:mr-auto' : ''}">
       <span>Experience:</span>
       {#if isReadonly || isAdmin}
-        <span class="text-t1">{data.experience}</span>
+        <span class="capitalize {data.experience === 'negative' ? 'text-neg' : 'text-t1'}">
+          {data.experience}
+        </span>
       {:else}
-        <Toggle isReactionToggle />
+        <Toggle isReactionToggle bind:activeButton={activeReactionButton} />
       {/if}
     </span>
+
+    {#if !isAdmin && data.submitted}
+      <div class="flex gap-1.5">
+        <span>Approved:</span>
+        <span class="text-t1 capitalize">{data.approved || 'Pending'}</span>
+      </div>
+    {/if}
     {#if !isReadonly}
       <Button
         isSubmitBtn
         size="small"
-        text={isAdmin ? `Approv${loading ? 'ing...' : 'e'}` : `Submit${loading ? 'ting...' : ''}`}
+        text={isAdmin
+          ? `Approv${loading ? 'ing...' : 'e'}`
+          : `${data.submitted ? 'Re-' : ''}Submit${loading ? 'ting...' : ''}`}
         variant={isAdmin ? 'primary' : 'secondary'}
-        class="w-full min-w-full sm:min-w-fit"
+        class="w-full min-w-full ml-auto sm:min-w-fit"
         disabled={loading} />
-    {:else if data.approved && !isAdmin}
-      <div class="flex gap-1.5">
-        <span>Approved:</span>
-        <span class="text-t1">{data.approved}</span>
-      </div>
     {/if}
   </form>
 </li>

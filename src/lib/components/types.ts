@@ -45,6 +45,7 @@ type AllowedTags = 'path' | 'circle' | 'rect' | 'polygon' | 'polyline' | 'line';
 
 /** Add names of icons you use (or include) here (for stricter typing and intellisense [name suggestions]). */
 export type IconName =
+  | 'information-circle'
   | 'arrow-path'
   | 'x-circle'
   | 'check-circle'
@@ -59,21 +60,20 @@ export type IconName =
 export interface ToggleProps extends HTMLAttributes<HTMLSpanElement> {
   leftButtonProps?: ButtonProps;
   rightButtonProps?: ButtonProps;
-  activeButton?: 'left' | 'right';
+  activeButton?: 'left' | 'right' | '';
   isReactionToggle?: boolean;
 }
 
 /** Snackbar */
-export type SnackbarStatus = 'successful' | 'pending' | 'failed';
+export type SnackbarType = 'success' | 'busy' | 'error' | 'info';
 
 /** Card */
 export interface CardProps {
   isReadonly?: boolean;
   isAdmin?: boolean;
   loading?: boolean;
-  data: ItemCollection;
+  data: ItemCollection & { number?: number };
   onSubmit?: (
-    data: CardProps['data'],
-    loading?: boolean
-  ) => (e?: Event | undefined) => Promise<void>;
+    data: CardProps['data']
+  ) => (e?: Event | undefined) => Promise<CardProps['data'] | null>;
 }
