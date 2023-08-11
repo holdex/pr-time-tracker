@@ -6,6 +6,8 @@
 
   /** vars */
   export let data: PageData;
+
+  console.log('Data.user:', data.user);
 </script>
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
@@ -15,7 +17,12 @@
     <Card isAdmin />
   </ul>
 
-  <h1>{data.post.title}</h1>
-  <p>{data.post.content}</p>
+  <!-- for correct work, it is necessary that the user be logged in? -->
+  {#if data.user}
+    <p>Logged in as: {data.user}</p>
+  {:else}
+    <p>Not logged in</p>
+  {/if}
+
   <!-- TODO: output data from +page.server.ts -->
 </main>
