@@ -13,6 +13,8 @@ import parseIssuesEvents from './issues';
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json();
 
+  console.log({ body });
+
   const success = await app.webhooks.verify(
     JSON.stringify(body),
     request.headers.get('x-hub-signature-256') as string
