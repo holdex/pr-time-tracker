@@ -32,7 +32,10 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         avatarUrl: user.avatar_url
       };
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
-      console.log('Owner of the PR has been stored in DB successfully.', contributorRes.value);
+      console.log(
+        'Contributor of the PR has been stored in DB successfully.',
+        contributorRes.value
+      );
 
       const prInfo: ItemCollection = {
         type: 'pull_request',
@@ -49,6 +52,24 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
 
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
       console.log('Closed PR has been stored in DB successfully.', prRes.value);
+
+      break;
+    }
+
+    case 'edited':
+    case 'synchronize': {
+      const contributorInfo: ContributorCollection = {
+        id: sender.id,
+        name: sender.login,
+        login: sender.login,
+        url: sender.html_url,
+        avatarUrl: sender.avatar_url
+      };
+      const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
+      console.log(
+        'Contributor of the PR has been stored in DB successfully.',
+        contributorRes.value
+      );
 
       break;
     }
