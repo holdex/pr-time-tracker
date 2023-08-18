@@ -50,7 +50,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       };
 
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Closed PR has been stored in DB successfully.', prRes.value);
+      console.log('A new PR has been stored in DB successfully.', prRes.value);
 
       break;
     }
@@ -119,7 +119,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       };
 
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Closed PR has been updated in DB successfully.', prRes.value);
+      console.log('Existing PR has been updated in DB successfully.', prRes.value);
 
       break;
     }
