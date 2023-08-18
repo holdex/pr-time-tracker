@@ -22,6 +22,39 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
   const { action, pull_request, repository, organization, sender } = event;
 
   switch (action) {
+    case 'opened': {
+      const { user } = pull_request;
+      const contributorInfo: ContributorCollection = {
+        id: user.id,
+        name: user.login,
+        login: user.login,
+        url: user.html_url,
+        avatarUrl: user.avatar_url,
+        pullRequest: pull_request.number
+      };
+      const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
+      console.log(
+        'Contributor of the PR has been stored in DB successfully.',
+        contributorRes.value
+      );
+
+      const prInfo: ItemCollection = {
+        type: 'pull_request',
+        id: pull_request.id,
+        org: organization?.login || 'holdex',
+        repo: repository.name,
+        owner: pull_request.user.login || sender.login,
+        contributorIds: [contributorRes.value?._id],
+        url: pull_request.url,
+        createdAt: pull_request.created_at
+      };
+
+      const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
+      console.log('Closed PR has been stored in DB successfully.', prRes.value);
+
+      break;
+    }
+
     case 'closed': {
       const { user } = pull_request;
       const contributorInfo: ContributorCollection = {
@@ -29,11 +62,12 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         name: user.login,
         login: user.login,
         url: user.html_url,
-        avatarUrl: user.avatar_url
+        avatarUrl: user.avatar_url,
+        pullRequest: pull_request.number
       };
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been stored in DB successfully.',
+        'Contributor of the PR has been updated in DB successfully.',
         contributorRes.value
       );
 
@@ -51,7 +85,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       };
 
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Closed PR has been stored in DB successfully.', prRes.value);
+      console.log('Closed PR has been updated in DB successfully.', prRes.value);
 
       break;
     }
@@ -63,13 +97,29 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         name: sender.login,
         login: sender.login,
         url: sender.html_url,
-        avatarUrl: sender.avatar_url
+        avatarUrl: sender.avatar_url,
+        pullRequest: pull_request.number
       };
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been stored in DB successfully.',
+        'Contributor of the PR has been updated in DB successfully.',
         contributorRes.value
       );
+
+      const prInfo: ItemCollection = {
+        type: 'pull_request',
+        id: pull_request.id,
+        org: organization?.login || 'holdex',
+        repo: repository.name,
+        owner: pull_request.user.login || sender.login,
+        contributorIds: [contributorRes.value?._id],
+        url: pull_request.url,
+        createdAt: pull_request.created_at,
+        updatedAt: pull_request.updated_at
+      };
+
+      const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
+      console.log('Closed PR has been updated in DB successfully.', prRes.value);
 
       break;
     }
