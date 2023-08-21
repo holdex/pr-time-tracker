@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ fetch, depends, params }) => {
 
   return {
     contributor: data.result,
-    message: data.message,
+    message: data.error ? data.message : '',
     error: data.error
   };
 };

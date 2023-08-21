@@ -5,8 +5,12 @@
 
   import Snackbar from '$lib/components/Snackbar/index.svelte';
   import { snackbar } from '$lib/components/Snackbar/index';
+  import { appIsReady } from '$lib/utils';
 
-  onMount(() => ($snackbar.open = false));
+  onMount(() => {
+    $appIsReady = true;
+    $snackbar.open = false;
+  });
 </script>
 
 <div

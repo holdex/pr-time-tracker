@@ -2,6 +2,9 @@
   /** types */
   import type { ButtonProps } from '../types';
 
+  /** internals */
+  import { appIsReady } from '$lib/utils';
+
   /** siblings */
   import Content from './content.svelte';
 
@@ -33,7 +36,7 @@
   /** react-ibles */
   $: variantClass = `btn--${variant}`;
   $: sizeClass = `btn--${size}`;
-  $: disabledClass = disabled || isLoading ? 'btn__disabled' : '';
+  $: disabledClass = disabled || isLoading || !$appIsReady ? 'btn__disabled' : '';
   $: btnType = isSubmitBtn ? 'submit' : 'button';
   $: iconSize = size === 'small' ? 20 : 24;
   $: btnClass = `btn ${variantClass} ${sizeClass} ${className || ''} ${disabledClass}`;
@@ -54,7 +57,7 @@
     bind:this={forwardRef}
     class="{btnClass} no-underline"
     {href}
-    on:click={clickHandler}>
+    on:click={$appIsReady ? clickHandler : undefined}>
     <Content {icon} {iconSize} {label} {text} {iconProps} {isLoading}>
       <slot />
     </Content>
@@ -63,7 +66,7 @@
   <button
     {...$$restProps}
     use:forwardAction
-    disabled={disabled || isLoading}
+    disabled={disabled || isLoading || !$appIsReady}
     style:width={fixedTo || 'auto'}
     bind:this={forwardRef}
     class={btnClass}

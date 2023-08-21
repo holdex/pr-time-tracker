@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 
 import type { RequestHandler } from '@sveltejs/kit';
+import type { Filter, WithId } from 'mongodb';
 
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
@@ -16,94 +17,73 @@ import {
   BAD_REQUEST
 } from '$lib/constants';
 
-const generateFilter = (
-  type: ItemType | string | null,
-  state: ItemState | string | null = ItemState.PENDING,
-  owner: string | null,
-  submitted: SubmitState | null | string,
-  archived: ArchiveState | null | string
-) => {
-  let filter: any = {};
+interface FilterProps {
+  $and: Filter<WithId<ItemCollection>>[];
+  $or: FilterProps['$and'];
+  [key: string]: any;
+}
+
+const generateFilter = (params: URLSearchParams) => {
+  const type = params.get('type') as ItemType | string | null;
+  const state = params.get('state') as ItemState | string | null;
+  const owner = params.get('owner') as string;
+  const submitted = params.get('submitted') as SubmitState | string | null;
+  const archived = params.get('archived') as ArchiveState | string | null;
+  const count = params.get('count');
+  const filter: Partial<FilterProps> = {};
 
   if (type !== 'undefined') {
-    filter = {
-      ...filter,
-      type
-    };
+    filter.type = type;
   }
 
   if (state !== 'undefined') {
     if (state === ItemState.PENDING) {
-      filter = {
-        ...filter,
-        $and: [
-          {
-            $or: [
-              { [ItemState.APPROVED]: { $exists: false } },
-              { [ItemState.APPROVED]: { $eq: false } }
-            ]
-          },
-          {
-            $or: [
-              { [ItemState.REJECTED]: { $exists: false } },
-              { [ItemState.REJECTED]: { $eq: false } }
-            ]
-          }
-        ]
-      };
+      filter.$and = [
+        {
+          $or: [
+            { [ItemState.APPROVED]: { $exists: false } },
+            { [ItemState.APPROVED]: { $eq: false } }
+          ]
+        },
+        {
+          $or: [
+            { [ItemState.REJECTED]: { $exists: false } },
+            { [ItemState.REJECTED]: { $eq: false } }
+          ]
+        }
+      ];
     } else {
-      filter = {
-        ...filter,
-        [state as ItemState]: true
-      };
+      filter[state as ItemState] = true;
     }
   }
 
   if (owner !== 'undefined') {
-    filter = {
-      ...filter,
-      owner
-    };
+    filter.owner = owner;
   }
 
   if (submitted === SubmitState.SUBMITTED) {
-    filter = {
-      ...filter,
-      submitted: submitted === SubmitState.SUBMITTED
-    };
+    filter.submitted = submitted === SubmitState.SUBMITTED;
   } else {
-    filter = {
-      ...filter,
-      $or: [{ submitted: { $exists: false } }, { submitted: { $eq: false } }]
-    };
+    filter.$or = [{ submitted: { $exists: false } }, { submitted: { $eq: false } }];
   }
 
   if (archived === ArchiveState.ARCHIVED) {
     const deadline = new Date();
     deadline.setMonth(deadline.getMonth() - ONE_MONTH);
 
-    filter = {
-      ...filter,
-      closedAt: { $gte: deadline }
-    };
+    filter.closedAt = { $gte: deadline };
   }
 
-  return filter;
+  return { filter, count: count === 'undefined' ? undefined : Number(count) };
 };
 
 export const GET: RequestHandler = async ({ url }) => {
   const { searchParams } = url;
 
-  const type = searchParams.get('type') as ItemType | string | null;
-  const state = searchParams.get('state') as ItemState | null;
-  const owner = searchParams.get('owner') as string;
-  const submitted = searchParams.get('submitted') as SubmitState | string | null;
-  const archived = searchParams.get('archived') as ArchiveState | string | null;
-  const filter = generateFilter(type, state, owner, submitted, archived);
+  const { filter, count } = generateFilter(searchParams);
   const mongoDB = await clientPromise;
-
   const documents = await (
-    await getDocumentsInfo(mongoDB.db(config.mongoDBName), Collections.ITEMS, filter)
+    await getDocumentsInfo(mongoDB.db(config.mongoDBName), Collections.ITEMS, filter, count)
   ).toArray();
 
   return json({ message: 'success', result: documents }, { status: SUCCESS_OK });

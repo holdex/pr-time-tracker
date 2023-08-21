@@ -13,7 +13,7 @@
   export let data: PageData;
 
   /** vars */
-  let contributors: ContributorCollection[] = [];
+  let contributors: ContributorCollection[] = data.contributors || [];
   let isLoading = true;
   let user: User;
 
@@ -36,7 +36,7 @@
   $: user = data.user!;
   $: useContributorEffect(async () => {
     isLoading = true;
-    contributors = await getContributors();
+    contributors = !contributors.length ? await getContributors() : contributors;
     isLoading = false;
   }, [!contributors.length]);
 </script>

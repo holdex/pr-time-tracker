@@ -8,6 +8,8 @@ import type {
   FindOneAndUpdateOptions
 } from 'mongodb';
 
+import { MAX_DATA_CHUNK } from '$lib/constants';
+
 type ItemCollection = {
   id: number;
   org: string;
@@ -55,11 +57,12 @@ export const getCollectionInfo = async <T extends Document>(
 export const getDocumentsInfo = async <T extends Document>(
   db: Db,
   collectionName: string,
-  filter: Filter<T>
+  filter: Filter<T>,
+  count = MAX_DATA_CHUNK
 ) => {
   try {
     const collection = db.collection<T>(collectionName);
-    return collection.find(filter);
+    return collection.find(filter).limit(!Number(count) ? MAX_DATA_CHUNK : count);
   } catch (error) {
     throw new Error('Failed to get documents:\n' + error);
   }

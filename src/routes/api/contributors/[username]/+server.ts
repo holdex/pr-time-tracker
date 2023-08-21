@@ -6,7 +6,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import { Collections, type ContributorCollection } from '$lib/server/mongo/operations';
-import { ItemState } from '$lib/constants';
+import { ItemState, MAX_DATA_CHUNK } from '$lib/constants';
+import { ResponseHeadersInit } from '$lib/config';
 
 export const GET: RequestHandler = async ({ params }) => {
   try {
@@ -38,11 +39,15 @@ export const GET: RequestHandler = async ({ params }) => {
           }
         }
       ])
+      .limit(MAX_DATA_CHUNK)
       .toArray();
 
     if (!contributor) throw Error(`Contributor, "${params.username}", not found.`);
 
-    return json({ message: 'success', result: contributor }, { status: StatusCode.SuccessOK });
+    return json(
+      { message: 'success', result: contributor },
+      { status: StatusCode.SuccessOK, headers: ResponseHeadersInit }
+    );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     return json(

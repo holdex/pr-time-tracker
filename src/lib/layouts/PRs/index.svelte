@@ -60,7 +60,7 @@
     if (!owner) return (isLoading = false);
     if (isLoading) return;
     isLoading = true;
-    prs = await getPRs({ ...query, owner }, invalidateCache);
+    prs = !prs.length || invalidateCache ? await getPRs({ ...query, owner }, invalidateCache) : prs;
     isLoading = false;
     invalidateCache = false;
   }, [$activeTab.position]);

@@ -1,6 +1,7 @@
 export const ONE_MONTH = 1;
 export const HOUR_IN_MILISECOND = 3600000;
 export const FIXED_DECIMAL_HOUR = 2;
+export const MAX_DATA_CHUNK = 10;
 
 export const REDIRECT_TEMP = 307;
 export const SUCCESS_OK = 200;
