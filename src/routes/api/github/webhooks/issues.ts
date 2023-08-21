@@ -30,7 +30,7 @@ const parseIssuesEvents = async (event: IssuesEvent) => {
       { upsert: true }
     );
 
-    console.log('Successfully stored issue close in DB.', { res });
+    // console.log('Successfully stored issue close in DB.', { res });
   }
 };
 

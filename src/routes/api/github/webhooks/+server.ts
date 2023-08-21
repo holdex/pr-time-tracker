@@ -41,7 +41,7 @@ export const POST: RequestHandler = async ({ request }) => {
       break;
     }
     default: {
-      console.log('current event is not parsed', eventName);
+      // console.log('current event is not parsed', eventName);
       break;
     }
   }
