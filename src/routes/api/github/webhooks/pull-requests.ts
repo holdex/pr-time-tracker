@@ -41,8 +41,6 @@ const addContributorIfNotExists = async (prId: number, contributorId: ObjectId |
     })
   )?.contributorIds;
 
-  console.log({ contributorId }, { contributorIds });
-
   if (contributorIds === undefined) {
     return [contributorId];
   }
@@ -95,31 +93,19 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
   const { action, pull_request, repository, organization, sender } = event;
 
   switch (action) {
-    case 'opened': {
-      const { user } = pull_request;
-      const contributorInfo = getContributorInfo(user);
-      const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
-      console.log(
-        'Contributor of the PR has been stored in DB successfully.',
-        contributorRes.value
-      );
-
-      const prInfo = await getPrInfo(
-        pull_request,
-        repository,
-        organization,
-        sender,
-        contributorRes
-      );
-      const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('A new PR has been stored in DB successfully.', prRes.value);
-
-      break;
-    }
-
+    case 'opened':
+    case 'edited':
+    case 'synchronize':
     case 'closed': {
       const { user } = pull_request;
-      const contributorInfo = getContributorInfo(user);
+      let contributorInfo: ContributorCollection;
+
+      if (action === 'opened' || action === 'closed') {
+        contributorInfo = getContributorInfo(user);
+      } else {
+        contributorInfo = getContributorInfo(sender);
+      }
+
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
         'Contributor of the PR has been updated in DB successfully.',
@@ -134,29 +120,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         contributorRes
       );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Closed PR has been updated in DB successfully.', prRes.value);
-
-      break;
-    }
-
-    case 'edited':
-    case 'synchronize': {
-      const contributorInfo = getContributorInfo(sender);
-      const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
-      console.log(
-        'Contributor of the PR has been updated in DB successfully.',
-        contributorRes.value
-      );
-
-      const prInfo = await getPrInfo(
-        pull_request,
-        repository,
-        organization,
-        sender,
-        contributorRes
-      );
-      const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Existing PR has been updated in DB successfully.', prRes.value);
+      console.log('A PR has been updated in DB successfully.', prRes.value);
 
       break;
     }
