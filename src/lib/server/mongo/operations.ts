@@ -34,7 +34,6 @@ type ContributorCollection = {
   login: string;
   url: string;
   avatarUrl: string;
-  pullRequest: number;
 };
 
 export enum Collections {
