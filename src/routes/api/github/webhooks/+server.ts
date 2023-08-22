@@ -12,7 +12,7 @@ import parseIssuesEvents from './issues';
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json();
-  console.log({ body });
+  console.log({ body }, 'test message');
 
   const success = await app.webhooks.verify(
     JSON.stringify(body),
