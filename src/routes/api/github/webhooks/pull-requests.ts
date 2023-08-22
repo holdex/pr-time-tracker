@@ -39,7 +39,13 @@ const addContributorIfNotExists = async (prId: number, contributorId: ObjectId |
       type: ItemType.PULL_REQUEST,
       id: prId
     })
-  )?.toArray()[0].contributorIds;
+  )?.contributorIds;
+
+  console.log({ contributorId, contributorIds, prId });
+
+  if (contributorIds === undefined) {
+    return [contributorId];
+  }
 
   if (contributorId === undefined) {
     return contributorIds;
@@ -59,24 +65,27 @@ const getContributorInfo = (user: User): ContributorCollection => ({
   avatarUrl: user.avatar_url
 });
 
-const getPrInfo = (
+const getPrInfo = async (
   pr: PullRequest,
   repository: Repository,
   organization: Organization | undefined,
   sender: User,
   contributorRes: any
-): ItemCollection => ({
-  type: 'pull_request',
-  id: pr.id,
-  org: organization?.login ?? 'holdex',
-  repo: repository.name,
-  owner: pr.user.login || sender.login,
-  contributorIds: [contributorRes.value?._id],
-  url: pr.url,
-  createdAt: pr?.created_at,
-  updatedAt: pr?.updated_at,
-  closedAt: pr.closed_at ?? undefined
-});
+): Promise<ItemCollection> => {
+  const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?._id);
+  return {
+    type: 'pull_request',
+    id: pr.id,
+    org: organization?.login ?? 'holdex',
+    repo: repository.name,
+    owner: pr.user.login || sender.login,
+    contributorIds,
+    url: pr.url,
+    createdAt: pr?.created_at,
+    updatedAt: pr?.updated_at,
+    closedAt: pr.closed_at ?? undefined
+  };
+};
 
 const parsePullRequestEvents = async (event: PullRequestEvent) => {
   const { action, pull_request, repository, organization, sender } = event;
@@ -87,13 +96,22 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       const contributorInfo = getContributorInfo(user);
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been stored in DB successfully.',
-        contributorRes.value
+        'Contributor of the PR has been stored in DB successfully.'
+        // contributorRes.value
       );
 
-      const prInfo = getPrInfo(pull_request, repository, organization, sender, contributorRes);
+      const prInfo = await getPrInfo(
+        pull_request,
+        repository,
+        organization,
+        sender,
+        contributorRes
+      );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('A new PR has been stored in DB successfully.', prRes.value);
+      console.log(
+        'A new PR has been stored in DB successfully.'
+        // prRes.value
+      );
 
       break;
     }
@@ -103,13 +121,22 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       const contributorInfo = getContributorInfo(user);
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been updated in DB successfully.',
-        contributorRes.value
+        'Contributor of the PR has been updated in DB successfully.'
+        // contributorRes.value
       );
 
-      const prInfo = getPrInfo(pull_request, repository, organization, sender, contributorRes);
+      const prInfo = await getPrInfo(
+        pull_request,
+        repository,
+        organization,
+        sender,
+        contributorRes
+      );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Closed PR has been updated in DB successfully.', prRes.value);
+      console.log(
+        'Closed PR has been updated in DB successfully.'
+        // prRes.value
+      );
 
       break;
     }
@@ -119,13 +146,22 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       const contributorInfo = getContributorInfo(sender);
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been updated in DB successfully.',
-        contributorRes.value
+        'Contributor of the PR has been updated in DB successfully.'
+        // contributorRes.value
       );
 
-      const prInfo = getPrInfo(pull_request, repository, organization, sender, contributorRes);
+      const prInfo = await getPrInfo(
+        pull_request,
+        repository,
+        organization,
+        sender,
+        contributorRes
+      );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log('Existing PR has been updated in DB successfully.', prRes.value);
+      console.log(
+        'Existing PR has been updated in DB successfully.'
+        // prRes.value
+      );
 
       break;
     }
