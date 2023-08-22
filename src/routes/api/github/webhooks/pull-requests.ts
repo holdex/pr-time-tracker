@@ -41,8 +41,6 @@ const addContributorIfNotExists = async (prId: number, contributorId: ObjectId |
     })
   )?.contributorIds;
 
-  console.log({ contributorId, contributorIds, prId });
-
   if (contributorIds === undefined) {
     return [contributorId];
   }
@@ -96,8 +94,8 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       const contributorInfo = getContributorInfo(user);
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been stored in DB successfully.'
-        // contributorRes.value
+        'Contributor of the PR has been stored in DB successfully.',
+        contributorRes.value
       );
 
       const prInfo = await getPrInfo(
@@ -108,10 +106,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         contributorRes
       );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log(
-        'A new PR has been stored in DB successfully.'
-        // prRes.value
-      );
+      console.log('A new PR has been stored in DB successfully.', prRes.value);
 
       break;
     }
@@ -121,8 +116,8 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       const contributorInfo = getContributorInfo(user);
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been updated in DB successfully.'
-        // contributorRes.value
+        'Contributor of the PR has been updated in DB successfully.',
+        contributorRes.value
       );
 
       const prInfo = await getPrInfo(
@@ -133,10 +128,7 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         contributorRes
       );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log(
-        'Closed PR has been updated in DB successfully.'
-        // prRes.value
-      );
+      console.log('Closed PR has been updated in DB successfully.', prRes.value);
 
       break;
     }
@@ -146,8 +138,8 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
       const contributorInfo = getContributorInfo(sender);
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
       console.log(
-        'Contributor of the PR has been updated in DB successfully.'
-        // contributorRes.value
+        'Contributor of the PR has been updated in DB successfully.',
+        contributorRes.value
       );
 
       const prInfo = await getPrInfo(
@@ -158,16 +150,13 @@ const parsePullRequestEvents = async (event: PullRequestEvent) => {
         contributorRes
       );
       const prRes = await upsertDataToDB(Collections.ITEMS, prInfo);
-      console.log(
-        'Existing PR has been updated in DB successfully.'
-        // prRes.value
-      );
+      console.log('Existing PR has been updated in DB successfully.', prRes.value);
 
       break;
     }
 
     default: {
-      // console.log('current action for pull request is not in the parse candidate', event);
+      console.log('current action for pull request is not in the parse candidate', event);
 
       break;
     }
