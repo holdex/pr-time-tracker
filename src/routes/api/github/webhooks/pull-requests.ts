@@ -41,6 +41,8 @@ const addContributorIfNotExists = async (prId: number, contributorId: ObjectId |
     })
   )?.contributorIds;
 
+  console.log({ contributorId }, { contributorIds });
+
   if (contributorIds === undefined) {
     return [contributorId];
   }
@@ -49,7 +51,11 @@ const addContributorIfNotExists = async (prId: number, contributorId: ObjectId |
     return contributorIds;
   }
 
-  if (!contributorIds.includes(contributorId)) {
+  const isInArray = contributorIds.some((currentContributorId: ObjectId) =>
+    currentContributorId.equals(contributorId)
+  );
+
+  if (!isInArray) {
     contributorIds.push(contributorId);
   }
 
