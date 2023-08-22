@@ -6,7 +6,10 @@ import type {
   IssuesEvent,
   PullRequestReviewEvent,
   InstallationEvent,
-  User
+  User,
+  PullRequest,
+  Organization,
+  Repository
 } from '@octokit/webhooks-types';
 
 import config from '$lib/server/config';
@@ -54,6 +57,9 @@ export type {
   PullRequestReviewEvent,
   InstallationEvent,
   GitHubAppAuthenticationWithRefreshToken,
-  User
+  User,
+  PullRequest,
+  Organization,
+  Repository
 };
 export default app;

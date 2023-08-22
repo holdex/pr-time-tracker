@@ -1,4 +1,4 @@
-import ax from 'axios';
+import ax, { type InternalAxiosRequestConfig } from 'axios';
 
 import { snackbar } from '$lib/components/Snackbar';
 import { ItemState, ItemType } from '$lib/constants';
@@ -11,7 +11,7 @@ export const axios = ax.create({
   }
 });
 
-axios.interceptors.request.use((config) => {
+axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // Add caching to requests
   config.headers['Cache-Control'] = 'max-age=300'; // duration is in seconds
 
