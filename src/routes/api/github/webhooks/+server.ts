@@ -8,6 +8,7 @@ import app from '$lib/server/github';
 import parseInstallationEvents from './installation';
 import parsePullRequestEvents from './pull-requests';
 import parsePullRequestReviewEvents from './pull-request-review';
+import parsePullRequestReviewCommentEvents from './pull-request-review-comments';
 import parseIssuesEvents from './issues';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -34,6 +35,10 @@ export const POST: RequestHandler = async ({ request }) => {
     }
     case GitHubEventName.PULL_REQUEST_REVIEW: {
       parsePullRequestReviewEvents(body);
+      break;
+    }
+    case GitHubEventName.PULL_REQUEST_REVIEW_COMMENT: {
+      parsePullRequestReviewCommentEvents(body);
       break;
     }
     case GitHubEventName.ISSUES: {

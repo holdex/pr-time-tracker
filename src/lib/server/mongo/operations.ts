@@ -15,6 +15,7 @@ type ItemCollection = {
   org: string;
   repo: string;
   owner: string;
+  title: string;
   contributorIds?: (ObjectId | undefined | null)[];
   type: string;
   url: string;
@@ -23,6 +24,7 @@ type ItemCollection = {
   closedAt?: string;
   hours?: string;
   experience?: 'positive' | 'negative';
+  merged?: boolean;
   approved?: boolean;
   rejected?: boolean;
   submitted?: boolean;

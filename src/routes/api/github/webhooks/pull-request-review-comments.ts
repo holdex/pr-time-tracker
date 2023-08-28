@@ -1,13 +1,15 @@
-import type { PullRequestReviewEvent } from '$lib/server/github';
+import type { PullRequestReviewCommentEvent, SimplePullRequest } from '$lib/server/github';
 import { Collections } from '$lib/server/mongo/operations';
 
 import { getContributorInfo, getPrInfo, upsertDataToDB } from './util';
 
-export default async function parsePullRequestReviewEvents(event: PullRequestReviewEvent) {
+export default async function parsePullRequestReviewCommentEvents(
+  event: PullRequestReviewCommentEvent
+) {
   const { action, pull_request, repository, organization, sender } = event;
 
   switch (action) {
-    case 'submitted': {
+    case 'created': {
       const contributorInfo = getContributorInfo(sender);
 
       const contributorRes = await upsertDataToDB(Collections.CONTRIBUTORS, contributorInfo);
@@ -17,7 +19,7 @@ export default async function parsePullRequestReviewEvents(event: PullRequestRev
       );
 
       const prInfo = await getPrInfo(
-        pull_request,
+        pull_request as SimplePullRequest,
         repository,
         organization,
         sender,
@@ -30,7 +32,10 @@ export default async function parsePullRequestReviewEvents(event: PullRequestRev
     }
 
     default: {
-      console.log('current action for pull request review is not in the parse candidate', event);
+      console.log(
+        'current action for pull request review comment is not in the parse candidate',
+        event
+      );
 
       break;
     }

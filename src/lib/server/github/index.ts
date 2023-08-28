@@ -5,9 +5,11 @@ import type {
   PullRequestEvent,
   IssuesEvent,
   PullRequestReviewEvent,
+  PullRequestReviewCommentEvent,
   InstallationEvent,
   User,
   PullRequest,
+  SimplePullRequest,
   Organization,
   Repository
 } from '@octokit/webhooks-types';
@@ -55,10 +57,12 @@ export type {
   PullRequestEvent,
   IssuesEvent,
   PullRequestReviewEvent,
+  PullRequestReviewCommentEvent,
   InstallationEvent,
   GitHubAppAuthenticationWithRefreshToken,
   User,
   PullRequest,
+  SimplePullRequest,
   Organization,
   Repository
 };
