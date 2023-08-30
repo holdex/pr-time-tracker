@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** deps */
+  /** deps */ 
   import type { CardProps, ToggleProps } from '../types';
 
   import Button from '$lib/components/Button/index.svelte';
