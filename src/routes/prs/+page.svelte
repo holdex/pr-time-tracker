@@ -1,10 +1,9 @@
 <script lang="ts">
-  /** types */
+  /** deps */
   import { onDestroy, onMount } from 'svelte';
 
   import type { PageData } from './$types';
 
-  /** internals */
   import PRs from '$lib/layouts/PRs/index.svelte';
   import type { ItemCollection } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
@@ -16,7 +15,7 @@
   /** vars */
   const prs: Record<'submitted' | 'unsubmitted', ItemCollection[]> = {
     submitted: [],
-    unsubmitted: data.prs || []
+    unsubmitted: data.prs?.filter((pr) => !pr.submitted) || []
   };
   let isSubmittedPrs = false;
 

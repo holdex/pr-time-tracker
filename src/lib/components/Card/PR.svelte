@@ -1,10 +1,7 @@
 <script lang="ts">
-  /** externals */
-
-  /** types */
+  /** deps */
   import type { CardProps, ToggleProps } from '../types';
 
-  /** internals */
   import Button from '$lib/components/Button/index.svelte';
   import Toggle from '$lib/components/Toggle/index.svelte';
   import Input from '$lib/components/Input/index.svelte';

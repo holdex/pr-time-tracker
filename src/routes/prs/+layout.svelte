@@ -1,10 +1,9 @@
 <script lang="ts">
+  /** deps */
   import { page } from '$app/stores';
 
-  /** types */
   import type { LayoutData } from './$types';
 
-  /** internals */
   import Header from '$lib/components/Header/index.svelte';
   import { routes } from '$lib/config';
   import { activeTab } from '$lib/components/Toggle';
