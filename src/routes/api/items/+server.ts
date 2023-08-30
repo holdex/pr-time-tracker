@@ -52,12 +52,12 @@ const generateFilter = (params: URLSearchParams) => {
           ]
         }
       ];
-    } else {
+    } else if (state) {
       filter[state as ItemState] = true;
     }
   }
 
-  if (owner !== 'undefined') {
+  if (owner !== 'undefined' && owner) {
     filter.owner = owner;
   }
 

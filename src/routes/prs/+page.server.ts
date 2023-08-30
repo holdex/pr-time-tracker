@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ fetch, depends, parent }) => {
 
   const parentData = await parent();
   const response: Response = await fetch(
-    `/api/items?type=${ItemType.PULL_REQUEST}&owner=${parentData.user?.login}&submitted=false`
+    `/api/items?type=${ItemType.PULL_REQUEST}&owner=${parentData.user?.login}`
   );
   const data: {
     result: ItemCollection[] | null;

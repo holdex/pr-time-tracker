@@ -1,12 +1,10 @@
 <script lang="ts">
-  /** externals */
+  /** deps */
   import { page } from '$app/stores';
 
-  /** types */
   import type { CardProps } from '$lib/components/types';
   import type { User } from '@octokit/webhooks-types';
 
-  /** internals */
   import PR from '$lib/components/Card/PR.svelte';
   import { snackbar } from '$lib/components/Snackbar';
   import { axios, getPRs, type PRsQuery } from '$lib/utils/request';
@@ -34,8 +32,7 @@
 
     try {
       await axios.post<{ result: ItemCollection }>(`/items`, payload);
-      prs = prs.filter((submit) => submit.id !== pr.id);
-      if (!isUpdate) prs = [pr].concat(prs);
+      if (!isUpdate) prs = prs.filter((submit) => submit.id !== pr.id);
       invalidateCache = true;
       $snackbar = {
         text: `Successfully ${
@@ -68,9 +65,9 @@
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
   <ul class="grid gap-4 md:gap-8">
-    {#each prs as pr}
+    {#each prs as pr, i}
       <!-- Force component destroy/re-render to get updated `pr` object values -->
-      {#key invalidateCache ? pr : ''}
+      {#key invalidateCache ? pr : i}
         <PR data={pr} {onSubmit} isAdmin={isContributorContext} isReadonly={pr.approved} />
       {/key}
     {:else}
