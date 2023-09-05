@@ -3,9 +3,9 @@ import StatusCode from 'status-code-enum';
 
 import type { RequestHandler } from '@sveltejs/kit';
 
-import clientPromise from '$lib/server/mongo';
+import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import { Collections, type ContributorCollection } from '$lib/server/mongo/operations';
+import type { ContributorSchema } from '$lib/server/mongo/operations';
 import { ItemState, MAX_DATA_CHUNK } from '$lib/constants';
 import { ResponseHeadersInit } from '$lib/config';
 
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ params }) => {
     const mongoClient = await clientPromise;
     const collection = mongoClient
       .db(config.mongoDBName)
-      .collection<ContributorCollection>(Collections.CONTRIBUTORS);
+      .collection<ContributorSchema>(CollectionNames.CONTRIBUTORS);
     const [contributor] = await collection
       .aggregate([
         {
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ params }) => {
         },
         {
           $lookup: {
-            from: Collections.ITEMS,
+            from: CollectionNames.ITEMS,
             localField: 'login',
             foreignField: 'owner',
             pipeline: [

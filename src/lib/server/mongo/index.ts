@@ -2,6 +2,8 @@ import { MongoClient } from 'mongodb';
 
 import config from '$lib/server/config';
 
+export * from './types';
+
 let client;
 let clientPromise: Promise<MongoClient>;
 
@@ -13,6 +15,8 @@ if (!config.mongoDBUri || !config.mongoDBName) {
     `Missing env variables: \nMongodbURL: ${config.mongoDBUri}\nDB name: ${config.mongoDBName}`
   );
 }
+
+console.log('[Mongo] Connecting MongoClient...');
 
 if (process.env.NODE_ENV === 'development') {
   // In development mode, use a global variable so that the value
@@ -28,4 +32,10 @@ if (process.env.NODE_ENV === 'development') {
   clientPromise = client.connect();
 }
 
+console.log(
+  `[Mongo] MongoClient connected to DB @ "${config.mongoDBUri.replace(/.*@(.*)\/.*/, '$1')}".`
+);
+
 export default clientPromise;
+
+export const mongoClient = await clientPromise;

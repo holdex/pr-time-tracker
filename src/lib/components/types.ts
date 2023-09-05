@@ -1,6 +1,6 @@
 import type { HTMLAttributes, HTMLButtonAttributes, SVGAttributes } from 'svelte/elements';
 
-import type { ItemCollection } from '$lib/server/mongo/operations';
+import type { ItemSchema } from '$lib/server/mongo/operations';
 
 /** Button */
 export interface ButtonProps extends HTMLButtonAttributes {
@@ -72,7 +72,7 @@ export interface CardProps {
   isReadonly?: boolean;
   isAdmin?: boolean;
   loading?: boolean;
-  data: ItemCollection & { number?: number };
+  data: ItemSchema & { number?: number };
   onSubmit?: (
     data: CardProps['data'],
     payload: Partial<CardProps['data']>,

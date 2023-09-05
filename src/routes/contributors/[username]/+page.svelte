@@ -8,7 +8,7 @@
   /** internals */
   import { snackbar } from '$lib/components/Snackbar';
   import PRs from '$lib/layouts/PRs/index.svelte';
-  import type { ItemCollection } from '$lib/server/mongo/operations';
+  import type { ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
   import { ItemState } from '$lib/constants';
   import { getPRs } from '$lib/utils';
@@ -17,7 +17,7 @@
   export let data: PageData;
 
   /** vars */
-  const prs: Record<'pending' | 'approved', ItemCollection[]> = {
+  const prs: Record<'pending' | 'approved', ItemSchema[]> = {
     pending: data.contributor?.prs.filter((pr) => pr.submitted) || [],
     approved: []
   };

@@ -9,18 +9,18 @@
   import { snackbar } from '$lib/components/Snackbar';
   import { axios, getPRs, type PRsQuery } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
-  import type { ContributorCollection, ItemCollection } from '$lib/server/mongo/operations';
+  import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
 
   /** props */
-  export let prs: ItemCollection[];
+  export let prs: ItemSchema[];
   export let context: 'contributor' | 'user' = 'user';
   export let query: Omit<PRsQuery, 'owner'> | undefined = undefined;
   export let getQuery: (() => Omit<PRsQuery, 'owner'>) | undefined = undefined;
 
   /** vars */
   const isContributorContext = context === 'contributor';
-  const owner = ($page.data[context] as User | ContributorCollection | null)?.login;
+  const owner = ($page.data[context] as User | ContributorSchema | null)?.login;
   let invalidateCache = false;
   let isLoading: boolean | undefined;
 
@@ -31,7 +31,7 @@
     $snackbar = { text: 'Please, wait...', type: 'busy' };
 
     try {
-      await axios.post<{ result: ItemCollection }>(`/items`, payload);
+      await axios.post<{ result: ItemSchema }>(`/items`, payload);
       if (!isUpdate) prs = prs.filter((submit) => submit.id !== pr.id);
       invalidateCache = true;
       $snackbar = {

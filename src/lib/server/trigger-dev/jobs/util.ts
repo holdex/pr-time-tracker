@@ -2,13 +2,9 @@ import { Github, events } from '@trigger.dev/github';
 
 import type { ObjectId, Document, ModifyResult } from 'mongodb';
 
-import clientPromise from '$lib/server/mongo';
+import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import {
-  Collections,
-  type ContributorCollection,
-  type ItemCollection
-} from '$lib/server/mongo/operations';
+import type { ContributorSchema } from '$lib/server/mongo/operations';
 import type {
   PullRequest,
   User,
@@ -18,7 +14,7 @@ import type {
 } from '$lib/server/github';
 import { ItemType } from '$lib/constants';
 
-const upsertDataToDB = async <T extends Document>(collection: Collections, data: T) => {
+const upsertDataToDB = async <T extends Document>(collection: CollectionNames, data: T) => {
   const mongoDB = await clientPromise;
 
   const res = await mongoDB
@@ -40,7 +36,7 @@ const addContributorIfNotExists = async (prId: number, contributorId: ObjectId |
   const mongoDB = await clientPromise;
 
   const contributorIds = (
-    await mongoDB.db(config.mongoDBName).collection(Collections.ITEMS).findOne({
+    await mongoDB.db(config.mongoDBName).collection(CollectionNames.ITEMS).findOne({
       type: ItemType.PULL_REQUEST,
       id: prId
     })
@@ -70,7 +66,7 @@ const getPrInfo = async (
   repository: Repository,
   organization: Organization | undefined,
   sender: User,
-  contributorRes: ModifyResult<ContributorCollection>
+  contributorRes: ModifyResult<ContributorSchema>
 ): Promise<any> => {
   const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?._id);
 

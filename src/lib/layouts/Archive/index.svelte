@@ -8,13 +8,13 @@
   import PR from '$lib/components/Card/PR.svelte';
   import { getPRs } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
-  import type { ItemCollection } from '$lib/server/mongo/operations';
+  import type { ItemSchema } from '$lib/server/mongo/operations';
 
   /** props */
   export let user: User | undefined = undefined;
 
   /** vars */
-  let archive: ItemCollection[] = [];
+  let archive: ItemSchema[] = [];
   let isLoading = true;
 
   /** funcs */

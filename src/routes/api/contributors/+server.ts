@@ -3,9 +3,9 @@ import StatusCode from 'status-code-enum';
 
 import type { RequestHandler } from '@sveltejs/kit';
 
-import clientPromise from '$lib/server/mongo';
+import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import { Collections, type ContributorCollection } from '$lib/server/mongo/operations';
+import type { ContributorSchema } from '$lib/server/mongo/operations';
 import { MAX_DATA_CHUNK } from '$lib/constants';
 import { ResponseHeadersInit } from '$lib/config';
 
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async () => {
     const mongoClient = await clientPromise;
     const collection = mongoClient
       .db(config.mongoDBName)
-      .collection<ContributorCollection>(Collections.CONTRIBUTORS);
+      .collection<ContributorSchema>(CollectionNames.CONTRIBUTORS);
     const contributors = await collection.find().limit(MAX_DATA_CHUNK).toArray();
 
     return json(

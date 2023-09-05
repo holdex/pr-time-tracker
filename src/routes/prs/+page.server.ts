@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 
 import { invalidations } from '$lib/config';
-import type { ItemCollection } from '$lib/server/mongo/operations';
+import type { ItemSchema } from '$lib/server/mongo/operations';
 import { ItemType } from '$lib/constants';
 
 export const load: PageServerLoad = async ({ fetch, depends, parent }) => {
@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ fetch, depends, parent }) => {
     `/api/items?type=${ItemType.PULL_REQUEST}&owner=${parentData.user?.login}`
   );
   const data: {
-    result: ItemCollection[] | null;
+    result: ItemSchema[] | null;
     message: string;
     error?: boolean;
   } = await response.json();

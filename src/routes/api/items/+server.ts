@@ -1,12 +1,11 @@
 import { error, json } from '@sveltejs/kit';
 
 import type { RequestHandler } from '@sveltejs/kit';
-import type { Filter, WithId } from 'mongodb';
 
-import clientPromise from '$lib/server/mongo';
+import clientPromise, { CollectionNames, type FilterProps } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import type { ItemCollection } from '$lib/server/mongo/operations';
-import { Collections, getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
+import type { ItemSchema } from '$lib/server/mongo/operations';
+import { getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
 import {
   ONE_MONTH,
   ItemType,
@@ -17,12 +16,6 @@ import {
   BAD_REQUEST
 } from '$lib/constants';
 import { transform } from '$lib/utils';
-
-interface FilterProps {
-  $and: Filter<WithId<ItemCollection>>[];
-  $or: FilterProps['$and'];
-  [key: string]: any;
-}
 
 const generateFilter = (params: URLSearchParams) => {
   const [closed, type, state, owner, submitted, archived, count] = [
@@ -83,14 +76,14 @@ export const GET: RequestHandler = async ({ url }) => {
   const { filter, count } = generateFilter(searchParams);
   const mongoDB = await clientPromise;
   const documents = await (
-    await getDocumentsInfo(mongoDB.db(config.mongoDBName), Collections.ITEMS, filter, count)
+    await getDocumentsInfo(mongoDB.db(config.mongoDBName), CollectionNames.ITEMS, filter, count)
   ).toArray();
 
   return json({ message: 'success', result: documents }, { status: SUCCESS_OK });
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-  const requestBody: ItemCollection = await request.json();
+  const requestBody: ItemSchema = await request.json();
 
   if (requestBody.id === undefined) {
     throw error(BAD_REQUEST, 'id_is_missing');
@@ -99,7 +92,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const mongoDB = await clientPromise;
   const res = await updateCollectionInfo(
     mongoDB.db(config.mongoDBName),
-    Collections.ITEMS,
+    CollectionNames.ITEMS,
     { id: requestBody.id },
     { $set: { ...requestBody } }
   );

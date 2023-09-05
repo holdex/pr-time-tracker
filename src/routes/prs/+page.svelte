@@ -5,7 +5,7 @@
   import type { PageData } from './$types';
 
   import PRs from '$lib/layouts/PRs/index.svelte';
-  import type { ItemCollection } from '$lib/server/mongo/operations';
+  import type { ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
   import { getPRs } from '$lib/utils';
 
@@ -13,7 +13,7 @@
   export let data: PageData;
 
   /** vars */
-  const prs: Record<'submitted' | 'unsubmitted', ItemCollection[]> = {
+  const prs: Record<'submitted' | 'unsubmitted', ItemSchema[]> = {
     submitted: [],
     unsubmitted: data.prs?.filter((pr) => !pr.submitted) || []
   };

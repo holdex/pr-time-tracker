@@ -11,7 +11,7 @@
   /** internals */
   import Header from '$lib/components/Header/index.svelte';
   import { routes } from '$lib/config';
-  import type { ContributorCollection } from '$lib/server/mongo/operations';
+  import type { ContributorSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
 
   /** props */
@@ -21,7 +21,7 @@
   let isArchiveRoute = false;
   let route = routes.contributors.path;
   let isBaseRoute = true;
-  let contributor: ContributorCollection | undefined;
+  let contributor: ContributorSchema | undefined;
 
   onMount(() => {
     setTimeout(() => {

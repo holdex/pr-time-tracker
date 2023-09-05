@@ -6,14 +6,14 @@
   /** internals */
   import Contributor from '$lib/components/Card/Contributor.svelte';
   import { axios, createEffect } from '$lib/utils';
-  import type { ContributorCollection } from '$lib/server/mongo/operations';
+  import type { ContributorSchema } from '$lib/server/mongo/operations';
   import { snackbar } from '$lib/components/Snackbar';
 
   /** props */
   export let data: PageData;
 
   /** vars */
-  let contributors: ContributorCollection[] = data.contributors || [];
+  let contributors: ContributorSchema[] = data.contributors || [];
   let isLoading = true;
   let user: User;
 
@@ -22,7 +22,7 @@
 
   const getContributors = async () => {
     try {
-      const response = await axios.get<{ result: ContributorCollection[] }>('/contributors');
+      const response = await axios.get<{ result: ContributorSchema[] }>('/contributors');
 
       return response.data.result;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

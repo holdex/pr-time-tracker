@@ -1,7 +1,8 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 
-import { Collections, type ContributorCollection } from '$lib/server/mongo/operations';
+import type { ContributorSchema } from '$lib/server/mongo/operations';
 import type { PullRequestEvent } from '$lib/server/github';
+import { CollectionNames } from '$lib/server/mongo';
 
 import { client } from '../';
 import { getContributorInfo, getPrInfo, upsertDataToDB, github, events } from './util';
@@ -54,8 +55,8 @@ async function createJob(
       } else {
         contributorInfo = getContributorInfo(sender);
       }
-      const contributorsRes = await upsertDataToDB<ContributorCollection>(
-        Collections.CONTRIBUTORS,
+      const contributorsRes = await upsertDataToDB<ContributorSchema>(
+        CollectionNames.CONTRIBUTORS,
         contributorInfo
       );
 
@@ -68,7 +69,7 @@ async function createJob(
         sender,
         contributorsRes
       );
-      await upsertDataToDB(Collections.ITEMS, prInfo);
+      await upsertDataToDB(CollectionNames.ITEMS, prInfo);
       break;
     }
     default: {

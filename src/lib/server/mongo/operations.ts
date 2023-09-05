@@ -1,5 +1,4 @@
 import type {
-  ObjectId,
   Filter,
   Db,
   Document,
@@ -7,43 +6,9 @@ import type {
   UpdateFilter,
   FindOneAndUpdateOptions
 } from 'mongodb';
+import type { ContributorSchema, ItemSchema } from './types';
 
 import { MAX_DATA_CHUNK } from '$lib/constants';
-
-type ItemCollection = {
-  _id?: ObjectId;
-  id: number;
-  org: string;
-  repo: string;
-  owner: string;
-  title: string;
-  contributorIds?: (ObjectId | undefined | null)[];
-  type: string;
-  url: string;
-  createdAt?: string;
-  updatedAt?: string;
-  closedAt?: string;
-  hours?: string;
-  experience?: 'positive' | 'negative';
-  merged?: boolean;
-  approved?: boolean;
-  rejected?: boolean;
-  submitted?: boolean;
-};
-
-type ContributorCollection = {
-  _id?: ObjectId;
-  id: number;
-  name: string;
-  login: string;
-  url: string;
-  avatarUrl: string;
-};
-
-export enum Collections {
-  ITEMS = 'items',
-  CONTRIBUTORS = 'contributors'
-}
 
 export const getCollectionInfo = async <T extends Document>(
   db: Db,
@@ -115,4 +80,4 @@ export const findAndupdateCollectionInfo = async <T extends Document>(
   }
 };
 
-export type { ContributorCollection, ItemCollection, Db };
+export type { ContributorSchema, ItemSchema, Db };
