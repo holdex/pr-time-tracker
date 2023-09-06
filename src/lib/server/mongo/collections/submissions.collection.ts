@@ -5,14 +5,22 @@ import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
 
 export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
-  async create(resource: OptionalId<SubmissionSchema>): Promise<InsertOneResult<SubmissionSchema>> {
-    const item = await items.getOne({ id: resource.item_id });
+  async create({
+    item_id,
+    owner,
+    ...resource
+  }: OptionalId<SubmissionSchema>): Promise<InsertOneResult<SubmissionSchema>> {
+    const item = await items.getOne({ id: item_id });
 
-    if (!item) throw Error(`Item with ID, ${resource.item_id}, not found. Aborted submission.`);
+    if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
 
-    const result = await super.create(resource);
+    if (await this.getOne({ item_id, owner })) {
+      throw Error(`Submission with item ID, ${item_id}, already exists for ${owner}.`);
+    }
 
-    await items.updateSubmissions(resource.item_id, result.insertedId);
+    const result = await super.create({ item_id, owner, ...resource });
+
+    await items.updateSubmissions(item_id, result.insertedId);
 
     return result;
   }

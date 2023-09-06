@@ -17,7 +17,7 @@ import {
   BAD_REQUEST
 } from '$lib/constants';
 import { jsonError, transform } from '$lib/utils';
-import { items } from '$lib/server/mongo/collections';
+import { contributors, items } from '$lib/server/mongo/collections';
 
 // const generateFilter = (params: URLSearchParams) => {
 //   const [closed, type, state, owner, submitted, archived, count] = [
@@ -85,6 +85,25 @@ import { items } from '$lib/server/mongo/collections';
 
 export const GET: RequestHandler = async ({ url: { searchParams } }) => {
   try {
+    // const results = await items.getMany(new URLSearchParams({ count: '1000' }));
+    // await Promise.all(
+    //   results.map(async (result) => {
+    //     await Promise.all(
+    //       result.contributorIds.map(async (contributorId) => {
+    //         if (result.contributors?.length > 1) return;
+    //         result.contributors = (
+    //           await items.makeContributors(
+    //             result.id,
+    //             await contributors.getOne(contributorId!.toString())
+    //           )
+    //         ).contributors;
+    //       })
+    //     );
+
+    //     await items.update(result);
+    //   })
+    // );
+
     return json({ data: await items.getMany(searchParams) });
   } catch (e) {
     return jsonError(e, '/api/items');

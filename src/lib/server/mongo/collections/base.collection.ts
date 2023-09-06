@@ -1,4 +1,11 @@
-import type { Collection, Db, Document, Filter, OptionalUnlessRequiredId } from 'mongodb';
+import {
+  ObjectId,
+  type Collection,
+  type Db,
+  type Document,
+  type Filter,
+  type OptionalUnlessRequiredId
+} from 'mongodb';
 
 import { MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
@@ -53,7 +60,7 @@ export abstract class BaseCollection<CollectionType extends Document> {
   async getOne(_idOrFilter: string | Filter<CollectionType>) {
     return await this.context.findOne(
       (typeof _idOrFilter === 'string'
-        ? { _id: _idOrFilter }
+        ? { _id: new ObjectId(_idOrFilter) }
         : _idOrFilter) as Filter<CollectionType>
     );
   }
@@ -73,7 +80,9 @@ export abstract class BaseCollection<CollectionType extends Document> {
   }
 
   async update(payload: OptionalUnlessRequiredId<Partial<CollectionType>>) {
-    return await this.context.updateOne({ _id: payload._id } as Filter<CollectionType>, payload);
+    return await this.context.updateOne({ _id: payload._id } as Filter<CollectionType>, {
+      $set: payload as Partial<CollectionType>
+    });
   }
 
   generateFilter(searchParams?: URLSearchParams) {

@@ -1,15 +1,18 @@
 import type { Filter, ObjectId } from 'mongodb';
 
 import { ItemType } from '$lib/constants';
+import { transform } from '$lib/utils';
 
-import { CollectionNames, type ItemSchema } from '../types';
+import { CollectionNames, type ContributorSchema, type ItemSchema } from '../types';
 import { BaseCollection } from './base.collection';
 
 export class ItemsCollection extends BaseCollection<ItemSchema> {
-  generateFilter(params: URLSearchParams) {
-    const filter: Partial<Filter<ItemSchema>> = super.generateFilter(params);
+  generateFilter(searchParams?: URLSearchParams) {
+    const filter: Partial<Filter<ItemSchema>> = super.generateFilter(searchParams);
+    const contributor = transform<string>(searchParams?.get('contributor'));
 
     filter.merged = filter.merged ?? true;
+    if (contributor) filter.contributors = { $in: [contributor] };
 
     return filter;
   }
@@ -28,6 +31,19 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
     await this.update({ id: itemId, submissions: Array.from(submissionIds) });
   }
+
+  async makeContributors(itemId: number, contributor: ContributorSchema | null) {
+    const item = await items.getOne({
+      type: ItemType.PULL_REQUEST,
+      id: itemId
+    });
+    const [contributorIds, contributors] = [
+      new Set((item?.contributorIds || []).concat(contributor?._id || [])),
+      new Set((item?.contributors || []).concat(contributor?.login || []))
+    ];
+
+    return { contributorIds: Array.from(contributorIds), contributors: Array.from(contributors) };
+  }
 }
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
@@ -45,6 +61,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
   ],
   properties: {
     contributorIds: { bsonType: 'array', description: 'must be an array.' },
+    contributors: { bsonType: 'array', description: 'must be an array.' },
     id: {
       bsonType: 'int',
       description: 'must be a number'
@@ -76,7 +93,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       description: 'must be provided.'
     },
     closedAt: {
-      bsonType: ['date', 'null']
+      bsonType: ['string', 'null']
     }
   } as any // remove any after you've updated Front-end usage of former ItemSchema
 });

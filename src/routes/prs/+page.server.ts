@@ -9,17 +9,17 @@ export const load: PageServerLoad = async ({ fetch, depends, parent }) => {
 
   const parentData = await parent();
   const response: Response = await fetch(
-    `/api/items?type=${ItemType.PULL_REQUEST}&owner=${parentData.user?.login}`
+    `/api/items?type=${ItemType.PULL_REQUEST}&contributor=${parentData.user?.login}`
   );
-  const data: {
-    result: ItemSchema[] | null;
+  const result: {
+    data: ItemSchema[] | null;
     message: string;
     error?: boolean;
   } = await response.json();
 
   return {
-    prs: data.result,
-    message: data.error ? data.message : '',
-    error: data.error
+    prs: result.data,
+    message: result.error ? result.message : '',
+    error: result.error
   };
 };

@@ -33,19 +33,17 @@ const getContributorInfo = (user: User) => ({
   avatarUrl: user.avatar_url
 });
 
-const addContributorIfNotExists = async (prId: number, contributorId: ObjectId | undefined) => {
-  const contributorIds = new Set(
-    (
-      (
-        await items.getOne({
-          type: ItemType.PULL_REQUEST,
-          id: prId
-        })
-      )?.contributorIds || []
-    ).concat(contributorId || [])
-  );
+const addContributorIfNotExists = async (prId: number, contributor: ContributorSchema | null) => {
+  const item = await items.getOne({
+    type: ItemType.PULL_REQUEST,
+    id: prId
+  });
+  const [contributorIds, contributors] = [
+    new Set((item?.contributorIds || []).concat(contributor?._id || [])),
+    new Set((item?.contributors || []).concat(contributor?.login || []))
+  ];
 
-  return Array.from(contributorIds);
+  return { contributorIds: Array.from(contributorIds), contributors: Array.from(contributors) };
 };
 
 const getPrInfo = async (
@@ -55,7 +53,10 @@ const getPrInfo = async (
   sender: User,
   contributorRes: ModifyResult<ContributorSchema>
 ): Promise<ItemSchema> => {
-  const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?._id);
+  const { contributorIds, contributors } = await items.makeContributors(
+    pr.id,
+    contributorRes.value
+  );
   let prMerged = false;
 
   if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;
@@ -68,6 +69,7 @@ const getPrInfo = async (
     repo: repository.name,
     owner: pr.user.login || sender.login,
     contributorIds,
+    contributors,
     url: pr.url,
     createdAt: pr?.created_at,
     updatedAt: pr?.updated_at,

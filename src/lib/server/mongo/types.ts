@@ -32,7 +32,9 @@ export type ItemSchema = {
   repo: string;
   owner: string;
   title: string;
-  contributorIds?: (ObjectId | undefined | null)[];
+  contributorIds: (ObjectId | undefined | null)[];
+  /** An array of contributor usernames/logins. Useful for query items when `_id` not available (in object/payload). */
+  contributors: string[];
   type: ItemType;
   url: string;
   createdAt?: string;
