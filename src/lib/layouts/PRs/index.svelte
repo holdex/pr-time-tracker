@@ -31,7 +31,7 @@
     $snackbar = { text: 'Please, wait...', type: 'busy' };
 
     try {
-      await axios.post<{ result: ItemSchema }>(`/items`, payload);
+      await axios.patch<{ data: ItemSchema }>(`/items`, payload);
       if (!isUpdate) prs = prs.filter((submit) => submit.id !== pr.id);
       invalidateCache = true;
       $snackbar = {
