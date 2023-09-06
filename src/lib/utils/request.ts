@@ -19,7 +19,7 @@ export const jsonError = (e: unknown, path: string, method?: string | null, stat
 
 export const transform = <Result = unknown>(
   value: unknown,
-  transformNumber = true
+  preserveNumber = false
 ): Result | null | undefined => {
   const isString = typeof value === 'string';
   const isArray = value && !isString && Array.isArray(value);
@@ -35,18 +35,18 @@ export const transform = <Result = unknown>(
     let parseds = (isString ? JSON.parse(value) : value) as Result;
 
     if (Array.isArray(parseds)) {
-      parseds = parseds.map((parsed) => transform(parsed, transformNumber)) as Result;
+      parseds = parseds.map((parsed) => transform(parsed, preserveNumber)) as Result;
     } else if (typeof parseds === 'object') {
       // eslint-disable-next-line guard-for-in
       for (const key in parseds) {
-        parseds[key] = transform(parseds[key], transformNumber)!;
+        parseds[key] = transform(parseds[key], preserveNumber)!;
       }
     }
 
     return parseds;
   }
 
-  return (transformNumber ? Number(value) || value : value) as Result;
+  return (!preserveNumber ? Number(value) || value : value) as Result;
 };
 
 export const axios = ax.create({
