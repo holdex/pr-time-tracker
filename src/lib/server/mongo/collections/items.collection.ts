@@ -1,4 +1,4 @@
-import type { Filter } from 'mongodb';
+import type { Filter, ObjectId } from 'mongodb';
 
 import { ItemType } from '$lib/constants';
 
@@ -12,6 +12,21 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     filter.merged = filter.merged ?? true;
 
     return filter;
+  }
+
+  async updateSubmissions(itemId: number, submissionId: ObjectId) {
+    const submissionIds = new Set(
+      (
+        (
+          await this.getOne({
+            type: ItemType.PULL_REQUEST,
+            id: itemId
+          })
+        )?.submissions || []
+      ).concat(submissionId || [])
+    );
+
+    await this.update({ id: itemId, submissions: Array.from(submissionIds) });
   }
 }
 

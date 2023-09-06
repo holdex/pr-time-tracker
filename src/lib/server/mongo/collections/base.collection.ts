@@ -39,8 +39,15 @@ export abstract class BaseCollection<CollectionType extends Document> {
       });
   }
 
-  async create(resource: OptionalUnlessRequiredId<CollectionType>) {
-    return await this.context.insertOne(resource);
+  async create(
+    resource: OptionalUnlessRequiredId<CollectionType>,
+    onAfterCreate?: (result: Awaited<ReturnType<typeof this.create>>) => Promise<void>
+  ) {
+    const result = await this.context.insertOne(resource);
+
+    if (onAfterCreate) await onAfterCreate(result);
+
+    return result;
   }
 
   async getOne(_idOrFilter: string | Filter<CollectionType>) {

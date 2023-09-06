@@ -63,7 +63,9 @@ export type SubmissionSchema = {
   experience: Experience;
   approval?: Approval;
   owner: string;
-  item_id: ObjectId;
+  /** Note that this is equivalent to `contributorId`(s) in `ItemSchema`. */
+  owner_id: number;
+  item_id: number;
 };
 
 export enum Approval {
