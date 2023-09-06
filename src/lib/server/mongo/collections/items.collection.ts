@@ -16,7 +16,18 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 }
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
-  required: ['contributorIds', 'id', 'merged', 'org', 'owner', 'repo', 'type', 'url', 'title'],
+  required: [
+    'contributorIds',
+    'id',
+    'merged',
+    'org',
+    'owner',
+    'repo',
+    'type',
+    'url',
+    'title',
+    'submissions'
+  ],
   properties: {
     contributorIds: { bsonType: 'array', description: 'must be an array.' },
     id: {

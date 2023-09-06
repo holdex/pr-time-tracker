@@ -4,7 +4,7 @@ import type { ObjectId, Document, ModifyResult } from 'mongodb';
 
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import type { ContributorSchema } from '$lib/server/mongo/operations';
+import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import type {
   PullRequest,
   User,
@@ -13,6 +13,7 @@ import type {
   Organization
 } from '$lib/server/github';
 import { ItemType } from '$lib/constants';
+import { items } from '$lib/server/mongo/collections';
 
 const upsertDataToDB = async <T extends Document>(collection: CollectionNames, data: T) => {
   const mongoDB = await clientPromise;
@@ -33,32 +34,18 @@ const getContributorInfo = (user: User) => ({
 });
 
 const addContributorIfNotExists = async (prId: number, contributorId: ObjectId | undefined) => {
-  const mongoDB = await clientPromise;
-
-  const contributorIds = (
-    await mongoDB.db(config.mongoDBName).collection(CollectionNames.ITEMS).findOne({
-      type: ItemType.PULL_REQUEST,
-      id: prId
-    })
-  )?.contributorIds;
-
-  if (contributorIds === undefined) {
-    return [contributorId];
-  }
-
-  if (contributorId === undefined) {
-    return contributorIds;
-  }
-
-  const isInArray = contributorIds.some((currentContributorId: ObjectId) =>
-    currentContributorId.equals(contributorId)
+  const contributorIds = new Set(
+    (
+      (
+        await items.getOne({
+          type: ItemType.PULL_REQUEST,
+          id: prId
+        })
+      )?.contributorIds || []
+    ).concat(contributorId || [])
   );
 
-  if (!isInArray) {
-    contributorIds.push(contributorId);
-  }
-
-  return contributorIds;
+  return Array.from(contributorIds);
 };
 
 const getPrInfo = async (
@@ -67,13 +54,11 @@ const getPrInfo = async (
   organization: Organization | undefined,
   sender: User,
   contributorRes: ModifyResult<ContributorSchema>
-): Promise<any> => {
+): Promise<ItemSchema> => {
   const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?._id);
-
   let prMerged = false;
-  if (pr.closed_at && (pr as PullRequest).merged) {
-    prMerged = true;
-  }
+
+  if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;
 
   return {
     type: ItemType.PULL_REQUEST,
@@ -87,7 +72,8 @@ const getPrInfo = async (
     createdAt: pr?.created_at,
     updatedAt: pr?.updated_at,
     merged: prMerged,
-    closedAt: pr.closed_at ?? undefined
+    closedAt: pr.closed_at ?? undefined,
+    submissions: []
   };
 };
 

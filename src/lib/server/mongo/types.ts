@@ -40,7 +40,7 @@ export type ItemSchema = {
   closedAt?: string;
   merged?: boolean;
   // submission?: SubmissionSchema;
-  submissions?: Array<SubmissionSchema | ObjectId>;
+  submissions: Array<SubmissionSchema | ObjectId>;
   // The following will be deprecated and deleted
   submitted?: boolean;
   hours?: string;

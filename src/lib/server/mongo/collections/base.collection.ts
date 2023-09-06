@@ -43,8 +43,12 @@ export abstract class BaseCollection<CollectionType extends Document> {
     return await this.context.insertOne(resource);
   }
 
-  async getOne(_id: string) {
-    return await this.context.findOne({ _id } as Filter<CollectionType>);
+  async getOne(_idOrFilter: string | Filter<CollectionType>) {
+    return await this.context.findOne(
+      (typeof _idOrFilter === 'string'
+        ? { _id: _idOrFilter }
+        : _idOrFilter) as Filter<CollectionType>
+    );
   }
 
   async getMany(searchParams?: URLSearchParams) {
