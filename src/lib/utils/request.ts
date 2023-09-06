@@ -74,7 +74,7 @@ export interface PRsQuery {
 export const getPRs = async (query: PRsQuery, noCache = false) => {
   try {
     const { owner, type, submitted, state, archived } = query;
-    const response = await axios.get<{ result: ItemSchema[] }>(
+    const response = await axios.get<{ data: ItemSchema[] }>(
       `/items?type=${
         type || ItemType.PULL_REQUEST
       }&owner=${owner}&submitted=${submitted}&state=${state}&archived=${archived}${
@@ -82,7 +82,7 @@ export const getPRs = async (query: PRsQuery, noCache = false) => {
       }`
     );
 
-    return response.data.result;
+    return response.data.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     snackbar.set({ text: e.message || e, type: 'error' });
