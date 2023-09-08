@@ -96,7 +96,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
   required: [
-    'contributor_ids',
+    // 'contributor_ids',
     'id',
     'merged',
     'org',
@@ -104,11 +104,11 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     'repo',
     'type',
     'url',
-    'title',
-    'submissions',
-    'created_at',
-    'updated_at',
-    'closed_at'
+    'title'
+    // 'submissions',
+    // 'created_at',
+    // 'updated_at',
+    // 'closed_at'
   ],
   properties: {
     contributor_ids: { bsonType: 'array', description: 'must be an array.' },
