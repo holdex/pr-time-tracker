@@ -155,5 +155,5 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       bsonType: ['string', 'null'],
       description: 'must be provided.'
     }
-  } as any
+  } as any // remove any after you've updated Front-end usage of former ItemSchema
 });

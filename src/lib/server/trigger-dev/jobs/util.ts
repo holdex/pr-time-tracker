@@ -25,7 +25,7 @@ const upsertDataToDB = async <T extends Document>(collection: CollectionNames, d
   return res;
 };
 
-const getContributorInfo = (user: User): ContributorSchema => ({
+const getContributorInfo = (user: User) => ({
   id: user.id,
   name: user.login,
   login: user.login,

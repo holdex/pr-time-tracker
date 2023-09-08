@@ -55,7 +55,7 @@ async function createJob(
       } else {
         contributorInfo = getContributorInfo(sender);
       }
-      const contributorsRes = await upsertDataToDB<Omit<ContributorSchema, 'created_at'>>(
+      const contributorsRes = await upsertDataToDB<ContributorSchema>(
         CollectionNames.CONTRIBUTORS,
         contributorInfo
       );
