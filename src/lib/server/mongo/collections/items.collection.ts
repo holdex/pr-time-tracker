@@ -56,8 +56,8 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     'repo',
     'type',
     'url',
-    'title',
-    'submissions'
+    'title'
+    // 'submissions'
   ],
   properties: {
     contributorIds: { bsonType: 'array', description: 'must be an array.' },
