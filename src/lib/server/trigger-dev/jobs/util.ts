@@ -25,26 +25,13 @@ const upsertDataToDB = async <T extends Document>(collection: CollectionNames, d
   return res;
 };
 
-const getContributorInfo = (user: User) => ({
+const getContributorInfo = (user: User): ContributorSchema => ({
   id: user.id,
   name: user.login,
   login: user.login,
   url: user.html_url,
   avatarUrl: user.avatar_url
 });
-
-const addContributorIfNotExists = async (prId: number, contributor: ContributorSchema | null) => {
-  const item = await items.getOne({
-    type: ItemType.PULL_REQUEST,
-    id: prId
-  });
-  const [contributorIds, contributors] = [
-    new Set((item?.contributorIds || []).concat(contributor?._id || [])),
-    new Set((item?.contributors || []).concat(contributor?.login || []))
-  ];
-
-  return { contributorIds: Array.from(contributorIds), contributors: Array.from(contributors) };
-};
 
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
@@ -68,13 +55,13 @@ const getPrInfo = async (
     org: organization?.login ?? 'holdex',
     repo: repository.name,
     owner: pr.user.login || sender.login,
-    contributorIds,
+    contributor_ids: contributorIds,
     contributors,
     url: pr.url,
-    createdAt: pr?.created_at,
-    updatedAt: pr?.updated_at,
+    created_at: pr?.created_at,
+    updated_at: pr?.updated_at,
     merged: prMerged,
-    closedAt: pr.closed_at ?? undefined,
+    closed_at: pr.closed_at ?? undefined,
     submissions: []
   };
 };

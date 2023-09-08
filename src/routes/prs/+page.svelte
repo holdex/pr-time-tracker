@@ -15,7 +15,7 @@
   /** vars */
   const prs: Record<'submitted' | 'unsubmitted', ItemSchema[]> = {
     submitted: [],
-    unsubmitted: data.prs?.filter((pr) => !pr.submitted) || []
+    unsubmitted: data.prs?.filter((pr) => !pr.submission) || []
   };
   let isSubmittedPrs = false;
 

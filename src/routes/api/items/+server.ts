@@ -85,18 +85,23 @@ import { contributors, items } from '$lib/server/mongo/collections';
 
 export const GET: RequestHandler = async ({ url: { searchParams } }) => {
   try {
-    // const results = await items.getMany(new URLSearchParams({ count: '1000' }));
+    // const results = await items.context.find({ contributors: { $exists: false } }).toArray();
+
     // await Promise.all(
-    //   results.map(async (result) => {
+    //   results?.map(async (result) => {
     //     await Promise.all(
-    //       result.contributorIds.map(async (contributorId) => {
-    //         if (result.contributors?.length > 1) return;
-    //         result.contributors = (
-    //           await items.makeContributors(
-    //             result.id,
-    //             await contributors.getOne(contributorId!.toString())
-    //           )
-    //         ).contributors;
+    //       result.contributorIds!.map(async (contributorId) => {
+    //         // if (result.contributors?.length > 1) return;
+    //         const { contributorIds, contributors: contribs } = await items.makeContributors(
+    //           result.id,
+    //           await contributors.getOne(contributorId!.toString())
+    //         );
+    //         result.contributor_ids = contributorIds;
+    //         result.contributors = contribs;
+    //         result.submissions = result.submissions || [];
+    //         result.closed_at = result.closedAt || null;
+    //         result.created_at = result.createdAt;
+    //         result.updated_at = result.updatedAt;
     //       })
     //     );
 

@@ -7,13 +7,20 @@ import {
   type OptionalUnlessRequiredId
 } from 'mongodb';
 
-import { MAX_DATA_CHUNK } from '$lib/constants';
+import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
-import { CollectionNames, mongoClient, type JSONSchema, type QueryProps } from '..';
+import {
+  CollectionNames,
+  mongoClient,
+  type JSONSchema,
+  type QueryProps,
+  type GetManyParams,
+  type TimeStamps
+} from '..';
 import config from '../../config';
 
-export abstract class BaseCollection<CollectionType extends Document> {
+export abstract class BaseCollection<CollectionType extends Document & TimeStamps> {
   readonly context: Collection<CollectionType>;
   readonly db: Db;
   readonly properties: Array<keyof CollectionType>;
@@ -50,6 +57,9 @@ export abstract class BaseCollection<CollectionType extends Document> {
     resource: OptionalUnlessRequiredId<CollectionType>,
     onAfterCreate?: (result: Awaited<ReturnType<typeof this.create>>) => Promise<void>
   ) {
+    resource.created_at = resource.created_at || new Date().toISOString();
+    resource.updated_at = resource.created_at;
+
     const result = await this.context.insertOne(resource);
 
     if (onAfterCreate) await onAfterCreate(result);
@@ -65,27 +75,30 @@ export abstract class BaseCollection<CollectionType extends Document> {
     );
   }
 
-  async getMany(searchParams?: URLSearchParams) {
+  async getMany(params?: GetManyParams<CollectionType>) {
+    const searchParams = BaseCollection.makeParams(params);
     const [filter, { count, skip, sort, sort_by, sort_order }] = [
-      this.generateFilter(searchParams),
-      BaseCollection.getQuery(searchParams)
+      this.makeFilter(searchParams),
+      params instanceof URLSearchParams ? BaseCollection.makeQuery(searchParams) : params || {}
     ];
 
     return await this.context
       .find(filter)
-      .sort(sort || { [sort_by || 'created_at']: sort_order || 'descending' })
+      .sort(sort || { [sort_by || 'created_at']: sort_order || DESCENDING })
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
       .toArray();
   }
 
   async update(payload: OptionalUnlessRequiredId<Partial<CollectionType>>) {
+    payload.updated_at = payload.updated_at || new Date().toISOString();
+
     return await this.context.updateOne({ _id: payload._id } as Filter<CollectionType>, {
       $set: payload as Partial<CollectionType>
     });
   }
 
-  generateFilter(searchParams?: URLSearchParams) {
+  makeFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<CollectionType>> = {};
 
     if (searchParams) {
@@ -99,18 +112,24 @@ export abstract class BaseCollection<CollectionType extends Document> {
     return filter;
   }
 
-  private static getQuery(searchParams?: URLSearchParams) {
+  static makeQuery<Type>(params?: GetManyParams<Type>) {
     const query: Partial<QueryProps> = {};
 
-    if (searchParams) {
+    if (params) {
       this.queryFields.forEach((field) => {
-        const value = searchParams.get(field);
+        const value = params instanceof URLSearchParams ? params.get(field) : params[field];
 
-        if (value) query[field] = transform<any>(value);
+        if (value) query[field] = transform(value);
       });
     }
 
     return query;
+  }
+
+  static makeParams<Type>(params?: GetManyParams<Type>) {
+    return params instanceof URLSearchParams
+      ? params
+      : new URLSearchParams(params as Record<string, string>);
   }
 
   // async delete() {}

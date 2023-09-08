@@ -4,7 +4,7 @@ import { BaseCollection } from './base.collection';
 export class ContributorsCollection extends BaseCollection<ContributorSchema> {}
 
 export const contributors = new ContributorsCollection(CollectionNames.CONTRIBUTORS, {
-  required: ['id', 'login', 'name', 'url'],
+  required: ['id', 'login', 'name', 'url', 'created_at'],
   properties: {
     id: {
       bsonType: 'int',
@@ -22,6 +22,10 @@ export const contributors = new ContributorsCollection(CollectionNames.CONTRIBUT
       description: 'must be provided.'
     },
     url: {
+      bsonType: 'string',
+      description: 'must be provided.'
+    },
+    created_at: {
       bsonType: 'string',
       description: 'must be provided.'
     }

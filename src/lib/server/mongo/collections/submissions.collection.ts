@@ -18,7 +18,14 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
       throw Error(`Submission with item ID, ${item_id}, already exists for ${owner}.`);
     }
 
-    const result = await super.create({ item_id, owner, ...resource });
+    const created_at = new Date().toISOString();
+    const result = await super.create({
+      item_id,
+      owner,
+      ...resource,
+      created_at,
+      updated_at: created_at
+    });
 
     await items.updateSubmissions(item_id, result.insertedId);
 
@@ -27,7 +34,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
 }
 
 export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS, {
-  required: ['experience', 'hours', 'owner', 'item_id'],
+  required: ['experience', 'hours', 'owner', 'item_id', 'created_at', 'updated_at'],
   properties: {
     approval: {
       bsonType: ['string', 'null'],
@@ -53,6 +60,14 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
     },
     owner_id: {
       bsonType: 'int',
+      description: 'must be provided.'
+    },
+    created_at: {
+      bsonType: 'string',
+      description: 'must be provided.'
+    },
+    updated_at: {
+      bsonType: 'string',
       description: 'must be provided.'
     }
   }

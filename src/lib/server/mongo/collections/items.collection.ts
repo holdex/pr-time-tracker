@@ -1,21 +1,52 @@
-import type { Filter, ObjectId } from 'mongodb';
+import type { WithId, Filter, ObjectId } from 'mongodb';
 
-import { ItemType } from '$lib/constants';
+import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
-import { CollectionNames, type ContributorSchema, type ItemSchema } from '../types';
+import {
+  CollectionNames,
+  type ContributorSchema,
+  type GetManyParams,
+  type ItemSchema
+} from '../types';
 import { BaseCollection } from './base.collection';
 
 export class ItemsCollection extends BaseCollection<ItemSchema> {
-  generateFilter(searchParams?: URLSearchParams) {
-    const filter: Partial<Filter<ItemSchema>> = super.generateFilter(searchParams);
-    const contributor = transform<string>(searchParams?.get('contributor'));
+  getMany = async (params?: GetManyParams<ItemSchema>) => {
+    const searchParams = ItemsCollection.makeParams(params);
+    const contributor = transform<string>(searchParams.get('contributor'));
 
-    filter.merged = filter.merged ?? true;
-    if (contributor) filter.contributors = { $in: [contributor] };
+    if (!contributor) return await super.getMany(searchParams);
 
-    return filter;
-  }
+    const filter = this.makeFilter(searchParams);
+    const submitted = transform<boolean>(searchParams.get('submitted'));
+    const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
+
+    return await this.context
+      .aggregate<WithId<ItemSchema>>([
+        { $match: filter },
+        {
+          $lookup: {
+            from: CollectionNames.SUBMISSIONS,
+            localField: 'owner',
+            foreignField: 'owner',
+            as: 'submission'
+          }
+        },
+        {
+          $unwind: { path: '$submission', preserveNullAndEmptyArrays: true }
+        },
+        {
+          $match: {
+            submission: typeof submitted === 'boolean' ? { $exists: submitted } : undefined
+          }
+        }
+      ])
+      .skip(skip || 0)
+      .limit(count || MAX_DATA_CHUNK)
+      .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
+      .toArray();
+  };
 
   async updateSubmissions(itemId: number, submissionId: ObjectId) {
     const submissionIds = new Set(
@@ -38,17 +69,34 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
       id: itemId
     });
     const [contributorIds, contributors] = [
-      new Set((item?.contributorIds || []).concat(contributor?._id || [])),
+      new Set(
+        (item?.contributor_ids || item?.contributorIds || [])!
+          .map(String)
+          .concat(contributor?._id?.toString() || [])
+      ),
       new Set((item?.contributors || []).concat(contributor?.login || []))
     ];
 
-    return { contributorIds: Array.from(contributorIds), contributors: Array.from(contributors) };
+    return {
+      contributorIds: Array.from(contributorIds),
+      contributors: Array.from(contributors)
+    };
+  }
+
+  makeFilter(searchParams?: URLSearchParams) {
+    const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
+    const contributor = transform<string>(searchParams?.get('contributor'));
+
+    filter.merged = filter.merged ?? true;
+    if (contributor) filter.contributors = { $in: [contributor] };
+
+    return filter;
   }
 }
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
   required: [
-    'contributorIds',
+    'contributor_ids',
     'id',
     'merged',
     'org',
@@ -57,10 +105,13 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     'type',
     'url',
     'title',
-    'submissions'
+    'submissions',
+    'created_at',
+    'updated_at',
+    'closed_at'
   ],
   properties: {
-    contributorIds: { bsonType: 'array', description: 'must be an array.' },
+    contributor_ids: { bsonType: 'array', description: 'must be an array.' },
     contributors: { bsonType: 'array', description: 'must be an array.' },
     id: {
       bsonType: 'int',
@@ -92,8 +143,17 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       bsonType: 'string',
       description: 'must be provided.'
     },
-    closedAt: {
-      bsonType: ['string', 'null']
+    created_at: {
+      bsonType: ['string', 'null'],
+      description: 'must be provided.'
+    },
+    updated_at: {
+      bsonType: ['string', 'null'],
+      description: 'must be provided.'
+    },
+    closed_at: {
+      bsonType: ['string', 'null'],
+      description: 'must be provided.'
     }
-  } as any // remove any after you've updated Front-end usage of former ItemSchema
+  } as any
 });

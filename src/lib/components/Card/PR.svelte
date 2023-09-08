@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** deps */ 
+  /** deps */
   import type { CardProps, ToggleProps } from '../types';
 
   import Button from '$lib/components/Button/index.svelte';
@@ -72,7 +72,7 @@
       const result = await onSubmit(
         data,
         payload,
-        isAdmin ? payload.approved === data.approved : data.submitted
+        isAdmin ? payload.approved === data.approved : Boolean(data.submission)
       )(e);
 
       if (result) data = result;
@@ -99,7 +99,7 @@
       {/if}
     </span>
 
-    {#if !isAdmin && data.submitted}
+    {#if !isAdmin && data.submission}
       <div class="flex gap-1.5">
         <span>Approved:</span>
         <span class="text-t1 capitalize">{data.approved || 'Pending'}</span>
@@ -111,7 +111,7 @@
         size="small"
         text={isAdmin
           ? `${data.approved ? 'Disapprov' : 'Approv'}${loading ? 'ing...' : 'e'}`
-          : `${data.submitted ? 'Re-' : ''}Submit${loading ? 'ting...' : ''}`}
+          : `${data.submission ? 'Re-' : ''}Submit${loading ? 'ting...' : ''}`}
         variant={isAdmin ? (data.approved ? 'secondary' : 'primary') : 'secondary'}
         class="w-full min-w-full ml-auto {data.approved && !loading
           ? '!text-neg'

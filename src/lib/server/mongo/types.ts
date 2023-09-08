@@ -3,20 +3,36 @@ import type { BSONTypeAlias, ObjectId, Sort, SortDirection } from 'mongodb';
 
 import type { ItemType } from '$lib/constants';
 
-export interface JSONSchema<CollectionType> {
-  required?: Array<keyof Omit<CollectionType, '_id'>>;
-  properties: Record<
-    keyof Omit<CollectionType, '_id' | 'createdAt' | 'updatedAt' | 'created_at' | 'updated_at'>,
-    { bsonType?: BSONTypeAlias | BSONTypeAlias[]; description?: string; enum?: string[] }
-  >;
+type SchemaProperty = {
+  bsonType?: BSONTypeAlias | BSONTypeAlias[];
+  description?: string;
+  enum?: string[];
+};
+
+export interface TimeStamps {
+  /** Best to be in ISO format. */
+  created_at?: string | number;
+  /** Best to be in ISO format. */
+  updated_at?: string | null | number;
 }
 
+export interface JSONSchema<CollectionType> {
+  required?: Array<keyof Omit<CollectionType, '_id'>>;
+  properties: Record<keyof Omit<CollectionType, '_id' | 'updated_at'>, SchemaProperty> & {
+    updated_at?: SchemaProperty;
+  };
+}
+
+export type GetManyParams<CollectionType> =
+  | URLSearchParams
+  | Partial<QueryProps & Record<keyof CollectionType, string | number | undefined | null>>;
+
 export type QueryProps<CollectionType = ItemSchema> = {
-  sort?: Sort;
-  sort_by?: keyof CollectionType;
-  sort_order?: SortDirection;
-  skip?: number;
-  count?: number;
+  sort?: Sort | null;
+  sort_by?: keyof CollectionType | null;
+  sort_order?: SortDirection | null;
+  skip?: number | null;
+  count?: number | null;
 };
 
 export enum CollectionNames {
@@ -25,41 +41,47 @@ export enum CollectionNames {
   SUBMISSIONS = 'submissions'
 }
 
-export type ItemSchema = {
+export interface ItemSchema extends TimeStamps {
   _id?: ObjectId;
   id: number;
   org: string;
   repo: string;
   owner: string;
   title: string;
-  contributorIds: (ObjectId | undefined | null)[];
+  /** @deprecated - Use `contributor_ids` instead. */
+  contributorIds?: (ObjectId | undefined | null | string)[];
+  contributor_ids: (ObjectId | undefined | null | string)[];
   /** An array of contributor usernames/logins. Useful for query items when `_id` not available (in object/payload). */
   contributors: string[];
   type: ItemType;
   url: string;
+  /** @deprecated - Use `created_at` instead. */
   createdAt?: string;
+  /** @deprecated - Use `updated_at` instead. */
   updatedAt?: string;
-  closedAt?: string;
+  /** @deprecated - Use `closed_at` instead. */
+  closedAt?: string | null;
+  closed_at?: string | null;
   merged?: boolean;
-  // submission?: SubmissionSchema;
+  submission?: SubmissionSchema;
   submissions: Array<SubmissionSchema | ObjectId>;
   // The following will be deprecated and deleted
-  submitted?: boolean;
+  // submitted?: boolean;
   hours?: string;
   experience?: any;
   approved?: boolean;
-};
+}
 
-export type ContributorSchema = {
+export interface ContributorSchema extends TimeStamps {
   _id?: ObjectId;
   id: number;
   name: string;
   login: string;
   url: string;
   avatarUrl: string;
-};
+}
 
-export type SubmissionSchema = {
+export interface SubmissionSchema extends TimeStamps {
   _id?: ObjectId;
   hours: string;
   experience: Experience;
@@ -68,7 +90,7 @@ export type SubmissionSchema = {
   /** Note that this is equivalent to `contributorId`(s) in `ItemSchema`. */
   owner_id: number;
   item_id: number;
-};
+}
 
 export enum Approval {
   APPROVED = 'approved',
