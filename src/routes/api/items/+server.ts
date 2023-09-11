@@ -72,66 +72,13 @@ import { contributors, items } from '$lib/server/mongo/collections';
 //   return { filter, count };
 // };
 
-// export const GET: RequestHandler = async ({ url: {searchParams} }) => {
-
-//   const { filter, count } = generateFilter(searchParams);
-//   const mongoDB = await clientPromise;
-//   const documents = await (
-//     await getDocumentsInfo(mongoDB.db(config.mongoDBName), CollectionNames.ITEMS, filter, count)
-//   ).toArray();
-
-//   return json({ message: 'success', result: documents }, { status: SUCCESS_OK });
-// };
-
 export const GET: RequestHandler = async ({ url: { searchParams } }) => {
   try {
-    // const results = await items.context.find({ contributors: { $exists: false } }).toArray();
-
-    // await Promise.all(
-    //   results?.map(async (result) => {
-    //     await Promise.all(
-    //       result.contributorIds!.map(async (contributorId) => {
-    //         // if (result.contributors?.length > 1) return;
-    //         const { contributorIds, contributors: contribs } = await items.makeContributors(
-    //           result.id,
-    //           await contributors.getOne(contributorId!.toString())
-    //         );
-    //         result.contributor_ids = contributorIds;
-    //         result.contributors = contribs;
-    //         result.submissions = result.submissions || [];
-    //         result.closed_at = result.closedAt || null;
-    //         result.created_at = result.createdAt;
-    //         result.updated_at = result.updatedAt;
-    //       })
-    //     );
-
-    //     await items.update(result);
-    //   })
-    // );
-
     return json({ data: await items.getMany(searchParams) });
   } catch (e) {
     return jsonError(e, '/api/items');
   }
 };
-
-// export const POST: RequestHandler = async ({ request }) => {
-//   const requestBody: ItemSchema = await request.json();
-
-//   if (requestBody.id === undefined) {
-//     throw error(BAD_REQUEST, 'id_is_missing');
-//   }
-
-//   const mongoDB = await clientPromise;
-//   const res = await updateCollectionInfo(
-//     mongoDB.db(config.mongoDBName),
-//     CollectionNames.ITEMS,
-//     { id: requestBody.id },
-//     { $set: { ...requestBody } }
-//   );
-
-//   return json({ message: 'success', result: res }, { status: SUCCESS_OK });
-// };
 
 export const PATCH: RequestHandler = async ({ request }) => {
   try {
