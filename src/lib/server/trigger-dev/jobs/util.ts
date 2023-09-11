@@ -4,7 +4,7 @@ import type { ObjectId, Document, ModifyResult } from 'mongodb';
 
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import type { ContributorSchema } from '$lib/server/mongo/operations';
+import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import type {
   PullRequest,
   User,
@@ -67,7 +67,7 @@ const getPrInfo = async (
   organization: Organization | undefined,
   sender: User,
   contributorRes: ModifyResult<ContributorSchema>
-): Promise<any> => {
+): Promise<ItemSchema> => {
   const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?._id);
 
   let prMerged = false;
@@ -82,12 +82,12 @@ const getPrInfo = async (
     org: organization?.login ?? 'holdex',
     repo: repository.name,
     owner: pr.user.login || sender.login,
-    contributorIds,
+    contributor_ids: contributorIds,
     url: pr.url,
-    createdAt: pr?.created_at,
-    updatedAt: pr?.updated_at,
+    created_at: pr?.created_at,
+    updated_at: pr?.updated_at,
     merged: prMerged,
-    closedAt: pr.closed_at ?? undefined
+    closed_at: pr.closed_at ?? undefined
   };
 };
 
