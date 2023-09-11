@@ -44,6 +44,9 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
           if (contributor) item.contributor_ids!.push(contributor.id);
         });
         if (!item.submission_ids) item.submission_ids = [];
+        if (!item.created_at) item.created_at = item.createdAt;
+        if (!item.updated_at) item.updated_at = item.updatedAt;
+        if (!item.closed_at) item.closed_at = item.closedAt;
 
         if (canUnsetDeprecated) {
           delete item.contributorIds;
