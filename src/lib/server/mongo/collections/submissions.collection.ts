@@ -7,18 +7,18 @@ import { items } from './items.collection';
 export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
   async create({
     item_id,
-    owner,
+    owner_id,
     ...resource
   }: OptionalId<SubmissionSchema>): Promise<InsertOneResult<SubmissionSchema>> {
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
 
-    if (await this.getOne({ item_id, owner })) {
-      throw Error(`Submission with item ID, ${item_id}, already exists for ${owner}.`);
+    if (await this.getOne({ item_id, owner_id })) {
+      throw Error(`Submission with item ID, ${item_id}, already exists for ${owner_id}.`);
     }
 
-    const result = await super.create({ item_id, owner, ...resource });
+    const result = await super.create({ item_id, owner_id, ...resource });
 
     await items.updateSubmissions(item_id, result.insertedId);
 
@@ -27,7 +27,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
 }
 
 export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS, {
-  required: ['experience', 'hours', 'owner', 'item_id'],
+  required: ['experience', 'hours', 'owner_id', 'item_id'],
   properties: {
     approval: {
       bsonType: ['string', 'null'],
@@ -45,10 +45,6 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
     },
     item_id: {
       bsonType: 'int',
-      description: 'must be provided.'
-    },
-    owner: {
-      bsonType: 'string',
       description: 'must be provided.'
     },
     owner_id: {

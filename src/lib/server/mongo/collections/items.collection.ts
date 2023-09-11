@@ -45,7 +45,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
   required: [
-    'contributorIds',
+    // 'contributor_ids',
     'id',
     'merged',
     'org',
@@ -57,8 +57,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     // 'submissions'
   ],
   properties: {
-    contributorIds: { bsonType: 'array', description: 'must be an array.' },
-    contributors: { bsonType: 'array', description: 'must be an array.' },
+    contributor_ids: { bsonType: 'array', description: 'must be an array.' },
     id: {
       bsonType: 'int',
       description: 'must be a number'
@@ -89,7 +88,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       bsonType: 'string',
       description: 'must be provided.'
     },
-    closedAt: {
+    closed_at: {
       bsonType: ['string', 'null']
     }
   } as any // remove any after you've updated Front-end usage of former ItemSchema
