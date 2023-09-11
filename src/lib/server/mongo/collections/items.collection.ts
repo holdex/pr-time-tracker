@@ -56,39 +56,29 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
             type: ItemType.PULL_REQUEST,
             id: itemId
           })
-        )?.submissions || []
+        )?.submission_ids || []
       ).concat(submissionId || [])
     );
 
-    await this.update({ id: itemId, submissions: Array.from(submissionIds) });
+    await this.update({ id: itemId, submission_ids: Array.from(submissionIds) });
   }
 
-  async makeContributors(itemId: number, contributor: ContributorSchema | null) {
+  async makeContributorIds(itemId: number, contributor: ContributorSchema | null) {
     const item = await items.getOne({
       type: ItemType.PULL_REQUEST,
       id: itemId
     });
-    const [contributorIds, contributors] = [
-      new Set(
-        (item?.contributor_ids || item?.contributorIds || [])!
-          .map(String)
-          .concat(contributor?._id?.toString() || [])
-      ),
-      new Set((item?.contributors || []).concat(contributor?.login || []))
-    ];
+    const contributorIds = new Set((item?.contributor_ids || []).concat(contributor?.id || []));
 
-    return {
-      contributorIds: Array.from(contributorIds),
-      contributors: Array.from(contributors)
-    };
+    return Array.from(contributorIds);
   }
 
   makeFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
-    const contributor = transform<string>(searchParams?.get('contributor'));
+    const contributor = transform<number>(searchParams?.get('contributor_id'));
 
     filter.merged = filter.merged ?? true;
-    if (contributor) filter.contributors = { $in: [contributor] };
+    if (contributor) filter.contributor_ids = { $in: [contributor] };
 
     return filter;
   }
@@ -105,7 +95,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     'type',
     'url',
     'title'
-    // 'submissions',
+    // 'submission_ids',
     // 'created_at',
     // 'updated_at',
     // 'closed_at'
@@ -133,7 +123,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       bsonType: 'string',
       description: 'must be provided.'
     },
-    submissions: { bsonType: 'array', description: 'must be an array.' },
+    submission_ids: { bsonType: 'array', description: 'must be an array.' },
     title: { bsonType: 'string', description: 'must be provided.' },
     type: {
       enum: Object.values(ItemType),

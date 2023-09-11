@@ -48,11 +48,11 @@ export interface ItemSchema extends TimeStamps {
   repo: string;
   owner: string;
   title: string;
-  /** @deprecated - Use `contributor_ids` instead. */
-  contributorIds?: (ObjectId | undefined | null | string)[];
-  contributor_ids: (ObjectId | undefined | null | string)[];
-  /** An array of contributor usernames/logins. Useful for query items when `_id` not available (in object/payload). */
-  contributors: string[];
+  /** @deprecated - Will use `contributor_ids` instead. */
+  contributorIds?: (ObjectId | undefined | null)[];
+  contributor_ids?: number[];
+  /** `contributors` here is just for type safety. It may be populated on `Item` retrieval. */
+  contributors?: ContributorSchema[];
   type: ItemType;
   url: string;
   /** @deprecated - Use `created_at` instead. */
@@ -61,10 +61,15 @@ export interface ItemSchema extends TimeStamps {
   updatedAt?: string;
   /** @deprecated - Use `closed_at` instead. */
   closedAt?: string | null;
-  closed_at?: string | null;
   merged?: boolean;
+  created_at?: string | number;
+  updated_at?: string | number;
+  closed_at?: string | null;
+  /** Submission here (is just for type safety and) is the `submission` pertaining to the current user. It may be populated during `Item` retrieval. */
   submission?: SubmissionSchema;
-  submissions: Array<SubmissionSchema | ObjectId>;
+  submission_ids?: ObjectId[];
+  /** `submissions` here is just for type safety. It may be populated on `Item` retrieval. */
+  submissions?: SubmissionSchema[];
   // The following will be deprecated and deleted
   // submitted?: boolean;
   hours?: string;

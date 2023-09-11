@@ -1,6 +1,6 @@
 import { Github, events } from '@trigger.dev/github';
 
-import type { ObjectId, Document, ModifyResult } from 'mongodb';
+import type { Document, ModifyResult } from 'mongodb';
 
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
@@ -40,10 +40,7 @@ const getPrInfo = async (
   sender: User,
   contributorRes: ModifyResult<ContributorSchema>
 ): Promise<ItemSchema> => {
-  const { contributorIds, contributors } = await items.makeContributors(
-    pr.id,
-    contributorRes.value
-  );
+  const contributorIds = await items.makeContributorIds(pr.id, contributorRes.value);
   let prMerged = false;
 
   if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;
@@ -56,7 +53,6 @@ const getPrInfo = async (
     repo: repository.name,
     owner: pr.user.login || sender.login,
     contributor_ids: contributorIds,
-    contributors,
     url: pr.url,
     created_at: pr?.created_at,
     updated_at: pr?.updated_at,
