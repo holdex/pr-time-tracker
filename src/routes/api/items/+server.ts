@@ -80,6 +80,24 @@ export const GET: RequestHandler = async ({ url: { searchParams } }) => {
   }
 };
 
+// export const POST: RequestHandler = async ({ request }) => {
+//   const requestBody: ItemSchema = await request.json();
+
+//   if (requestBody.id === undefined) {
+//     throw error(BAD_REQUEST, 'id_is_missing');
+//   }
+
+//   const mongoDB = await clientPromise;
+//   const res = await updateCollectionInfo(
+//     mongoDB.db(config.mongoDBName),
+//     CollectionNames.ITEMS,
+//     { id: requestBody.id },
+//     { $set: { ...requestBody } }
+//   );
+
+//   return json({ message: 'success', result: res }, { status: SUCCESS_OK });
+// };
+
 export const PATCH: RequestHandler = async ({ request }) => {
   try {
     const body = transform<ItemSchema>(await request.json())!;
