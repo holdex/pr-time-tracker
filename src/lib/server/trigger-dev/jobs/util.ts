@@ -1,6 +1,6 @@
 import { Github, events } from '@trigger.dev/github';
 
-import type { ObjectId, Document, ModifyResult } from 'mongodb';
+import type { Document, ModifyResult } from 'mongodb';
 
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
@@ -32,26 +32,26 @@ const getContributorInfo = (user: User) => ({
   avatarUrl: user.avatar_url
 });
 
-const addContributorIfNotExists = async (prId: number, contributorId: ObjectId | undefined) => {
+const addContributorIfNotExists = async (prId: number, contributorId: number | undefined) => {
   const mongoDB = await clientPromise;
 
   const contributorIds = (
-    await mongoDB.db(config.mongoDBName).collection(CollectionNames.ITEMS).findOne({
+    await mongoDB.db(config.mongoDBName).collection<ItemSchema>(CollectionNames.ITEMS).findOne({
       type: ItemType.PULL_REQUEST,
       id: prId
     })
-  )?.contributorIds;
+  )?.contributor_ids;
 
   if (contributorIds === undefined) {
-    return [contributorId];
+    return [];
   }
 
   if (contributorId === undefined) {
     return contributorIds;
   }
 
-  const isInArray = contributorIds.some((currentContributorId: ObjectId) =>
-    currentContributorId.equals(contributorId)
+  const isInArray = contributorIds.some(
+    (currentContributorId) => currentContributorId === contributorId
   );
 
   if (!isInArray) {
@@ -68,7 +68,7 @@ const getPrInfo = async (
   sender: User,
   contributorRes: ModifyResult<ContributorSchema>
 ): Promise<ItemSchema> => {
-  const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?._id);
+  const contributorIds = await addContributorIfNotExists(pr.id, contributorRes.value?.id);
 
   let prMerged = false;
   if (pr.closed_at && (pr as PullRequest).merged) {
