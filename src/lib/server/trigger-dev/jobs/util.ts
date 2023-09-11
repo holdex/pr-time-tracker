@@ -57,7 +57,8 @@ const getPrInfo = async (
     created_at: pr?.created_at,
     updated_at: pr?.updated_at,
     merged: prMerged,
-    closed_at: pr.closed_at ?? undefined
+    closed_at: pr.closed_at ?? undefined,
+    submissions: []
   };
 };
 
