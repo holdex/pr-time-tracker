@@ -102,7 +102,6 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
   ],
   properties: {
     contributor_ids: { bsonType: 'array', description: 'must be an array.' },
-    contributors: { bsonType: 'array', description: 'must be an array.' },
     id: {
       bsonType: 'int',
       description: 'must be a number'

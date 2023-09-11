@@ -91,8 +91,7 @@ export interface SubmissionSchema extends TimeStamps {
   hours: string;
   experience: Experience;
   approval?: Approval;
-  owner: string;
-  /** Note that this is equivalent to `contributorId`(s) in `ItemSchema`. */
+  /** Note that this is equivalent to `contributor_id`(s) in `ItemSchema`. */
   owner_id: number;
   item_id: number;
 }
