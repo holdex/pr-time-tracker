@@ -9,10 +9,10 @@ import { BaseCollection } from './base.collection';
 export class ItemsCollection extends BaseCollection<ItemSchema> {
   generateFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<ItemSchema>> = super.generateFilter(searchParams);
-    const contributor = transform<string>(searchParams?.get('contributor'));
+    const contributorId = transform<number>(searchParams?.get('contributor_id'));
 
     filter.merged = filter.merged ?? true;
-    if (contributor) filter.contributors = { $in: [contributor] };
+    if (contributorId) filter.contributor_ids = { $in: [contributorId] };
 
     return filter;
   }
@@ -25,24 +25,21 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
             type: ItemType.PULL_REQUEST,
             id: itemId
           })
-        )?.submissions || []
+        )?.submission_ids || []
       ).concat(submissionId || [])
     );
 
-    await this.update({ id: itemId, submissions: Array.from(submissionIds) });
+    await this.update({ id: itemId, submission_ids: Array.from(submissionIds) });
   }
 
-  async makeContributors(itemId: number, contributor: ContributorSchema | null) {
+  async makeContributorIds(itemId: number, contributor: ContributorSchema | null) {
     const item = await items.getOne({
       type: ItemType.PULL_REQUEST,
       id: itemId
     });
-    const [contributorIds, contributors] = [
-      new Set((item?.contributorIds || []).concat(contributor?._id || [])),
-      new Set((item?.contributors || []).concat(contributor?.login || []))
-    ];
+    const contributorIds = new Set((item?.contributor_ids || []).concat(contributor?.id || []));
 
-    return { contributorIds: Array.from(contributorIds), contributors: Array.from(contributors) };
+    return Array.from(contributorIds);
   }
 }
 

@@ -1,6 +1,6 @@
 import { Github, events } from '@trigger.dev/github';
 
-import type { ObjectId, Document, ModifyResult } from 'mongodb';
+import type { Document, ModifyResult } from 'mongodb';
 
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
@@ -33,19 +33,6 @@ const getContributorInfo = (user: User) => ({
   avatarUrl: user.avatar_url
 });
 
-const addContributorIfNotExists = async (prId: number, contributor: ContributorSchema | null) => {
-  const item = await items.getOne({
-    type: ItemType.PULL_REQUEST,
-    id: prId
-  });
-  const [contributorIds, contributors] = [
-    new Set((item?.contributorIds || []).concat(contributor?._id || [])),
-    new Set((item?.contributors || []).concat(contributor?.login || []))
-  ];
-
-  return { contributorIds: Array.from(contributorIds), contributors: Array.from(contributors) };
-};
-
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
   repository: Repository,
@@ -53,10 +40,7 @@ const getPrInfo = async (
   sender: User,
   contributorRes: ModifyResult<ContributorSchema>
 ): Promise<ItemSchema> => {
-  const { contributorIds, contributors } = await items.makeContributors(
-    pr.id,
-    contributorRes.value
-  );
+  const contributorIds = await items.makeContributorIds(pr.id, contributorRes.value);
   let prMerged = false;
 
   if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;
@@ -68,14 +52,12 @@ const getPrInfo = async (
     org: organization?.login ?? 'holdex',
     repo: repository.name,
     owner: pr.user.login || sender.login,
-    contributorIds,
-    contributors,
+    contributor_ids: contributorIds,
     url: pr.url,
-    createdAt: pr?.created_at,
-    updatedAt: pr?.updated_at,
+    created_at: pr?.created_at,
+    updated_at: pr?.updated_at,
     merged: prMerged,
-    closedAt: pr.closed_at ?? undefined,
-    submissions: []
+    closed_at: pr.closed_at ?? undefined
   };
 };
 
