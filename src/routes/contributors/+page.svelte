@@ -43,8 +43,8 @@
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
   <ul class="grid gap-4 md:gap-8">
-    {#each contributors as { avatarUrl, login, name }}
-      <Contributor avatar_url={avatarUrl} {name} username={login} />
+    {#each contributors as { avatarUrl, login, name, id }}
+      <Contributor avatar_url={avatarUrl} {name} {id} username={login} />
     {:else}
       <li class="text-t3">
         {#if isLoading}

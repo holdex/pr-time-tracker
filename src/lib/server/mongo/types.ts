@@ -47,6 +47,7 @@ export interface ItemSchema extends TimeStamps {
   org: string;
   repo: string;
   owner: string;
+  owner_id: number;
   title: string;
   /** @deprecated - Will use `contributor_ids` instead. */
   contributorIds?: (ObjectId | undefined | null)[];

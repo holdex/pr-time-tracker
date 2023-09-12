@@ -25,7 +25,7 @@
   export let activeToggleButton: ToggleProps['activeButton'] = 'left';
 
   /** vars */
-  const user = $page.data.user as User;
+  let user: User;
   let isArchiveRoute = false;
   let isLoading = false;
 
@@ -46,6 +46,7 @@
   };
 
   /** react-ibles */
+  $: user = $page.data.user;
   $: isArchiveRoute = $page.url.pathname.includes('archive');
 </script>
 

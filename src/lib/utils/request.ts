@@ -46,7 +46,7 @@ export const transform = <Result = unknown>(
     return parseds;
   }
 
-  return (!preserveNumber ? Number(value) || value : value) as Result;
+  return (!preserveNumber ? (isNaN(Number(value)) ? value : Number(value)) : value) as Result;
 };
 
 export const axios = ax.create({

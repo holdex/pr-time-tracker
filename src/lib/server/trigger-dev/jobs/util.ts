@@ -52,6 +52,7 @@ const getPrInfo = async (
     org: organization?.login ?? 'holdex',
     repo: repository.name,
     owner: pr.user.login || sender.login,
+    owner_id: pr.user.id || sender.id,
     contributor_ids: contributorIds,
     url: pr.url,
     created_at: pr?.created_at,

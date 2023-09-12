@@ -13,15 +13,16 @@
   /** props */
   export let name = '';
   export let avatar_url = '';
+  export let id = -1;
   export let username = '';
 
   /** lifecycles */
-  onMount(() => preloadData(`/contributors/${username}`));
+  onMount(() => preloadData(`/contributors/${id}`));
 </script>
 
 <li>
   <a
-    href="/contributors/{username}"
+    href="/contributors/{id}?n={name || username}"
     class="flex items-center p-4 gap-4 relative border border-solid border-l4 bg-l1 shadow-input rounded-xl text-t1 transition-all list-none animate-fadeIn dark:bg-l2 xs:w-full hover:scale-102.5 focus:scale-105"
     data-sveltekit-preload-data="off"
     on:click={() => ($snackbar = { open: true, text: '', type: 'busy' })}>

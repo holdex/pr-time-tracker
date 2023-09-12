@@ -18,6 +18,8 @@
   export let data: LayoutData;
 
   /** vars */
+  let contributorName: string | null;
+  let contributorId: string;
   let isArchiveRoute = false;
   let route = routes.contributors.path;
   let isBaseRoute = true;
@@ -30,7 +32,11 @@
   });
 
   /** react-ibles */
-  $: route = $page.url.pathname;
+  $: {
+    contributorName = $page.url.searchParams.get('n');
+    contributorId = $page.params.id;
+    route = $page.url.pathname;
+  }
   $: isBaseRoute = route === routes.contributors.path;
   $: isArchiveRoute = route.includes('archive');
 </script>
@@ -39,11 +45,11 @@
   title={`${!isBaseRoute ? '' : routes.contributors.title}${
     isBaseRoute
       ? ''
-      : `${contributor?.name || $page.params.username}${isArchiveRoute ? ' ⏤ Archive' : ''}`
+      : `${contributor?.name || contributorName}${isArchiveRoute ? ' ⏤ Archive' : ''}`
   }`}
-  breadcrumbs={$page.params.username &&
-    `Contributors / ${$page.params.username}${isArchiveRoute ? ' / Archive' : ''}`}
-  archivePath={`${routes.contributors.path}/${$page.params.username}/archive`}
+  breadcrumbs={contributorId &&
+    `Contributors / ${contributorName}${isArchiveRoute ? ' / Archive' : ''}`}
+  archivePath={`${routes.contributors.path}/${contributorId}/archive`}
   activeToggleButton={$activeTab.position}
   toggle={isBaseRoute
     ? undefined
