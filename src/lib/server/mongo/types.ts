@@ -18,7 +18,7 @@ export interface TimeStamps {
 
 export interface JSONSchema<CollectionType> {
   required?: Array<keyof Omit<CollectionType, '_id'>>;
-  properties: Record<keyof Omit<CollectionType, '_id' | 'updated_at'>, SchemaProperty> & {
+  properties: Record<keyof Omit<CollectionType, '_id' | 'updated_at' | 'prs'>, SchemaProperty> & {
     updated_at?: SchemaProperty;
   };
 }
@@ -84,13 +84,14 @@ export interface ContributorSchema extends TimeStamps {
   login: string;
   url: string;
   avatarUrl: string;
+  prs?: ItemSchema[];
 }
 
 export interface SubmissionSchema extends TimeStamps {
   _id?: ObjectId;
   hours: string;
   experience: Experience;
-  approval?: Approval;
+  approval: Approval;
   /** Note that this is equivalent to `contributor_id`(s) in `ItemSchema`. */
   owner_id: number;
   item_id: number;

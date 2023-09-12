@@ -31,7 +31,7 @@
     prs.approved = await getPRs({
       submitted: true,
       state: ItemState.APPROVED,
-      owner: data.contributor.login
+      contributor_id: data.contributor.id
     });
   });
 

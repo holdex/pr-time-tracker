@@ -45,7 +45,7 @@ export const routes: Record<'contributors' | 'index' | 'login' | 'prs' | 'prsArc
   }
 };
 
-export const ResponseHeadersInit = {
+export const responseHeadersInit = {
   'content-type': 'application/json; charset=utf-8',
   accept: 'application/json',
   'Cache-Control': 'max-age=300, s-maxage=300, stale-if-error=120'

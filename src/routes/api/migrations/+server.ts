@@ -6,7 +6,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
-import { ResponseHeadersInit } from '$lib/config';
+import { responseHeadersInit } from '$lib/config';
 import { jsonError, transform } from '$lib/utils';
 
 export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) => {
@@ -80,7 +80,7 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
 
     return json(
       { message: 'success', extra: result.length, data: items },
-      { status: StatusCode.SuccessOK, headers: ResponseHeadersInit }
+      { status: StatusCode.SuccessOK, headers: responseHeadersInit }
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {

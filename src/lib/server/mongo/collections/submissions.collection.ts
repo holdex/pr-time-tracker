@@ -9,7 +9,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     item_id,
     owner_id,
     ...resource
-  }: OptionalId<SubmissionSchema>): Promise<InsertOneResult<SubmissionSchema>> {
+  }: OptionalId<Omit<SubmissionSchema, 'approval'>>): Promise<InsertOneResult<SubmissionSchema>> {
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
@@ -23,6 +23,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
       item_id,
       owner_id,
       ...resource,
+      approval: Approval.PENDING,
       created_at,
       updated_at: created_at
     });
@@ -34,10 +35,10 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
 }
 
 export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS, {
-  required: ['experience', 'hours', 'owner_id', 'item_id', 'created_at', 'updated_at'],
+  required: ['experience', 'hours', 'owner_id', 'item_id', 'created_at', 'updated_at', 'approval'],
   properties: {
     approval: {
-      bsonType: ['string', 'null'],
+      bsonType: 'string',
       enum: Object.values(Approval),
       description: 'must be one of the enum values.'
     },

@@ -4,6 +4,7 @@ import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import {
+  // Approval,
   CollectionNames,
   type ContributorSchema,
   type GetManyParams,
@@ -14,11 +15,12 @@ import { BaseCollection } from './base.collection';
 export class ItemsCollection extends BaseCollection<ItemSchema> {
   getMany = async (params?: GetManyParams<ItemSchema>) => {
     const searchParams = ItemsCollection.makeParams(params);
-    const contributor = transform<string>(searchParams.get('contributor'));
+    const contributor_id = transform<string>(searchParams.get('contributor_id'));
 
-    if (!contributor) return await super.getMany(searchParams);
+    if (!contributor_id) return await super.getMany(searchParams);
 
     const filter = this.makeFilter(searchParams);
+    // const approvals = transform<Approval[]>(searchParams.get('approvals'));
     const submitted = transform<boolean>(searchParams.get('submitted'));
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
 
@@ -29,7 +31,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
           $lookup: {
             from: CollectionNames.SUBMISSIONS,
             localField: 'owner',
-            foreignField: 'owner',
+            foreignField: 'owner_id',
             as: 'submission'
           }
         },
@@ -39,6 +41,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         {
           $match: {
             submission: typeof submitted === 'boolean' ? { $exists: submitted } : undefined
+            // ...(typeof submitted === 'boolean' ? { $exists: submitted } : {}),
+            // ...(approvals ? { approval: { $in: approvals } } : {})
           }
         }
       ])
@@ -75,10 +79,10 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
   makeFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
-    const contributor = transform<number>(searchParams?.get('contributor_id'));
+    const contributorId = transform<number>(searchParams?.get('contributor_id'));
 
     filter.merged = filter.merged ?? true;
-    if (contributor) filter.contributor_ids = { $in: [contributor] };
+    if (contributorId) filter.contributor_ids = { $in: [contributorId] };
 
     return filter;
   }

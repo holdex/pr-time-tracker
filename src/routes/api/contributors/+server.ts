@@ -7,7 +7,7 @@ import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ContributorSchema } from '$lib/server/mongo/operations';
 import { MAX_DATA_CHUNK } from '$lib/constants';
-import { ResponseHeadersInit } from '$lib/config';
+import { responseHeadersInit } from '$lib/config';
 
 export const GET: RequestHandler = async () => {
   try {
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async () => {
 
     return json(
       { message: 'success', result: contributors },
-      { status: StatusCode.SuccessOK, headers: ResponseHeadersInit }
+      { status: StatusCode.SuccessOK, headers: responseHeadersInit }
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {

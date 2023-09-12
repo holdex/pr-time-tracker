@@ -24,11 +24,11 @@
   $: usePREffect(async () => {
     isLoading = true;
     archive = await getPRs({
-      owner: user ? user.login : $page.params.username,
+      contributor_id: user ? user.id : Number($page.params.user_id),
       archived: true
     });
     isLoading = false;
-  }, [user?.login || $page.params.username]);
+  }, [user?.id || $page.params.user_id]);
 </script>
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">

@@ -64,7 +64,7 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 });
 
 export interface PRsQuery {
-  owner: string;
+  contributor_id: number;
   type?: ItemType;
   state?: ItemState;
   submitted?: boolean;
@@ -73,11 +73,11 @@ export interface PRsQuery {
 
 export const getPRs = async (query: PRsQuery, noCache = false) => {
   try {
-    const { owner, type, submitted, state, archived } = query;
+    const { contributor_id, type, submitted, state, archived } = query;
     const response = await axios.get<{ data: ItemSchema[] }>(
       `/items?type=${
         type || ItemType.PULL_REQUEST
-      }&owner=${owner}&submitted=${submitted}&state=${state}&archived=${archived}${
+      }&contributor_id=${contributor_id}&submitted=${submitted}&state=${state}&archived=${archived}${
         noCache ? `&cache_bust=${String(Math.random()).slice(2, 10)}` : ''
       }`
     );

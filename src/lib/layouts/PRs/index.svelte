@@ -15,12 +15,12 @@
   /** props */
   export let prs: ItemSchema[];
   export let context: 'contributor' | 'user' = 'user';
-  export let query: Omit<PRsQuery, 'owner'> | undefined = undefined;
-  export let getQuery: (() => Omit<PRsQuery, 'owner'>) | undefined = undefined;
+  export let query: Omit<PRsQuery, 'contributor_id'> | undefined = undefined;
+  export let getQuery: (() => Omit<PRsQuery, 'contributor_id'>) | undefined = undefined;
 
   /** vars */
   const isContributorContext = context === 'contributor';
-  const owner = ($page.data[context] as User | ContributorSchema | null)?.login;
+  const contributorId = ($page.data[context] as User | ContributorSchema | null)?.id;
   let invalidateCache = false;
   let isLoading: boolean | undefined;
 
@@ -54,10 +54,13 @@
   /** react-ibles */
   $: usePRsEffect(async () => {
     if (!query && getQuery) query = getQuery();
-    if (!owner) return (isLoading = false);
+    if (!contributorId) return (isLoading = false);
     if (isLoading) return;
     isLoading = true;
-    prs = !prs.length || invalidateCache ? await getPRs({ ...query, owner }, invalidateCache) : prs;
+    prs =
+      !prs.length || invalidateCache
+        ? await getPRs({ ...query, contributor_id: contributorId }, invalidateCache)
+        : prs;
     isLoading = false;
     invalidateCache = false;
   }, [$activeTab.position]);
@@ -72,7 +75,7 @@
       {/key}
     {:else}
       <li class="text-t3">
-        {#if !$activeTab.title || !owner}
+        {#if !$activeTab.title || !contributorId}
           {$page.data.message || 'Please, wait...'}
         {:else if isLoading || isLoading === undefined}
           Loading {isContributorContext
