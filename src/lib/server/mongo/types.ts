@@ -32,19 +32,11 @@ export type ItemSchema = {
   repo: string;
   owner: string;
   title: string;
-  /** @deprecated - Will use `contributor_ids` instead. */
-  contributorIds?: (ObjectId | undefined | null)[];
   contributor_ids?: number[];
   /** `contributors` here is just for type safety. It may be populated on `Item` retrieval. */
   contributors?: ContributorSchema[];
   type: ItemType;
   url: string;
-  /** @deprecated - Use `created_at` instead. */
-  createdAt?: string;
-  /** @deprecated - Use `updated_at` instead. */
-  updatedAt?: string;
-  /** @deprecated - Use `closed_at` instead. */
-  closedAt?: string;
   created_at?: string;
   updated_at?: string;
   closed_at?: string;
