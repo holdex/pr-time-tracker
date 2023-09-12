@@ -11,9 +11,9 @@ import { jsonError, transform } from '$lib/utils';
 
 export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) => {
   const authToken = '1be7b56c';
-  const canUnsetDeprecated =
-    hostname.includes('invoice.holdex.io') &&
-    transform<boolean>(searchParams.get('unset_deprecated'));
+  // const canUnsetDeprecated =
+  //   hostname.includes('invoice.holdex.io') &&
+  //   transform<boolean>(searchParams.get('unset_deprecated'));
 
   if (transform<string>(searchParams.get('token')) !== authToken) {
     return jsonError(
@@ -28,55 +28,13 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
     const contributorsCollection = mongoDb.collection<ContributorSchema>(
       CollectionNames.CONTRIBUTORS
     );
-    const [items, contributors] = await Promise.all([
+    const [items] = await Promise.all([
       itemsCollection.find().toArray(),
       contributorsCollection.find().toArray()
     ]);
-    const result = await Promise.all(
-      items.map(async (item) => {
-        // if (!contributor_ids) {
-        item.contributor_ids = [];
-        item.contributorIds?.forEach((__id) => {
-          const contributor = contributors.find(({ _id }) => _id.toString() === __id?.toString());
+    const result = await Promise.all(items);
 
-          if (contributor) item.contributor_ids!.push(contributor.id);
-        });
-        if (!item.submission_ids) item.submission_ids = [];
-        if (!item.created_at) item.created_at = item.createdAt;
-        if (!item.updated_at) item.updated_at = item.updatedAt;
-        if (!item.closed_at) item.closed_at = item.closedAt;
-
-        if (canUnsetDeprecated) {
-          delete item.contributorIds;
-          delete item.contributors;
-          delete item.submissions;
-          delete item.closedAt;
-          delete item.createdAt;
-          delete item.updatedAt;
-        }
-
-        await itemsCollection.updateOne(
-          { _id: item._id },
-          {
-            $set: item,
-            ...(canUnsetDeprecated
-              ? {
-                  $unset: {
-                    contributorIds: [],
-                    contributors: [],
-                    submissions: [],
-                    createdAt: '',
-                    updatedAt: '',
-                    closedAt: ''
-                  }
-                }
-              : {})
-          }
-        );
-        return item;
-        // }
-      })
-    );
+    // Your migration script here...
 
     return json(
       { message: 'success', extra: result.length, data: items },
