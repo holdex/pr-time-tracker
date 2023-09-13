@@ -34,7 +34,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
     const body = transform<SubmissionSchema>(await request.json())!;
     const data = await submissions.update(body);
 
-    if (data.acknowledged) throw Error(`Could not make update for submission, ${body._id}.`);
+    if (!data.acknowledged) throw Error(`Could not make update for submission, ${body._id}.`);
 
     return json({ data: body });
   } catch (e) {
