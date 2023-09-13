@@ -30,8 +30,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         {
           $lookup: {
             from: CollectionNames.SUBMISSIONS,
-            localField: 'owner',
-            foreignField: 'owner_id',
+            localField: 'id',
+            foreignField: 'item_id',
             as: 'submission'
           }
         },
