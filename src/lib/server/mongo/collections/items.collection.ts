@@ -42,7 +42,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         {
           $match: {
             submission: definesSubmitted ? { $exists: submitted } : undefined,
-            'submission.approval': approvals ? { $in: approvals } : undefined
+            'submission.approval': approvals ? { $in: approvals } : undefined,
+            'submission.owner_id': submitted ? { $eq: contributor_id } : undefined
           }
         }
       ])
