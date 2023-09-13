@@ -103,7 +103,9 @@ export const PATCH: RequestHandler = async ({ request }) => {
     const body = transform<ItemSchema>(await request.json())!;
     const data = await items.update(body);
 
-    return json({ data: { _id: data.upsertedId, ...body } });
+    if (data.acknowledged) throw Error(`Could not make update for item, ${body._id}.`);
+
+    return json({ data: body });
   } catch (e) {
     return jsonError(e, '/api/items', 'PATCH');
   }

@@ -4,7 +4,8 @@ import {
   type Db,
   type Document,
   type Filter,
-  type OptionalUnlessRequiredId
+  type OptionalUnlessRequiredId,
+  type WithId
 } from 'mongodb';
 
 import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
@@ -90,12 +91,15 @@ export abstract class BaseCollection<CollectionType extends Document & TimeStamp
       .toArray();
   }
 
-  async update(payload: OptionalUnlessRequiredId<Partial<CollectionType>>) {
+  async update(payload: Partial<CollectionType> & { id?: string | number }) {
     payload.updated_at = payload.updated_at || new Date().toISOString();
 
-    return await this.context.updateOne({ _id: payload._id } as Filter<CollectionType>, {
-      $set: payload as Partial<CollectionType>
-    });
+    return await this.context.updateOne(
+      (payload.id ? { id: payload.id } : { _id: payload._id }) as Filter<CollectionType>,
+      {
+        $set: payload as Partial<CollectionType>
+      }
+    );
   }
 
   makeFilter(searchParams?: URLSearchParams) {

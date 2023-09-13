@@ -1,5 +1,5 @@
 /* eslint-disable no-shadow */
-import type { BSONTypeAlias, ObjectId, Sort, SortDirection } from 'mongodb';
+import type { BSONTypeAlias, ObjectId, Sort, SortDirection, WithId } from 'mongodb';
 
 import type { ItemType } from '$lib/constants';
 

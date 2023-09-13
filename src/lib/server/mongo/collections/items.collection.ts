@@ -31,8 +31,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         {
           $lookup: {
             from: CollectionNames.SUBMISSIONS,
-            localField: 'owner_id',
-            foreignField: 'owner_id',
+            localField: 'id',
+            foreignField: 'item_id',
             as: 'submission'
           }
         },
@@ -41,13 +41,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         },
         {
           $match: {
-            submission:
-              definesSubmitted || approvals
-                ? {
-                    ...(definesSubmitted ? { $exists: submitted } : {}),
-                    ...(approvals ? { approval: { $in: approvals } } : {})
-                  }
-                : undefined
+            submission: definesSubmitted ? { $exists: submitted } : undefined,
+            'submission.approval': approvals ? { $in: approvals } : undefined
           }
         }
       ])
@@ -59,14 +54,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
   async updateSubmissions(itemId: number, submissionId: ObjectId) {
     const submissionIds = new Set(
-      (
-        (
-          await this.getOne({
-            type: ItemType.PULL_REQUEST,
-            id: itemId
-          })
-        )?.submission_ids || []
-      ).concat(submissionId || [])
+      ((await this.getOne({ id: itemId }))?.submission_ids || []).concat(submissionId || [])
     );
 
     await this.update({ id: itemId, submission_ids: Array.from(submissionIds) });

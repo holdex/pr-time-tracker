@@ -15,7 +15,9 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
 
     if (await this.getOne({ item_id, owner_id })) {
-      throw Error(`Submission with item ID, ${item_id}, already exists for ${owner_id}.`);
+      throw Error(
+        `Submission with item ID, ${item_id}, already exists for contributor, ${owner_id}.`
+      );
     }
 
     const created_at = new Date().toISOString();
@@ -38,7 +40,6 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
   required: ['experience', 'hours', 'owner_id', 'item_id', 'created_at', 'updated_at', 'approval'],
   properties: {
     approval: {
-      bsonType: 'string',
       enum: Object.values(Approval),
       description: 'must be one of the enum values.'
     },
@@ -48,7 +49,7 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
       description: 'must be one of the enum values.'
     },
     hours: {
-      bsonType: 'string',
+      bsonType: 'int',
       description: 'must be provided.'
     },
     item_id: {
