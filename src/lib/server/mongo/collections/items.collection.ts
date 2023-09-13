@@ -4,7 +4,7 @@ import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import {
-  // Approval,
+  Approval,
   CollectionNames,
   type ContributorSchema,
   type GetManyParams,
@@ -20,8 +20,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     if (!contributor_id) return await super.getMany(searchParams);
 
     const filter = this.makeFilter(searchParams);
-    // const approvals = transform<Approval[]>(searchParams.get('approvals'));
+    const approvals = transform<Approval[]>(searchParams.get('approvals'));
     const submitted = transform<boolean>(searchParams.get('submitted'));
+    const definesSubmitted = typeof submitted === 'boolean';
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
 
     return await this.context
@@ -40,9 +41,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         },
         {
           $match: {
-            submission: typeof submitted === 'boolean' ? { $exists: submitted } : undefined
-            // ...(typeof submitted === 'boolean' ? { $exists: submitted } : {}),
-            // ...(approvals ? { approval: { $in: approvals } } : {})
+            submission: definesSubmitted ? { $exists: submitted } : undefined,
+            'submission.approval': approvals ? { $in: approvals } : undefined,
+            'submission.owner_id': submitted ? { $eq: contributor_id } : undefined
           }
         }
       ])
@@ -54,14 +55,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
   async updateSubmissions(itemId: number, submissionId: ObjectId) {
     const submissionIds = new Set(
-      (
-        (
-          await this.getOne({
-            type: ItemType.PULL_REQUEST,
-            id: itemId
-          })
-        )?.submission_ids || []
-      ).concat(submissionId || [])
+      ((await this.getOne({ id: itemId }))?.submission_ids || []).concat(submissionId || [])
     );
 
     await this.update({ id: itemId, submission_ids: Array.from(submissionIds) });
