@@ -14,12 +14,13 @@ import { BaseCollection } from './base.collection';
 export class ItemsCollection extends BaseCollection<ItemSchema> {
   getMany = async (params?: GetManyParams<ItemSchema>) => {
     const searchParams = ItemsCollection.makeParams(params);
-    const contributor = transform<string>(searchParams.get('contributor'));
+    const contributor_id = transform<string>(searchParams.get('contributor_id'));
 
-    if (!contributor) return await super.getMany(searchParams);
+    if (!contributor_id) return await super.getMany(searchParams);
 
     const filter = this.makeFilter(searchParams);
     const submitted = transform<boolean>(searchParams.get('submitted'));
+    const definesSubmitted = typeof submitted === 'boolean';
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
 
     return await this.context
@@ -28,8 +29,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         {
           $lookup: {
             from: CollectionNames.SUBMISSIONS,
-            localField: 'owner',
-            foreignField: 'owner',
+            localField: 'id',
+            foreignField: 'item_id',
             as: 'submission'
           }
         },
@@ -38,7 +39,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         },
         {
           $match: {
-            submission: typeof submitted === 'boolean' ? { $exists: submitted } : undefined
+            submission: definesSubmitted ? { $exists: submitted } : undefined,
+            'submission.owner_id': submitted ? { $eq: contributor_id } : undefined
           }
         }
       ])
@@ -50,14 +52,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
   async updateSubmissions(itemId: number, submissionId: ObjectId) {
     const submissionIds = new Set(
-      (
-        (
-          await this.getOne({
-            type: ItemType.PULL_REQUEST,
-            id: itemId
-          })
-        )?.submission_ids || []
-      ).concat(submissionId || [])
+      ((await this.getOne({ id: itemId }))?.submission_ids || []).concat(submissionId || [])
     );
 
     await this.update({ id: itemId, submission_ids: Array.from(submissionIds) });
@@ -75,10 +70,10 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
   makeFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
-    const contributor = transform<number>(searchParams?.get('contributor_id'));
+    const contributorId = transform<number>(searchParams?.get('contributor_id'));
 
     filter.merged = filter.merged ?? true;
-    if (contributor) filter.contributor_ids = { $in: [contributor] };
+    if (contributorId) filter.contributor_ids = { $in: [contributorId] };
 
     return filter;
   }
