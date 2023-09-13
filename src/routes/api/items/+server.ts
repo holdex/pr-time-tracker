@@ -5,7 +5,7 @@ import type { Filter, WithId } from 'mongodb';
 
 import clientPromise, { CollectionNames } from '$lib/server/mongo';
 import config from '$lib/server/config';
-import type { ItemSchema } from '$lib/server/mongo/operations';
+import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import { getDocumentsInfo, updateCollectionInfo } from '$lib/server/mongo/operations';
 import {
   ONE_MONTH,
