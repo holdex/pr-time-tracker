@@ -37,10 +37,9 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
         const { contributor_ids } = item;
         let needUpdate = false;
 
-        const contributor =
-          !contributor_ids?.length || !item.owner_id
-            ? contributors.find(({ login }) => login === item.owner)
-            : undefined;
+        const contributor = !contributor_ids?.length //|| !item.owner_id
+          ? contributors.find(({ login }) => login === item.owner)
+          : undefined;
 
         if (contributor) {
           if (!contributor_ids?.length) {
@@ -49,10 +48,10 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
             needUpdate = true;
           }
 
-          if (!item.owner_id) {
-            item.owner_id = contributor.id;
-            needUpdate = true;
-          }
+          // if (!item.owner_id) {
+          //   item.owner_id = contributor.id;
+          //   needUpdate = true;
+          // }
         }
 
         if (!item.submission_ids?.length) {

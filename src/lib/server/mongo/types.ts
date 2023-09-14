@@ -47,7 +47,6 @@ export interface ItemSchema extends TimeStamps {
   org: string;
   repo: string;
   owner: string;
-  owner_id: number;
   title: string;
   contributor_ids?: number[];
   /** `contributors` here is just for type safety. It may be populated on `Item` retrieval. */
