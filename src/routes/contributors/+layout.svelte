@@ -25,15 +25,11 @@
   let isBaseRoute = true;
   let contributor: ContributorSchema | undefined;
 
-  onMount(() => {
-    setTimeout(() => {
-      preloadCode('/contributors/*');
-    });
-  });
+  onMount(() => setTimeout(() => preloadCode('/contributors/*')));
 
   /** react-ibles */
   $: {
-    contributorName = $page.url.searchParams.get('n');
+    contributorName = $page.data.contributor?.name || '...';
     contributorId = $page.params.id;
     route = $page.url.pathname;
   }
