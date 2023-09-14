@@ -1,14 +1,12 @@
 <script lang="ts">
-  /** externals */
+  /** deps */
   import { onMount } from 'svelte';
 
   import { page } from '$app/stores';
   import { preloadCode } from '$app/navigation';
 
-  /** types */
   import type { LayoutData } from './$types';
 
-  /** internals */
   import Header from '$lib/components/Header/index.svelte';
   import { routes } from '$lib/config';
   import type { ContributorSchema } from '$lib/server/mongo/operations';

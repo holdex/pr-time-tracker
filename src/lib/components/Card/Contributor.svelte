@@ -17,6 +17,7 @@
   export let username = '';
 
   /** lifecycles */
+  // See this comment, https://github.com/holdex/autoinvoice/pull/145#discussion_r1325465390, for why this is preloaded.
   onMount(() => preloadData(`/contributors/${id}`));
 </script>
 

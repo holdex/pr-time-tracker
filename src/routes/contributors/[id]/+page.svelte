@@ -1,11 +1,9 @@
 <script lang="ts">
-  /** externals */
+  /** deps */
   import { onDestroy, onMount } from 'svelte';
 
-  /** types */
   import type { PageData } from './$types';
 
-  /** internals */
   import { snackbar } from '$lib/components/Snackbar';
   import PRs from '$lib/layouts/PRs/index.svelte';
   import type { ItemSchema } from '$lib/server/mongo/operations';
