@@ -74,9 +74,6 @@ import { contributors, items } from '$lib/server/mongo/collections';
 
 export const GET: RequestHandler = async ({ url: { searchParams } }) => {
   try {
-    const _items = await items.getMany(searchParams);
-
-    console.log({ _items });
     return json({ data: await items.getMany(searchParams) });
   } catch (e) {
     return jsonError(e, '/api/items');
