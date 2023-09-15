@@ -19,8 +19,15 @@ export const jsonError = (e: unknown, path: string, method?: string | null, stat
 
 export const transform = <Result = unknown>(
   value: unknown,
-  preserveNumber = false
+  options?: {
+    preserveNumber?: boolean;
+    /** For objects. Whether to exclude certain fields. */
+    omit?: Array<keyof Result>;
+    /** For objects. Whether to include certain fields only. */
+    pick?: Array<keyof Result>;
+  }
 ): Result | null | undefined => {
+  const { preserveNumber, omit, pick } = options || {};
   const isString = typeof value === 'string';
   const isArray = value && !isString && Array.isArray(value);
   const isObject = !isArray && typeof value === 'object';
@@ -32,18 +39,28 @@ export const transform = <Result = unknown>(
   if (!value) return value as Result;
 
   if ((isString && /\{|\[/.test(value)) || isArray || isObject) {
+    const picked = {} as Result;
     let parseds = (isString ? JSON.parse(value) : value) as Result;
+    let key: keyof Result;
 
     if (Array.isArray(parseds)) {
-      parseds = parseds.map((parsed) => transform(parsed, preserveNumber)) as Result;
-    } else if (typeof parseds === 'object') {
-      // eslint-disable-next-line guard-for-in
-      for (const key in parseds) {
-        parseds[key] = transform(parseds[key], preserveNumber)!;
+      parseds = parseds.map((parsed) => transform(parsed, options)) as Result;
+    } else if (parseds && typeof parseds === 'object') {
+      if (pick) {
+        for (key of (omit || pick)!) {
+          picked[key] = transform(parseds[key], options) as Result[keyof Result];
+        }
+      } else {
+        if (omit) for (key of omit) delete parseds[key];
+
+        // eslint-disable-next-line guard-for-in
+        for (key in parseds) {
+          (parseds as Result)[key] = transform(parseds[key], options) as Result[keyof Result];
+        }
       }
     }
 
-    return parseds;
+    return pick ? picked : parseds;
   }
 
   return (!preserveNumber ? (isNaN(Number(value)) ? value : Number(value)) : value) as Result;

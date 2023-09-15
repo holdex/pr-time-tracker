@@ -1,6 +1,6 @@
 import type { WithId, Filter, ObjectId } from 'mongodb';
 
-import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
+import { ASCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import { BaseCollection } from './base.collection';
@@ -43,14 +43,14 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         {
           $match: {
             submission: definesSubmitted ? { $exists: submitted } : undefined,
-            'submission.approval': approvals ? { $in: approvals } : undefined,
-            'submission.owner_id': submitted ? { $eq: contributor_id } : undefined
+            'submission.owner_id': submitted ? { $eq: contributor_id } : undefined,
+            'submission.approval': approvals ? { $in: approvals } : { $ne: '' }
           }
         }
       ])
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
-      .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
+      .sort({ [sort_by || 'updated_at']: sort_order || ASCENDING })
       .toArray();
   };
 
@@ -143,5 +143,5 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       bsonType: ['string', 'null'],
       description: 'must be provided.'
     }
-  } as any // remove any after you've updated Front-end usage of former ItemSchema
+  }
 });

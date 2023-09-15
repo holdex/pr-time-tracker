@@ -2,7 +2,6 @@ import {
   ObjectId,
   type Collection,
   type Db,
-  type Document,
   type Filter,
   type OptionalUnlessRequiredId
 } from 'mongodb';
@@ -15,13 +14,15 @@ import type {
   GetManyParams
 } from '$lib/@types';
 
-import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
+import { ASCENDING, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import config from '../../config';
 import { mongoClient } from '..';
 
-export abstract class BaseCollection<CollectionType extends Document & TimeStamps> {
+export abstract class BaseCollection<
+  CollectionType extends TimeStamps & { _id?: ObjectId; id?: string | number }
+> {
   readonly context: Collection<CollectionType>;
   readonly db: Db;
   readonly properties: Array<keyof CollectionType>;
@@ -38,7 +39,7 @@ export abstract class BaseCollection<CollectionType extends Document & TimeStamp
   ) {
     this.db = mongoClient.db(config.mongoDBName);
     this.context = this.db.collection<CollectionType>(this.collectionName);
-    this.properties = Object.keys(this.validationSchema.properties);
+    this.properties = Object.keys(this.validationSchema.properties) as Array<keyof CollectionType>;
     this.db
       .command({
         collMod: collectionName,
@@ -84,27 +85,29 @@ export abstract class BaseCollection<CollectionType extends Document & TimeStamp
 
     return await this.context
       .find(filter)
-      .sort(sort || { [sort_by || 'created_at']: sort_order || DESCENDING })
+      .sort(sort || { [sort_by || 'created_at']: sort_order || ASCENDING })
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
       .toArray();
   }
 
-  async update(payload: Partial<CollectionType> & { id?: string | number }) {
-    payload.updated_at = payload.updated_at || new Date().toISOString();
+  async update({ _id, id, ...payload }: Partial<CollectionType>) {
+    payload.updated_at = new Date().toISOString();
 
     const result = await this.context.updateOne(
-      (payload.id ? { id: payload.id } : { _id: payload._id }) as Filter<CollectionType>,
-      {
-        $set: payload as Partial<CollectionType>
-      }
+      (!id ? { id } : { _id }) as Filter<CollectionType>,
+      { $set: payload as Partial<CollectionType> }
     );
 
-    if (!result.upsertedId) {
-      throw Error(`Could not make update for document, ${payload._id || payload.id}.`);
+    if (!result.acknowledged) {
+      throw Error(
+        `Could not make update for ${this.constructor.name.replace('sCollection', '')}, ${
+          id || _id
+        }.`
+      );
     }
 
-    return (await this.getOne(result.upsertedId.toString()))!;
+    return (await this.getOne(_id?.toString() || { id: id! }))!;
   }
 
   makeFilter(searchParams?: URLSearchParams) {

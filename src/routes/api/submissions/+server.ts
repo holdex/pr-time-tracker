@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ url: { searchParams } }) => {
 
     return json({ message: 'success', data }, { status: SUCCESS_OK });
   } catch (e) {
-    return jsonError(e, '/api/submissions', 'GET');
+    return jsonError(e, '/api/submissions');
   }
 };
 
@@ -30,8 +30,13 @@ export const POST: RequestHandler = async ({ request }) => {
 
 export const PATCH: RequestHandler = async ({ request }) => {
   try {
+    // To-do: Add Authorization (through out endpoints) to restrict/prevent updating unauthorize (submission) paths
     return json({
-      data: await submissions.update(transform<SubmissionSchema>(await request.json())!)
+      data: await submissions.update(
+        transform<SubmissionSchema>(await request.json(), {
+          omit: ['created_at', 'updated_at']
+        })!
+      )
     });
   } catch (e) {
     return jsonError(e, '/api/submissions', 'PATCH');

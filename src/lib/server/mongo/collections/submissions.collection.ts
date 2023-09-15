@@ -1,4 +1,4 @@
-import type { OptionalId, InsertOneResult } from 'mongodb';
+import type { OptionalId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';

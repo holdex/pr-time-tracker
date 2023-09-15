@@ -20,7 +20,8 @@
   export let onSubmit: CardProps['onSubmit'] = undefined;
 
   /** vars */
-  let submission: Partial<SubmissionSchema> = {};
+  const href = data.url.replace(/.*\/repos/, 'https://github.com').replace('pulls', 'pull');
+  let submissionPayload: Partial<SubmissionSchema> = { ...(data.submission || {}) };
   let submissionApproved = false;
   let positiveExperience = true;
   let activeReactionButton: ToggleProps['activeButton'] = !data.submission?.experience
@@ -30,9 +31,8 @@
     : 'left';
 
   /** react-ibles */
-  $: submission = { ...(data.submission || submission) };
-  $: positiveExperience = submission.experience === Experience.POSITIVE;
-  $: submissionApproved = submission.approval === Approval.APPROVED;
+  $: positiveExperience = data.submission?.experience === Experience.POSITIVE;
+  $: submissionApproved = data.submission?.approval === Approval.APPROVED;
   $: if (submissionApproved && !isAdmin) isReadonly = true;
   $: data.number = Number(data.url?.split('/').slice(-1));
 </script>
@@ -45,14 +45,12 @@
     submissionApproved && !isAdmin ? 'opacity-80' : ''
   } dark:bg-l2 xs:w-full`}>
   <div class="p-4 flex gap-4 justify-between items-center">
-    <a
-      href={data.url.replace(/.*\/repos/, 'https://github.com').replace('pulls', 'pull')}
-      target="_blank"
-      class="link">
+    <a {href} target="_blank" class="link">
       <h2 class="text-t3">{data.org} / {data.repo} / #{data.number}</h2>
     </a>
 
     <Button
+      {href}
       variant="icon"
       iconProps={{ name: 'github', width: '1.25rem' }}
       class="px-0"
@@ -73,41 +71,43 @@
         });
       }
 
-      // if (!submission) {
-      //   submission = {
-      //     experience: Experience[activeReactionButton==='left' ?'POSITIVE':'NEGATIVE'],
-      //     approval: Approval.PENDING,
-      //     // hours:
-      //   };
-      // }
-
-      submission.owner_id = $page.data.user.id;
-      submission._id = data.submission?._id || undefined;
-      submission.item_id = data.id;
-      submission.experience = Experience[activeReactionButton === 'left' ? 'POSITIVE' : 'NEGATIVE'];
-      submission.approval = submissionApproved ? Approval.PENDING : Approval.APPROVED;
+      submissionPayload.owner_id = $page.data.user.id;
+      submissionPayload._id = data.submission?._id || undefined;
+      submissionPayload.item_id = data.id;
+      submissionPayload.experience =
+        Experience[activeReactionButton === 'left' ? 'POSITIVE' : 'NEGATIVE'];
       loading = true;
 
+      if (isAdmin) {
+        submissionPayload.approval = submissionApproved ? Approval.PENDING : Approval.APPROVED;
+      }
+
       const result = await onSubmit(
-        submission,
+        submissionPayload,
         Number(data.number),
-        isAdmin ? submission.approval === data.submission?.approval : Boolean(data.submission)
+        isAdmin
+          ? submissionPayload.approval === data.submission?.approval
+          : Boolean(data.submission)
       )(e);
 
       if (result) {
-        submission = result;
+        submissionPayload = result;
         data.submission = result;
       }
 
       loading = false;
-      isReadonly = submission.approval === Approval.APPROVED;
+      isReadonly = data.submission?.approval === Approval.APPROVED;
     }}>
     <span class="flex gap-1.5 items-center max-w-content">
       <span>Hours:</span>
       {#if isReadonly}
-        <span class="text-t1">{submission.hours}</span>
+        <span class="text-t1">{data.submission?.hours || '...'}</span>
       {:else}
-        <Input required min="0.5" bind:value={submission.hours} disabled={loading || isAdmin} />
+        <Input
+          required
+          min="0.5"
+          bind:value={submissionPayload.hours}
+          disabled={loading || isAdmin} />
       {/if}
     </span>
 
@@ -116,7 +116,7 @@
       {#if isReadonly || isAdmin}
         <span
           class="capitalize {data.submission?.experience === 'negative' ? 'text-neg' : 'text-t1'}">
-          {data.submission?.experience}
+          {data.submission?.experience || '...'}
         </span>
       {:else}
         <Toggle isReactionToggle bind:activeButton={activeReactionButton} />
@@ -125,8 +125,8 @@
 
     {#if !isAdmin && data.submission}
       <div class="flex gap-1.5">
-        <span>Approved:</span>
-        <span class="text-t1 capitalize">{data.submission.approval || 'Pending'}</span>
+        <span>Approval:</span>
+        <span class="text-t1 capitalize">{data.submission.approval || '...'}</span>
       </div>
     {/if}
     {#if !isReadonly || isAdmin}
@@ -141,7 +141,7 @@
         class="w-full min-w-full ml-auto {submissionApproved && !loading
           ? '!text-neg'
           : ''} sm:min-w-fit"
-        disabled={loading || true} />
+        disabled={loading || Boolean(data.submission)} />
     {/if}
   </form>
 </li>

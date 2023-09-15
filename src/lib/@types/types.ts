@@ -18,7 +18,13 @@ export interface TimeStamps {
 
 export interface JSONSchema<CollectionType> {
   required?: Array<keyof Omit<CollectionType, '_id'>>;
-  properties: Record<keyof Omit<CollectionType, '_id' | 'updated_at' | 'prs'>, SchemaProperty> & {
+  properties: Record<
+    keyof Omit<
+      CollectionType,
+      '_id' | 'updated_at' | 'prs' | 'contributors' | 'submissions' | 'submission'
+    >,
+    SchemaProperty
+  > & {
     updated_at?: SchemaProperty;
   };
 }
