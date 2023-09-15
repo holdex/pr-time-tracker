@@ -1,15 +1,12 @@
 import type { OptionalId, InsertOneResult } from 'mongodb';
 
-import { Approval, CollectionNames, Experience, type SubmissionSchema } from '../types';
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
 
+import { Approval, CollectionNames, Experience, type SubmissionSchema } from '$lib/@types';
+
 export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
-  async create({
-    item_id,
-    owner_id,
-    ...resource
-  }: OptionalId<Omit<SubmissionSchema, 'approval'>>): Promise<InsertOneResult<SubmissionSchema>> {
+  async create({ item_id, owner_id, ...resource }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
@@ -21,7 +18,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     }
 
     const created_at = new Date().toISOString();
-    const result = await super.create({
+    const submission = await super.create({
       item_id,
       owner_id,
       ...resource,
@@ -30,9 +27,9 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
       updated_at: created_at
     });
 
-    await items.updateSubmissions(item_id, result.insertedId);
+    await items.updateSubmissions(item_id, submission._id);
 
-    return result;
+    return submission;
   }
 }
 

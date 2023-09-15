@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 
 import type { RequestHandler } from '@sveltejs/kit';
+import type { SubmissionSchema } from '$lib/@types';
 
-import type { SubmissionSchema } from '$lib/server/mongo';
 import { SUCCESS_OK } from '$lib/constants';
 import { jsonError, transform } from '$lib/utils';
 import { submissions } from '$lib/server/mongo/collections';
@@ -20,10 +20,9 @@ export const GET: RequestHandler = async ({ url: { searchParams } }) => {
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const body = transform<SubmissionSchema>(await request.json())!;
-    const data = await submissions.create(body);
-
-    return json({ data: { _id: data.insertedId, ...body } });
+    return json({
+      data: await submissions.create(transform<SubmissionSchema>(await request.json())!)
+    });
   } catch (e) {
     return jsonError(e, '/api/submissions', 'POST');
   }
@@ -31,12 +30,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
 export const PATCH: RequestHandler = async ({ request }) => {
   try {
-    const body = transform<SubmissionSchema>(await request.json())!;
-    const data = await submissions.update(body);
-
-    if (!data.acknowledged) throw Error(`Could not make update for submission, ${body._id}.`);
-
-    return json({ data: body });
+    return json({
+      data: await submissions.update(transform<SubmissionSchema>(await request.json())!)
+    });
   } catch (e) {
     return jsonError(e, '/api/submissions', 'PATCH');
   }

@@ -3,11 +3,13 @@ import StatusCode from 'status-code-enum';
 
 import type { RequestHandler } from '@sveltejs/kit';
 
-import clientPromise, { CollectionNames } from '$lib/server/mongo';
+import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ContributorSchema } from '$lib/server/mongo/operations';
 import { MAX_DATA_CHUNK } from '$lib/constants';
 import { responseHeadersInit } from '$lib/config';
+
+import { CollectionNames } from '$lib/@types';
 
 export const GET: RequestHandler = async () => {
   try {

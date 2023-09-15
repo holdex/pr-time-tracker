@@ -2,8 +2,6 @@ import { MongoClient } from 'mongodb';
 
 import config from '$lib/server/config';
 
-export * from './types';
-
 let client;
 let clientPromise: Promise<MongoClient>;
 

@@ -3,11 +3,13 @@ import StatusCode from 'status-code-enum';
 
 import type { RequestHandler } from '@sveltejs/kit';
 
-import clientPromise, { CollectionNames } from '$lib/server/mongo';
+import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import { responseHeadersInit } from '$lib/config';
 import { jsonError, transform } from '$lib/utils';
+
+import { CollectionNames } from '$lib/@types';
 
 export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) => {
   const authToken = '1be7b56c';

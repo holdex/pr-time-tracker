@@ -1,4 +1,5 @@
 import type { HTMLAttributes, HTMLButtonAttributes, SVGAttributes } from 'svelte/elements';
+import type { SubmissionSchema } from '$lib/@types';
 
 import type { ItemSchema } from '$lib/server/mongo/operations';
 
@@ -74,8 +75,8 @@ export interface CardProps {
   loading?: boolean;
   data: ItemSchema & { number?: number };
   onSubmit?: (
-    data: CardProps['data'],
-    payload: Partial<CardProps['data']>,
+    payload: Partial<SubmissionSchema>,
+    number: number,
     isUpdate?: boolean
-  ) => (e?: Event | undefined) => Promise<CardProps['data'] | null>;
+  ) => (e?: Event | undefined) => Promise<SubmissionSchema | null>;
 }

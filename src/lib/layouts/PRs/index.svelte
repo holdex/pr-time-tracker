@@ -12,6 +12,8 @@
   import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
 
+  import { Approval, type SubmissionSchema } from '$lib/@types';
+
   /** props */
   export let prs: ItemSchema[];
   export let context: 'contributor' | 'user' = 'user';
@@ -27,23 +29,29 @@
   /** funcs */
   const usePRsEffect = createEffect();
 
-  const onSubmit: CardProps['onSubmit'] = (pr, payload, isUpdate) => async () => {
+  const onSubmit: CardProps['onSubmit'] = (submission, number, isUpdate) => async () => {
     $snackbar = { text: 'Please, wait...', type: 'busy' };
 
     try {
-      await axios.patch<{ data: ItemSchema }>(`/items`, payload);
-      if (!isUpdate) prs = prs.filter((submit) => submit.id !== pr.id);
+      const response = await axios[isUpdate ? 'patch' : 'post']<{ data: SubmissionSchema }>(
+        `/submissions`,
+        submission
+      );
+
+      if (!isUpdate) prs = prs.filter((pr) => pr.id !== submission.item_id);
       invalidateCache = true;
       $snackbar = {
         text: `Successfully ${
-          isContributorContext ? `${payload.approved ? '' : 'dis'}approved` : 'submitted'
-        } #${pr.number} ${isContributorContext ? 'of' : 'with'} "${pr.hours} hour${
-          Number(pr.hours) === 1 ? '' : 's'
+          isContributorContext
+            ? `${submission.approval === Approval.APPROVED ? '' : 'dis'}approved`
+            : 'submitted'
+        } #${number} ${isContributorContext ? 'of' : 'with'} "${submission.hours} hour${
+          Number(submission.hours) === 1 ? '' : 's'
         }" of efficiency.`,
         type: 'success'
       };
 
-      return { ...pr, ...payload };
+      return response.data.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       $snackbar = { text: e.message || e, type: 'error' };
@@ -71,7 +79,11 @@
     {#each prs as pr, i}
       <!-- Force component destroy/re-render to get updated `pr` object values -->
       {#key invalidateCache ? pr : `${i} ${$activeTab.position}`}
-        <PR data={pr} {onSubmit} isAdmin={isContributorContext} isReadonly={pr.approved} />
+        <PR
+          data={pr}
+          {onSubmit}
+          isAdmin={isContributorContext}
+          isReadonly={pr.submission?.approval === Approval.APPROVED} />
       {/key}
     {:else}
       <li class="text-t3">

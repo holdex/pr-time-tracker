@@ -4,22 +4,22 @@ import {
   type Db,
   type Document,
   type Filter,
-  type OptionalUnlessRequiredId,
-  type WithId
+  type OptionalUnlessRequiredId
 } from 'mongodb';
+
+import type {
+  TimeStamps,
+  QueryProps,
+  CollectionNames,
+  JSONSchema,
+  GetManyParams
+} from '$lib/@types';
 
 import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
-import {
-  CollectionNames,
-  mongoClient,
-  type JSONSchema,
-  type QueryProps,
-  type GetManyParams,
-  type TimeStamps
-} from '..';
 import config from '../../config';
+import { mongoClient } from '..';
 
 export abstract class BaseCollection<CollectionType extends Document & TimeStamps> {
   readonly context: Collection<CollectionType>;
@@ -54,18 +54,17 @@ export abstract class BaseCollection<CollectionType extends Document & TimeStamp
       });
   }
 
-  async create(
-    resource: OptionalUnlessRequiredId<CollectionType>,
-    onAfterCreate?: (result: Awaited<ReturnType<typeof this.create>>) => Promise<void>
-  ) {
+  async create(resource: OptionalUnlessRequiredId<CollectionType>) {
     resource.created_at = resource.created_at || new Date().toISOString();
     resource.updated_at = resource.created_at;
 
     const result = await this.context.insertOne(resource);
 
-    if (onAfterCreate) await onAfterCreate(result);
+    if (!result?.insertedId) {
+      throw Error(`Could not create ${this.constructor.name.replace('sCollection', '')}.`);
+    }
 
-    return result;
+    return (await this.getOne(result.insertedId.toString()))!;
   }
 
   async getOne(_idOrFilter: string | Filter<CollectionType>) {
@@ -94,12 +93,18 @@ export abstract class BaseCollection<CollectionType extends Document & TimeStamp
   async update(payload: Partial<CollectionType> & { id?: string | number }) {
     payload.updated_at = payload.updated_at || new Date().toISOString();
 
-    return await this.context.updateOne(
+    const result = await this.context.updateOne(
       (payload.id ? { id: payload.id } : { _id: payload._id }) as Filter<CollectionType>,
       {
         $set: payload as Partial<CollectionType>
       }
     );
+
+    if (!result.upsertedId) {
+      throw Error(`Could not make update for document, ${payload._id || payload.id}.`);
+    }
+
+    return (await this.getOne(result.upsertedId.toString()))!;
   }
 
   makeFilter(searchParams?: URLSearchParams) {

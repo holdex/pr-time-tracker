@@ -3,14 +3,15 @@ import type { WithId, Filter, ObjectId } from 'mongodb';
 import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
+import { BaseCollection } from './base.collection';
+
 import {
   Approval,
   CollectionNames,
   type ContributorSchema,
   type GetManyParams,
   type ItemSchema
-} from '../types';
-import { BaseCollection } from './base.collection';
+} from '$lib/@types';
 
 export class ItemsCollection extends BaseCollection<ItemSchema> {
   getMany = async (params?: GetManyParams<ItemSchema>) => {

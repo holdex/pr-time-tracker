@@ -1,5 +1,6 @@
-import { CollectionNames, type ContributorSchema } from '../types';
 import { BaseCollection } from './base.collection';
+
+import { CollectionNames, type ContributorSchema } from '$lib/@types';
 
 export class ContributorsCollection extends BaseCollection<ContributorSchema> {}
 

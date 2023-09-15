@@ -2,10 +2,10 @@ import ax, { type InternalAxiosRequestConfig } from 'axios';
 import { json } from '@sveltejs/kit';
 
 import type { MongoServerError } from 'mongodb';
+import type { ItemSchema } from '$lib/@types';
 
 import { snackbar } from '$lib/components/Snackbar';
 import { BAD_REQUEST, ItemState, ItemType } from '$lib/constants';
-import type { ItemSchema } from '$lib/server/mongo';
 
 export const jsonError = (e: unknown, path: string, method?: string | null, status = 500) => {
   const message = (e as MongoServerError).errInfo

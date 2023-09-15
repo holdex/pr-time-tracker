@@ -6,7 +6,7 @@ import type {
   UpdateFilter,
   FindOneAndUpdateOptions
 } from 'mongodb';
-import type { ContributorSchema, ItemSchema } from './types';
+import type { ContributorSchema, ItemSchema } from '../../@types';
 
 import { MAX_DATA_CHUNK } from '$lib/constants';
 
