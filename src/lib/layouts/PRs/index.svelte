@@ -77,11 +77,10 @@
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
   <ul class="grid gap-4 md:gap-8">
     {#each prs as pr, i}
-      <!-- Force component destroy/re-render to get updated `pr` object values. 
-        Make sure to not use the full `pr` object as `key` as it causes an infinite re-render and hangs the UI, due to JavaScript's object inequality -->
-      {#key invalidateCache ? `${pr.submission?.hours} ${pr.submission?.experience} ${pr.submission?.approval}` : `${i} ${$activeTab.position}`}
+      <!-- Force component destroy/re-render to get updated `pr` object values. -->
+      {#key invalidateCache ? pr : `${i} ${$activeTab.position}`}
         <PR
-          bind:data={pr}
+          data={pr}
           {onSubmit}
           isAdmin={isContributorContext}
           isReadonly={pr.submission?.approval === Approval.APPROVED} />

@@ -1,6 +1,6 @@
 import type { WithId, Filter } from 'mongodb';
 
-import { ASCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
+import { ASCENDING, DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import { BaseCollection } from './base.collection';
@@ -50,7 +50,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
       ])
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
-      .sort({ [sort_by || 'updated_at']: sort_order || ASCENDING })
+      .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
       .toArray();
   };
 
