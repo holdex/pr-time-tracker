@@ -18,8 +18,6 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     const searchParams = ItemsCollection.makeParams(params);
     const contributor_id = transform<string>(searchParams.get('contributor_id'));
 
-    // if (!contributor_id) return await super.getMany(searchParams);
-
     const filter = this.makeFilter(searchParams);
     const approvals = transform<Approval[]>(searchParams.get('approvals'));
     const submitted = transform<boolean>(searchParams.get('submitted'));
