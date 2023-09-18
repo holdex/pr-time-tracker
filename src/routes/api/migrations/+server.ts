@@ -8,6 +8,7 @@ import config from '$lib/server/config';
 import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import { responseHeadersInit } from '$lib/config';
 import { jsonError, transform } from '$lib/utils';
+// import { submissions } from '$lib/server/mongo/collections';
 
 import { CollectionNames } from '$lib/@types';
 
@@ -33,6 +34,7 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
     const [items, contributors] = await Promise.all([
       itemsCollection.find().toArray(),
       contributorsCollection.find().toArray()
+      // submissions.context.deleteMany()
     ]);
     const result = await Promise.all(
       items.map(async (item) => {
@@ -56,8 +58,9 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
           // }
         }
 
-        if (!item.submission_ids?.length) {
-          item.submission_ids = [];
+        if (item.submission_ids?.length) {
+          // needUpdate = true;
+          // item.submission_ids = [];
         }
 
         if (canUnsetDeprecated) {

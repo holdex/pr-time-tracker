@@ -1,4 +1,4 @@
-import type { OptionalId } from 'mongodb';
+import type { ObjectId, OptionalId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
@@ -27,7 +27,12 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
       updated_at: created_at
     });
 
-    await items.updateSubmissions(item_id, submission._id);
+    await items.update({
+      id: item_id,
+      submission_ids: Array.from(
+        new Set((item.submission_ids || []).concat(submission._id).map(String))
+      ) as unknown as ObjectId[]
+    });
 
     return submission;
   }

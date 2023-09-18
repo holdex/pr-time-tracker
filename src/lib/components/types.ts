@@ -1,16 +1,22 @@
-import type { HTMLAttributes, HTMLButtonAttributes, SVGAttributes } from 'svelte/elements';
+import type {
+  HTMLAnchorAttributes,
+  HTMLAttributes,
+  HTMLButtonAttributes,
+  SVGAttributes
+} from 'svelte/elements';
 import type { SubmissionSchema } from '$lib/@types';
 
 import type { ItemSchema } from '$lib/server/mongo/operations';
 
 /** Button */
-export interface ButtonProps extends HTMLButtonAttributes {
+export interface ButtonProps
+  extends HTMLButtonAttributes,
+    Pick<HTMLAnchorAttributes, 'href' | 'target'> {
   text?: string | number | null;
   size?: 'small' | 'medium' | 'large';
   variant?: 'primary' | 'secondary' | 'solo' | 'icon';
   /** @deprecated - Use `text` instead. */
   label?: string;
-  href?: string;
   fixedTo?: string;
   /** @deprecated - Use `iconProps` instead. */
   icon?: IconName | undefined;

@@ -21,12 +21,12 @@
 
   /** vars */
   const href = data.url.replace(/.*\/repos/, 'https://github.com').replace('pulls', 'pull');
-  let submissionPayload: Partial<SubmissionSchema> = { ...(data.submission || {}) };
+  let submissionPayload: Partial<SubmissionSchema> = data.submission || {};
   let submissionApproved = false;
   let positiveExperience = true;
   let activeReactionButton: ToggleProps['activeButton'] = !data.submission?.experience
     ? ''
-    : !positiveExperience
+    : data.submission?.experience === 'negative'
     ? 'right'
     : 'left';
 
@@ -54,6 +54,7 @@
       variant="icon"
       iconProps={{ name: 'github', width: '1.25rem' }}
       class="px-0"
+      target="_blank"
       aria-label="GitHub" />
   </div>
 
@@ -61,6 +62,7 @@
 
   <form
     class="p-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4"
+    name={data.title}
     on:submit|preventDefault={async (e) => {
       if (!onSubmit) return;
 
@@ -72,7 +74,6 @@
       }
 
       submissionPayload.owner_id = $page.data.user.id;
-      submissionPayload._id = data.submission?._id || undefined;
       submissionPayload.item_id = data.id;
       submissionPayload.experience =
         Experience[activeReactionButton === 'left' ? 'POSITIVE' : 'NEGATIVE'];
@@ -141,7 +142,7 @@
         class="w-full min-w-full ml-auto {submissionApproved && !loading
           ? '!text-neg'
           : ''} sm:min-w-fit"
-        disabled={loading || Boolean(data.submission)} />
+        disabled={loading} />
     {/if}
   </form>
 </li>

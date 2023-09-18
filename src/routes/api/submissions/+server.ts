@@ -30,11 +30,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
 export const PATCH: RequestHandler = async ({ request }) => {
   try {
-    // To-do: Add Authorization (through out endpoints) to restrict/prevent updating unauthorize (submission) paths
+    // To-do: Add Authorization (through out endpoints) to restrict/prevent updating unauthorized (submission) paths
     return json({
       data: await submissions.update(
         transform<SubmissionSchema>(await request.json(), {
-          omit: ['created_at', 'updated_at']
+          pick: ['hours', 'experience', 'approval']
         })!
       )
     });

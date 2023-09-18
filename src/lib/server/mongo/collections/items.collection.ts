@@ -1,6 +1,6 @@
-import type { WithId, Filter, ObjectId } from 'mongodb';
+import type { WithId, Filter } from 'mongodb';
 
-import { ASCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
+import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import { BaseCollection } from './base.collection';
@@ -50,17 +50,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
       ])
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
-      .sort({ [sort_by || 'updated_at']: sort_order || ASCENDING })
+      .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
       .toArray();
   };
-
-  async updateSubmissions(itemId: number, submissionId: ObjectId) {
-    const submissionIds = new Set(
-      ((await this.getOne({ id: itemId }))?.submission_ids || []).concat(submissionId || [])
-    );
-
-    await this.update({ id: itemId, submission_ids: Array.from(submissionIds) });
-  }
 
   async makeContributorIds(itemId: number, contributor: ContributorSchema | null) {
     const item = await items.getOne({
