@@ -34,7 +34,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
     return json({
       data: await submissions.update(
         transform<SubmissionSchema>(await request.json(), {
-          pick: ['hours', 'experience', 'approval']
+          pick: ['_id', 'hours', 'experience', 'approval']
         })!
       )
     });

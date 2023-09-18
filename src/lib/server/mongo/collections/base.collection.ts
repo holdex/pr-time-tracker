@@ -101,7 +101,7 @@ export abstract class BaseCollection<
     payload.updated_at = new Date().toISOString();
 
     const result = await this.context.updateOne(
-      (_id ? { _id } : { id }) as Filter<CollectionType>,
+      (_id ? { _id: new ObjectId(_id) } : { id }) as Filter<CollectionType>,
       {
         $set: payload as Partial<CollectionType>
       }
@@ -115,10 +115,7 @@ export abstract class BaseCollection<
       );
     }
 
-    // delay a few milliseconds to ensure (always) that `this.getOne` would return updated (and not stale) result
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    return (await this.getOne(_id?.toString() || { id: id! }))!;
+    return (await this.getOne(_id || { id: id! }))!;
   }
 
   makeFilter(searchParams?: URLSearchParams) {
