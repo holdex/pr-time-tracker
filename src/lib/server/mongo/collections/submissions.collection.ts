@@ -18,23 +18,33 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     }
 
     const created_at = new Date().toISOString();
-    const submission = await super.create({
-      item_id,
-      owner_id,
-      ...resource,
-      approval: Approval.PENDING,
-      created_at,
-      updated_at: created_at
-    });
+    const session = this.client.startSession();
 
-    await items.update({
-      id: item_id,
-      submission_ids: Array.from(
-        new Set((item.submission_ids || []).concat(submission._id).map(String))
-      ) as unknown as ObjectId[]
-    });
+    try {
+      session.startTransaction();
 
-    return submission;
+      const submission = await super.create({
+        item_id,
+        owner_id,
+        ...resource,
+        approval: Approval.PENDING,
+        created_at,
+        updated_at: created_at
+      });
+
+      await items.update({
+        id: item_id,
+        submission_ids: Array.from(
+          new Set((item.submission_ids || []).concat(submission._id).map(String))
+        ) as unknown as ObjectId[]
+      });
+      session.commitTransaction();
+
+      return submission;
+    } catch (e) {
+      await session.abortTransaction();
+      throw e;
+    }
   }
 }
 
@@ -51,7 +61,7 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
       description: 'must be one of the enum values.'
     },
     hours: {
-      bsonType: 'int',
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     item_id: {

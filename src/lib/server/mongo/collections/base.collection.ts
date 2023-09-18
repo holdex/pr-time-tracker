@@ -3,7 +3,8 @@ import {
   type Collection,
   type Db,
   type Filter,
-  type OptionalUnlessRequiredId
+  type OptionalUnlessRequiredId,
+  MongoClient
 } from 'mongodb';
 
 import type {
@@ -25,6 +26,7 @@ export abstract class BaseCollection<
 > {
   readonly context: Collection<CollectionType>;
   readonly db: Db;
+  readonly client: MongoClient;
   readonly properties: Array<keyof CollectionType>;
   private static readonly queryFields: Array<keyof QueryProps> = [
     'count',
@@ -37,6 +39,7 @@ export abstract class BaseCollection<
     private collectionName: CollectionNames,
     private validationSchema: JSONSchema<CollectionType>
   ) {
+    this.client = mongoClient;
     this.db = mongoClient.db(config.mongoDBName);
     this.context = this.db.collection<CollectionType>(this.collectionName);
     this.properties = Object.keys(this.validationSchema.properties) as Array<keyof CollectionType>;
@@ -107,7 +110,7 @@ export abstract class BaseCollection<
       }
     );
 
-    if (!result.acknowledged) {
+    if (!result.modifiedCount) {
       throw Error(
         `Could not make update for ${this.constructor.name.replace('sCollection', '')}, ${
           id || _id

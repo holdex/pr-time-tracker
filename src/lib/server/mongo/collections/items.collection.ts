@@ -18,7 +18,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     const searchParams = ItemsCollection.makeParams(params);
     const contributor_id = transform<string>(searchParams.get('contributor_id'));
 
-    if (!contributor_id) return await super.getMany(searchParams);
+    // if (!contributor_id) return await super.getMany(searchParams);
 
     const filter = this.makeFilter(searchParams);
     const approvals = transform<Approval[]>(searchParams.get('approvals'));
@@ -42,9 +42,10 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
         },
         {
           $match: {
-            submission: definesSubmitted ? { $exists: submitted } : undefined,
-            'submission.owner_id': submitted ? { $eq: contributor_id } : undefined,
-            'submission.approval': approvals ? { $in: approvals } : { $ne: '' }
+            submission: definesSubmitted ? { $exists: submitted } : { $ne: '' },
+            'submission.owner_id':
+              definesSubmitted && contributor_id ? { $eq: contributor_id } : { $ne: '' },
+            'submission.approval': definesSubmitted && approvals ? { $in: approvals } : { $ne: '' }
           }
         }
       ])

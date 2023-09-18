@@ -82,7 +82,7 @@ export interface ContributorSchema extends TimeStamps {
 
 export interface SubmissionSchema extends TimeStamps {
   _id?: ObjectId;
-  hours: string;
+  hours: number;
   experience: Experience;
   approval: Approval;
   /** Note that this is equivalent to `contributor_id`(s) in `ItemSchema`. */

@@ -3,17 +3,13 @@ import StatusCode from 'status-code-enum';
 
 import type { RequestHandler } from '@sveltejs/kit';
 
-import clientPromise from '$lib/server/mongo';
-import config from '$lib/server/config';
-import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import { responseHeadersInit } from '$lib/config';
 import { jsonError, transform } from '$lib/utils';
 // import { submissions } from '$lib/server/mongo/collections';
-
-import { CollectionNames } from '$lib/@types';
+import { contributors, items, submissions } from '$lib/server/mongo/collections';
 
 export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) => {
-  const authToken = '1be7b56c';
+  const authToken = '1be7b56cF2Gdfkr';
   const canUnsetDeprecated =
     hostname.includes('invoice.holdex.io') &&
     transform<boolean>(searchParams.get('unset_deprecated'));
@@ -26,33 +22,31 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
   }
 
   try {
-    const mongoDb = (await clientPromise).db(config.mongoDBName);
-    const itemsCollection = mongoDb.collection<ItemSchema>(CollectionNames.ITEMS);
-    const contributorsCollection = mongoDb.collection<ContributorSchema>(
-      CollectionNames.CONTRIBUTORS
-    );
-    const [items, contributors] = await Promise.all([
-      itemsCollection.find().toArray(),
-      contributorsCollection.find().toArray()
+    const [_items, _contributors] = await Promise.all([
+      items.getMany({ count: 1000 }),
+      contributors.getMany()
       // submissions.context.deleteMany()
     ]);
     const result = await Promise.all(
-      items.map(async (item) => {
-        const { contributor_ids } = item;
-        let needUpdate = false;
+      _items.map(async (item) => {
+        const { submission_ids } = item;
+        const needUpdate = false;
 
-        const contributor = !contributor_ids?.length //|| !item.owner_id
-          ? contributors.find(({ login }) => login === item.owner)
-          : undefined;
+        const contributor = _contributors.find(({ login }) => login === item.owner);
 
         if (contributor) {
-          if (!contributor_ids?.length) {
-            item.contributor_ids = [];
-            item.contributor_ids!.push(contributor.id);
-            needUpdate = true;
+          if (!submission_ids?.length && (item as any).submitted) {
+            // needUpdate = true;
+            await submissions.create({
+              item_id: item.id,
+              owner_id: contributor.id,
+              hours: parseFloat((item as any).hours),
+              experience: (item as any).experience
+            });
+            // await submissions.context.deleteMany({ item_id: item.id });
           }
 
-          // if (!item.owner_id) {
+          // if (!(item as any).owner_id) {
           //   item.owner_id = contributor.id;
           //   needUpdate = true;
           // }
@@ -65,10 +59,13 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
 
         if (canUnsetDeprecated) {
           // delete item.contributors;
+          delete (item as any).submitted;
+          delete (item as any).hours;
+          delete (item as any).experience;
         }
 
         if (needUpdate) {
-          await itemsCollection.updateOne(
+          await items.context.updateOne(
             { _id: item._id },
             {
               $set: item,
@@ -76,6 +73,9 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
                 ? {
                     $unset: {
                       // closedAt: ''
+                      submitted: '',
+                      hours: '',
+                      experience: ''
                     }
                   }
                 : {})
@@ -88,7 +88,7 @@ export const POST: RequestHandler = async ({ url: { searchParams, hostname } }) 
     );
 
     return json(
-      { message: 'success', extra: result.length, data: items },
+      { message: 'success', extra: result.length, data: _items },
       { status: StatusCode.SuccessOK, headers: responseHeadersInit }
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
