@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 
 import type { RequestHandler } from '@sveltejs/kit';
+import type { ItemSchema } from '$lib/@types';
 
-import type { ItemSchema } from '$lib/server/mongo/operations';
 import { jsonError, transform } from '$lib/utils';
 import { items } from '$lib/server/mongo/collections';
 

@@ -4,9 +4,7 @@ import type {
   HTMLButtonAttributes,
   SVGAttributes
 } from 'svelte/elements';
-import type { SubmissionSchema } from '$lib/@types';
-
-import type { ItemSchema } from '$lib/server/mongo/operations';
+import type { ItemSchema, SubmissionSchema } from '$lib/@types';
 
 /** Button */
 export interface ButtonProps

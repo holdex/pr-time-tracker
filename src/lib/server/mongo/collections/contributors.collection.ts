@@ -1,6 +1,6 @@
 import { BaseCollection } from './base.collection';
 
-import { CollectionNames, type ContributorSchema } from '$lib/@types';
+import { CollectionNames, UserRole, type ContributorSchema } from '$lib/@types';
 
 export class ContributorsCollection extends BaseCollection<ContributorSchema> {}
 
@@ -32,6 +32,7 @@ export const contributors = new ContributorsCollection(CollectionNames.CONTRIBUT
       bsonType: 'string',
       description: 'must be provided.'
     },
+    role: { enum: Object.values(UserRole), description: 'must be one of the enum values.' },
     created_at: {
       bsonType: 'string',
       description: 'must be provided.'

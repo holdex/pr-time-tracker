@@ -3,9 +3,9 @@
   import { onDestroy, onMount } from 'svelte';
 
   import type { PageData } from './$types';
+  import type { ItemSchema } from '$lib/@types';
 
   import PRs from '$lib/layouts/PRs/index.svelte';
-  import type { ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
   import { getPRs } from '$lib/utils';
 

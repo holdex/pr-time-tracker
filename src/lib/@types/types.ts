@@ -77,6 +77,8 @@ export interface ContributorSchema extends TimeStamps {
   login: string;
   url: string;
   avatarUrl: string;
+  role: UserRole;
+  /** `prs` here is just for type safety. It may be populated on `Item` retrieval. */
   prs?: ItemSchema[];
 }
 
@@ -102,5 +104,6 @@ export enum Experience {
 }
 
 export enum UserRole {
-  MANAGER = 'Manager'
+  MANAGER = 'Manager',
+  CONTRIBUTOR = 'Contributor'
 }

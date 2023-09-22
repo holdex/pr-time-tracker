@@ -6,11 +6,10 @@
 
   import { snackbar } from '$lib/components/Snackbar';
   import PRs from '$lib/layouts/PRs/index.svelte';
-  import type { ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
   import { getPRs } from '$lib/utils';
 
-  import { Approval } from '$lib/@types';
+  import { Approval, type ItemSchema } from '$lib/@types';
 
   /** props */
   export let data: PageData;

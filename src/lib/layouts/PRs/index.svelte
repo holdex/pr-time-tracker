@@ -9,10 +9,14 @@
   import { snackbar } from '$lib/components/Snackbar';
   import { axios, getPRs, type PRsQuery } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
-  import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
 
-  import { Approval, type SubmissionSchema } from '$lib/@types';
+  import {
+    Approval,
+    type ContributorSchema,
+    type ItemSchema,
+    type SubmissionSchema
+  } from '$lib/@types';
 
   /** props */
   export let prs: ItemSchema[];

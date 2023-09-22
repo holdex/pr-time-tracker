@@ -1,12 +1,11 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 
-import type { ContributorSchema } from '$lib/server/mongo/operations';
 import type { PullRequestEvent } from '$lib/server/github';
 
 import { client } from '../';
 import { getContributorInfo, getPrInfo, upsertDataToDB, github, events } from './util';
 
-import { CollectionNames } from '$lib/@types';
+import { CollectionNames, type ContributorSchema } from '$lib/@types';
 
 // Your first job
 // This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline

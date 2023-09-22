@@ -1,14 +1,13 @@
 <script lang="ts">
-  /** externals */
+  /** deps */
   import { page } from '$app/stores';
 
   import type { User } from '@octokit/webhooks-types';
+  import type { ItemSchema } from '$lib/@types';
 
-  /** internals */
   import PR from '$lib/components/Card/PR.svelte';
   import { getPRs } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
-  import type { ItemSchema } from '$lib/server/mongo/operations';
 
   /** props */
   export let user: User | undefined = undefined;

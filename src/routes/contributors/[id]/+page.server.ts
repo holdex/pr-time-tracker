@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
+import type { ContributorSchema, ItemSchema } from '$lib/@types';
 
 import { invalidations } from '$lib/config';
-import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 
 export const load: PageServerLoad = async ({ fetch, depends, params }) => {
   depends(invalidations.user);

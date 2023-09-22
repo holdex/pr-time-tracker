@@ -2,10 +2,10 @@
   /** deps */
   import type { PageData } from './$types';
   import type { User } from '@octokit/webhooks-types';
+  import type { ContributorSchema } from '$lib/@types';
 
   import Contributor from '$lib/components/Card/Contributor.svelte';
   import { axios, createEffect } from '$lib/utils';
-  import type { ContributorSchema } from '$lib/server/mongo/operations';
   import { snackbar } from '$lib/components/Snackbar';
 
   /** props */

@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
+import type { ItemSchema } from '$lib/@types';
 
 import { invalidations } from '$lib/config';
-import type { ItemSchema } from '$lib/server/mongo/operations';
 import { ItemType } from '$lib/constants';
 
 export const load: PageServerLoad = async ({ fetch, depends, parent }) => {

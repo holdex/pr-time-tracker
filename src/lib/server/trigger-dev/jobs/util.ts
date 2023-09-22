@@ -1,11 +1,9 @@
 import { Github, events } from '@trigger.dev/github';
 
 import type { Document, ModifyResult } from 'mongodb';
-import type { CollectionNames } from '$lib/@types';
 
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
-import type { ContributorSchema, ItemSchema } from '$lib/server/mongo/operations';
 import type {
   PullRequest,
   User,
@@ -15,6 +13,13 @@ import type {
 } from '$lib/server/github';
 import { ItemType } from '$lib/constants';
 import { items } from '$lib/server/mongo/collections';
+
+import {
+  UserRole,
+  type CollectionNames,
+  type ContributorSchema,
+  type ItemSchema
+} from '$lib/@types';
 
 const upsertDataToDB = async <T extends Document>(collection: CollectionNames, data: T) => {
   const mongoDB = await clientPromise;
@@ -26,12 +31,13 @@ const upsertDataToDB = async <T extends Document>(collection: CollectionNames, d
   return res;
 };
 
-const getContributorInfo = (user: User) => ({
+const getContributorInfo = (user: User): ContributorSchema => ({
   id: user.id,
   name: user.login,
   login: user.login,
   url: user.html_url,
-  avatarUrl: user.avatar_url
+  avatarUrl: user.avatar_url,
+  role: UserRole.CONTRIBUTOR
 });
 
 const getPrInfo = async (

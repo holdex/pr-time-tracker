@@ -6,10 +6,10 @@
   import { preloadCode } from '$app/navigation';
 
   import type { LayoutData } from './$types';
+  import type { ContributorSchema } from '$lib/@types';
 
   import Header from '$lib/components/Header/index.svelte';
   import { routes } from '$lib/config';
-  import type { ContributorSchema } from '$lib/server/mongo/operations';
   import { activeTab } from '$lib/components/Toggle';
 
   /** props */
