@@ -1,10 +1,14 @@
 import { redirect } from '@sveltejs/kit';
 
+import { dev } from '$app/environment';
+
 import type { LayoutServerLoad } from './$types';
+import type { ContributorSchema } from '$lib/@types';
 
 import { invalidations, routes } from '$lib/config';
 import type { User } from '$lib/server/github';
 import { REDIRECT_TEMP } from '$lib/constants';
+import { contributors } from '$lib/server/mongo/collections';
 
 export const load: LayoutServerLoad = async ({ fetch, depends, url }) => {
   depends(invalidations.user);
@@ -12,15 +16,20 @@ export const load: LayoutServerLoad = async ({ fetch, depends, url }) => {
   const data: { user: User | null } = await fetch('/api/github/auth/profile').then((res) =>
     res.json()
   );
+  let user: (User & Omit<ContributorSchema, '_id'> & { _id?: string }) | null = null;
 
-  if (!data.user && !url.pathname.includes(routes.login.path)) {
-    throw redirect(REDIRECT_TEMP, routes.login.path);
-  } else if (data.user && url.pathname.includes(routes.login.path)) {
-    throw redirect(
-      REDIRECT_TEMP,
-      data.user.type === 'User' ? routes.prs.path : routes.contributors.path
-    );
+  if (data.user) {
+    const { _id, ...contributor } = (await contributors.getOne({ id: data.user.id }))! || {};
+
+    user = { ...data.user, ...contributor, _id: _id?.toString() };
+    data.user = user;
   }
 
-  return data;
+  if (!user && !url.pathname.includes(routes.login.path)) {
+    throw redirect(REDIRECT_TEMP, routes.login.path);
+  } else if (user && url.pathname.includes(routes.login.path)) {
+    throw redirect(REDIRECT_TEMP, dev ? routes.prs.path : routes.contributors.path);
+  }
+
+  return data as { user: (User & ContributorSchema) | null };
 };
