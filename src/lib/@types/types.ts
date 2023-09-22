@@ -78,7 +78,7 @@ export interface ContributorSchema extends TimeStamps {
   url: string;
   avatarUrl: string;
   role: UserRole;
-  /** `prs` here is just for type safety. It may be populated on `Item` retrieval. */
+  /** `prs` here is just for type safety. It may be populated on contributor retrieval. */
   prs?: ItemSchema[];
 }
 
