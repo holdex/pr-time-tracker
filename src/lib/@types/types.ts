@@ -100,3 +100,7 @@ export enum Experience {
   POSITIVE = 'positive',
   NEGATIVE = 'negative'
 }
+
+export enum UserRole {
+  MANAGER = 'Manager'
+}
