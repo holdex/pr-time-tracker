@@ -5,11 +5,12 @@
   import type { CardProps } from '$lib/components/types';
   import type { User } from '@octokit/webhooks-types';
 
-  import PR from '$lib/components/Card/PR.svelte';
+  import type PR from '$lib/components/Card/PR.svelte';
   import { snackbar } from '$lib/components/Snackbar';
   import { axios, getPRs, type PRsQuery } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
   import { activeTab } from '$lib/components/Toggle';
+  import type ManagerPR from '$lib/components/Card/ManagerPR.svelte';
 
   import {
     Approval,
@@ -23,6 +24,7 @@
   export let context: 'contributor' | 'user' = 'user';
   export let query: Omit<PRsQuery, 'contributor_id'> | undefined = undefined;
   export let getQuery: (() => Omit<PRsQuery, 'contributor_id'>) | undefined = undefined;
+  export let PRCard: typeof ManagerPR; // using `ManagerPR` instead because of slot TS type mismatch with `PR`;
 
   /** vars */
   const isContributorContext = context === 'contributor';
@@ -78,12 +80,13 @@
   }, [$activeTab.position]);
 </script>
 
-<main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
-  <ul class="grid gap-4 md:gap-8">
+<main class="max-w-container m-auto py-4 animate-fadeIn md:py-5">
+  <ul class="grid gap-4 md:gap-5">
     {#each prs as pr, i}
       <!-- Force component destroy/re-render to get updated `pr` object values. -->
       {#key `${i}${invalidateCache ? pr.submission?.updated_at : $activeTab.position}`}
-        <PR
+        <svelte:component
+          this={PRCard}
           data={pr}
           {onSubmit}
           isAdmin={isContributorContext}

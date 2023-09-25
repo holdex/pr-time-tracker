@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ fetch, depends, parent }) => {
 
   const parentData = await parent();
   const response: Response = await fetch(
-    `/api/items?type=${ItemType.PULL_REQUEST}&contributor_id=${parentData.user?.id}&submitted=false`
+    `/api/items?type=${ItemType.PULL_REQUEST}&contributor_id=${parentData.user?.id}&submitted=false&merged=true`
   );
   const result: {
     data: ItemSchema[] | null;

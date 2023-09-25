@@ -47,7 +47,12 @@
   $: isArchiveRoute = $page.url.pathname.includes('archive');
 </script>
 
-<header class="animate-fadeIn sticky {!isArchiveRoute ? '-top-36 z-20 md:-top-40' : ''}">
+<header
+  class="animate-fadeIn sticky z-20 {!isArchiveRoute
+    ? $page.url.pathname.includes('contributors')
+      ? '-top-36 md:-top-52'
+      : '-top-36 md:-top-40'
+    : ''}">
   <div class="pb-4 flex justify-between border-b border-l3 md:pb-8">
     <div class="flex gap-3 items-center">
       <Avatar url={user.avatar_url} alt={user.name} />

@@ -8,6 +8,7 @@
   import PRs from '$lib/layouts/PRs/index.svelte';
   import { activeTab } from '$lib/components/Toggle';
   import { getPRs } from '$lib/utils';
+  import ManagerPR from '$lib/components/Card/ManagerPR.svelte';
 
   import { Approval, type ItemSchema } from '$lib/@types';
 
@@ -46,5 +47,9 @@
 
 <PRs
   context="contributor"
-  query={{ approvals: isApprovedTab ? [Approval.APPROVED] : [Approval.PENDING], submitted: true }}
-  bind:prs={prs[isApprovedTab ? 'approved' : 'pending']} />
+  query={{
+    approvals: isApprovedTab ? [Approval.APPROVED] : [Approval.PENDING],
+    submitted: undefined
+  }}
+  bind:prs={prs[isApprovedTab ? 'approved' : 'pending']}
+  PRCard={ManagerPR} />

@@ -28,7 +28,7 @@
     isOutlined={$$restProps.isOutlined}
     {...iconProps}
     name={isLoading ? 'arrow-path' : iconProps?.name || icon || ''}
-    class={`${iconProps?.className || ''}${isLoading ? ' animate-spin' : ''}`} />
+    class={`${iconProps?.class || ''}${isLoading ? ' animate-spin' : ''}`} />
 {/if}
 
 {#if text || label}

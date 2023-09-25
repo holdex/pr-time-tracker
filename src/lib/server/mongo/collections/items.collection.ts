@@ -24,7 +24,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     const definesSubmitted = typeof submitted === 'boolean';
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
 
-    if (!contributor_id) delete filter.merged;
+    if (filter.merged === undefined) delete filter.merged;
+
+    // return await this.context.find(filter).toArray();
 
     return await this.context
       .aggregate<WithId<ItemSchema>>([
@@ -70,7 +72,6 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
     const contributorId = transform<number>(searchParams?.get('contributor_id'));
 
-    filter.merged = filter.merged ?? true;
     if (contributorId) filter.contributor_ids = { $in: [contributorId] };
 
     return filter;

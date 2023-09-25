@@ -30,7 +30,7 @@ export interface ButtonProps
 }
 
 /** Icon */
-export interface IconProps extends SVGAttributes<SVGElement> {
+export interface IconProps extends Omit<SVGAttributes<SVGElement>, 'className'> {
   name: IconName;
   isOutlined?: boolean;
   colorInherit?: boolean;
@@ -50,6 +50,8 @@ type AllowedTags = 'path' | 'circle' | 'rect' | 'polygon' | 'polyline' | 'line';
 
 /** Add names of icons you use (or include) here (for stricter typing and intellisense [name suggestions]). */
 export type IconName =
+  | 'pr-open'
+  | 'pr-closed'
   | 'information-circle'
   | 'arrow-path'
   | 'x-circle'
