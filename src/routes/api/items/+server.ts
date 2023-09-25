@@ -16,6 +16,7 @@ import { verifyAuth } from '$lib/server/github';
 
 export const GET: RequestHandler = async ({ url: { searchParams, pathname }, cookies }) => {
   try {
+    console.log('Hmm...');
     await verifyAuth(pathname, 'GET', cookies);
 
     return json({ data: await items.getMany(searchParams) });
