@@ -26,8 +26,6 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
     if (filter.merged === undefined) delete filter.merged;
 
-    // return await this.context.find(filter).toArray();
-
     return await this.context
       .aggregate<WithId<ItemSchema>>([
         { $match: filter },

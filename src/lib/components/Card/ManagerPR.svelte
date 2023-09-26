@@ -33,7 +33,7 @@
         <span class="flex gap-1.5 text-sm flex-col max-w-content">
           <span class="">Opened:</span>
           <span class="text-t1">
-            {openedAt?.toDateString() || '...'}
+            {openedAt?.toDateString().replace(/\w{3,3}\s/, '') || '...'}
             <span class="text-t3 text-sm"
               >@ {openedAt?.toLocaleTimeString().replace(/(\d\d:\d\d).*/, '$1') || '...'}</span>
           </span>

@@ -18,7 +18,9 @@
   /** vars */
   const prs: Record<'pending' | 'approved', ItemSchema[]> = {
     pending:
-      data.contributor?.prs.filter((pr) => pr.submission?.approval === Approval.PENDING) || [],
+      data.contributor?.prs.filter(
+        (pr) => pr.submission?.approval === Approval.PENDING || !pr.submission
+      ) || [],
     approved: []
   };
   let isApprovedTab = false;

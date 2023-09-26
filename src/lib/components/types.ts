@@ -36,7 +36,9 @@ export interface IconProps extends Omit<SVGAttributes<SVGElement>, 'className'> 
   colorInherit?: boolean;
 }
 
-export interface IconSourceProps extends Omit<IconProps, 'name'> {
+export interface IconSourceProps
+  extends Omit<IconProps, 'name'>,
+    Omit<SVGAttributes<SVGElement>, 'className'> {
   src: { solid?: IconThemeSource } & { default: IconThemeSource };
 }
 

@@ -24,20 +24,16 @@
   const href = data.url.replace(/.*\/repos/, 'https://github.com').replace('pulls', 'pull');
   let submissionPayload: Partial<SubmissionSchema> = data.submission || {};
   let submissionApproved = false;
-  let positiveExperience = true;
   let activeReactionButton: ToggleProps['activeButton'] = !data.submission?.experience
     ? ''
     : data.submission?.experience === 'negative'
     ? 'right'
     : 'left';
-  let openedAt: Date | undefined;
 
   /** react-ibles */
-  $: positiveExperience = data.submission?.experience === Experience.POSITIVE;
   $: submissionApproved = data.submission?.approval === Approval.APPROVED;
   $: if (submissionApproved && !isAdmin) isReadonly = true;
   $: data.number = Number(data.url?.split('/').slice(-1));
-  $: openedAt = data.created_at ? new Date(data.created_at) : undefined;
 </script>
 
 <li
@@ -48,7 +44,9 @@
     submissionApproved && !isAdmin ? 'opacity-80' : ''
   } dark:bg-l2 xs:w-full`}>
   <div class="p-4 flex gap-4 items-center">
-    <Icon name="pr-{data.merged ? 'closed' : 'open'}" class="w-5 h-5 min-w-fit" />
+    <span title={data.merged ? 'Closed' : 'Open'}>
+      <Icon name="pr-{data.merged ? 'closed' : 'open'}" class="w-5 h-5 min-w-fit" />
+    </span>
 
     <a {href} target="_blank" class="link">
       <h2 class="text-t3">{data.org} / {data.repo} / #{data.number}</h2>
@@ -149,7 +147,7 @@
         class="w-full min-w-full ml-auto {submissionApproved && !loading
           ? '!text-neg'
           : ''} sm:min-w-fit"
-        disabled={loading} />
+        disabled={loading || (isAdmin && !data.merged)} />
     {/if}
   </form>
 </li>
