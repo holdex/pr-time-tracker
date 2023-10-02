@@ -11,7 +11,7 @@ export class ContributorsCollection extends BaseCollection<ContributorSchema> {
     const contributor = await this.getOne({ id, ...payload });
 
     if (contributor?.role) return super.update(payload);
-    if (!payload.role) payload.role = id === Vadims_ID ? UserRole.MANAGER : UserRole.CONTRIBUTOR;
+    if (!payload.role) payload.role = UserRole.CONTRIBUTOR;
 
     return await super.create(payload as ContributorSchema);
   }
