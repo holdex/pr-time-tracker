@@ -40,7 +40,8 @@ const getPrInfo = async (
   sender: User,
   contributor: ContributorSchema
 ): Promise<ItemSchema> => {
-  const contributorIds = await items.makeContributorIds(pr.id, contributor);
+  const item = await items.getOne({ id: pr.id });
+  const contributorIds = item ? await items.makeContributorIds(item, contributor) : [];
   let prMerged = false;
 
   if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;
@@ -58,7 +59,7 @@ const getPrInfo = async (
     updated_at: pr?.updated_at,
     merged: prMerged,
     closed_at: pr.closed_at ?? undefined,
-    submission_ids: []
+    submission_ids: item?.submission_ids || []
   };
 };
 
