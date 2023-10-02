@@ -5,7 +5,6 @@
   import type { CardProps } from '$lib/components/types';
   import type { User } from '@octokit/webhooks-types';
 
-  import type PR from '$lib/components/Card/PR.svelte';
   import { snackbar } from '$lib/components/Snackbar';
   import { axios, getPRs, type PRsQuery } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
