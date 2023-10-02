@@ -4,9 +4,7 @@ import type { PullRequestReviewEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
 
 import { client } from '../';
-import { getContributorInfo, getPrInfo, upsertDataToDB, github, events } from './util';
-
-import { CollectionNames, type ContributorSchema } from '$lib/@types';
+import { getContributorInfo, getPrInfo, github, events } from './util';
 
 // Your first job
 // This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline

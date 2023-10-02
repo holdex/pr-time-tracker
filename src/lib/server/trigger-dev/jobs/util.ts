@@ -15,16 +15,6 @@ import type {
 import { ItemType } from '$lib/constants';
 import { items } from '$lib/server/mongo/collections';
 
-const upsertDataToDB = async <T extends Document>(collection: CollectionNames, data: T) => {
-  const mongoDB = await clientPromise;
-
-  const res = await mongoDB
-    .db(config.mongoDBName)
-    .collection<T>(collection)
-    .findOneAndUpdate({ id: data.id }, { $set: data }, { returnDocument: 'after', upsert: true });
-  return res;
-};
-
 const getContributorInfo = (user: User): Omit<ContributorSchema, 'role'> => ({
   id: user.id,
   name: user.login,
@@ -68,4 +58,4 @@ const github = new Github({
   token: config.github.token
 });
 
-export { getContributorInfo, getPrInfo, upsertDataToDB, github, events };
+export { getContributorInfo, getPrInfo, github, events };
