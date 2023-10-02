@@ -1,6 +1,7 @@
 import { Github, events } from '@trigger.dev/github';
 
 import type { Document, ModifyResult } from 'mongodb';
+import type { CollectionNames, ContributorSchema, ItemSchema } from '$lib/@types';
 
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
@@ -14,13 +15,6 @@ import type {
 import { ItemType } from '$lib/constants';
 import { items } from '$lib/server/mongo/collections';
 
-import {
-  UserRole,
-  type CollectionNames,
-  type ContributorSchema,
-  type ItemSchema
-} from '$lib/@types';
-
 const upsertDataToDB = async <T extends Document>(collection: CollectionNames, data: T) => {
   const mongoDB = await clientPromise;
 
@@ -31,13 +25,12 @@ const upsertDataToDB = async <T extends Document>(collection: CollectionNames, d
   return res;
 };
 
-const getContributorInfo = (user: User): ContributorSchema => ({
+const getContributorInfo = (user: User): Omit<ContributorSchema, 'role'> => ({
   id: user.id,
   name: user.login,
   login: user.login,
   url: user.html_url,
-  avatarUrl: user.avatar_url,
-  role: UserRole.CONTRIBUTOR
+  avatarUrl: user.avatar_url
 });
 
 const getPrInfo = async (
@@ -45,9 +38,9 @@ const getPrInfo = async (
   repository: Repository,
   organization: Organization | undefined,
   sender: User,
-  contributorRes: ModifyResult<ContributorSchema>
+  contributor: ContributorSchema
 ): Promise<ItemSchema> => {
-  const contributorIds = await items.makeContributorIds(pr.id, contributorRes.value);
+  const contributorIds = await items.makeContributorIds(pr.id, contributor);
   let prMerged = false;
 
   if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;

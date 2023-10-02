@@ -1,8 +1,21 @@
+import type { WithId } from 'mongodb';
+
+import { Vadims_ID } from '$lib/constants';
+
 import { BaseCollection } from './base.collection';
 
 import { CollectionNames, UserRole, type ContributorSchema } from '$lib/@types';
 
-export class ContributorsCollection extends BaseCollection<ContributorSchema> {}
+export class ContributorsCollection extends BaseCollection<ContributorSchema> {
+  async update({ id, ...payload }: Partial<ContributorSchema>): Promise<WithId<ContributorSchema>> {
+    const contributor = await this.getOne({ id, ...payload });
+
+    if (contributor?.role) return super.update(payload);
+    if (!payload.role) payload.role = id === Vadims_ID ? UserRole.MANAGER : UserRole.CONTRIBUTOR;
+
+    return await super.create(payload as ContributorSchema);
+  }
+}
 
 export const contributors = new ContributorsCollection(CollectionNames.CONTRIBUTORS, {
   required: [
