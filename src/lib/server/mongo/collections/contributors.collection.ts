@@ -1,19 +1,16 @@
 import type { WithId } from 'mongodb';
 
-import { Vadims_ID } from '$lib/constants';
-
 import { BaseCollection } from './base.collection';
 
 import { CollectionNames, UserRole, type ContributorSchema } from '$lib/@types';
 
 export class ContributorsCollection extends BaseCollection<ContributorSchema> {
-  async update({ id, ...payload }: Partial<ContributorSchema>): Promise<WithId<ContributorSchema>> {
-    const contributor = await this.getOne({ id, ...payload });
+  async update(_payload: Partial<ContributorSchema>): Promise<WithId<ContributorSchema>> {
+    return await super.update(_payload, (payload) => {
+      if (!payload.role) payload.role = UserRole.CONTRIBUTOR;
 
-    if (contributor?.role) return super.update(payload);
-    if (!payload.role) payload.role = UserRole.CONTRIBUTOR;
-
-    return await super.create(payload as ContributorSchema);
+      return payload;
+    });
   }
 }
 

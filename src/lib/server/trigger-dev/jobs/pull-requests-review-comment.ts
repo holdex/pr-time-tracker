@@ -55,7 +55,7 @@ async function createJob(
         sender,
         contributor
       );
-      await items.update(prInfo);
+      await items.update(prInfo, true);
       break;
     }
     default: {

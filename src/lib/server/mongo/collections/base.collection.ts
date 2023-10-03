@@ -100,17 +100,35 @@ export abstract class BaseCollection<
       .toArray();
   }
 
-  async update({ _id, id, ...payload }: Partial<CollectionType>) {
+  async update(
+    { _id, id, ...payload }: Partial<CollectionType>,
+    onCreateIfNotExist?:
+      | boolean
+      | ((_payload: Omit<CollectionType, '_id'>) => OptionalUnlessRequiredId<CollectionType>)
+  ) {
     payload.updated_at = new Date().toISOString();
 
-    const result = await this.context.updateOne(
-      (_id ? { _id: new ObjectId(_id) } : { id }) as Filter<CollectionType>,
-      {
-        $set: payload as Partial<CollectionType>
-      }
-    );
+    const existing = onCreateIfNotExist && Boolean(await this.getOne(_id || { id: id! }));
+    const result =
+      existing || !onCreateIfNotExist
+        ? await this.context.updateOne(
+            (_id ? { _id: new ObjectId(_id) } : { id }) as Filter<CollectionType>,
+            { $set: payload as Partial<CollectionType> }
+          )
+        : null;
 
-    if (!result.modifiedCount) {
+    if (!result && onCreateIfNotExist) {
+      return this.create(
+        (typeof onCreateIfNotExist === 'boolean'
+          ? { id, ...payload }
+          : onCreateIfNotExist({
+              id,
+              ...payload
+            } as CollectionType)) as OptionalUnlessRequiredId<CollectionType>
+      );
+    }
+
+    if (!result?.modifiedCount) {
       throw Error(
         `Could not make update for ${this.constructor.name.replace('sCollection', '')}, ${
           id || _id
