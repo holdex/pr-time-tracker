@@ -5,7 +5,6 @@ export const FIXED_DECIMAL_HOUR = 2;
 export const MAX_DATA_CHUNK = 50; //10;
 export const DESCENDING = -1;
 export const ASCENDING = 1;
-export const Vadims_ID = 1125014;
 
 export const REDIRECT_TEMP = 307;
 export const SUCCESS_OK = 200;
