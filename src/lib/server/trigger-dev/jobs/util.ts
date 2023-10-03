@@ -1,6 +1,7 @@
 import { Github, events } from '@trigger.dev/github';
 
 import type { Document, ModifyResult } from 'mongodb';
+import type { CollectionNames, ContributorSchema, ItemSchema } from '$lib/@types';
 
 import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
@@ -14,30 +15,12 @@ import type {
 import { ItemType } from '$lib/constants';
 import { items } from '$lib/server/mongo/collections';
 
-import {
-  UserRole,
-  type CollectionNames,
-  type ContributorSchema,
-  type ItemSchema
-} from '$lib/@types';
-
-const upsertDataToDB = async <T extends Document>(collection: CollectionNames, data: T) => {
-  const mongoDB = await clientPromise;
-
-  const res = await mongoDB
-    .db(config.mongoDBName)
-    .collection<T>(collection)
-    .findOneAndUpdate({ id: data.id }, { $set: data }, { returnDocument: 'after', upsert: true });
-  return res;
-};
-
-const getContributorInfo = (user: User): ContributorSchema => ({
+const getContributorInfo = (user: User): Omit<ContributorSchema, 'role'> => ({
   id: user.id,
   name: user.login,
   login: user.login,
   url: user.html_url,
-  avatarUrl: user.avatar_url,
-  role: UserRole.CONTRIBUTOR
+  avatarUrl: user.avatar_url
 });
 
 const getPrInfo = async (
@@ -45,9 +28,10 @@ const getPrInfo = async (
   repository: Repository,
   organization: Organization | undefined,
   sender: User,
-  contributorRes: ModifyResult<ContributorSchema>
+  contributor: ContributorSchema
 ): Promise<ItemSchema> => {
-  const contributorIds = await items.makeContributorIds(pr.id, contributorRes.value);
+  const item = await items.getOne({ id: pr.id });
+  const contributorIds = item ? await items.makeContributorIds(item, contributor) : [];
   let prMerged = false;
 
   if (pr.closed_at && (pr as PullRequest).merged) prMerged = true;
@@ -65,7 +49,7 @@ const getPrInfo = async (
     updated_at: pr?.updated_at,
     merged: prMerged,
     closed_at: pr.closed_at ?? undefined,
-    submission_ids: []
+    submission_ids: item?.submission_ids || []
   };
 };
 
@@ -74,4 +58,4 @@ const github = new Github({
   token: config.github.token
 });
 
-export { getContributorInfo, getPrInfo, upsertDataToDB, github, events };
+export { getContributorInfo, getPrInfo, github, events };

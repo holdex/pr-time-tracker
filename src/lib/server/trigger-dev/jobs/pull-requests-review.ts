@@ -1,11 +1,10 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 
 import type { PullRequestReviewEvent } from '$lib/server/github';
+import { contributors, items } from '$lib/server/mongo/collections';
 
 import { client } from '../';
-import { getContributorInfo, getPrInfo, upsertDataToDB, github, events } from './util';
-
-import { CollectionNames, type ContributorSchema } from '$lib/@types';
+import { getContributorInfo, getPrInfo, github, events } from './util';
 
 // Your first job
 // This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline
@@ -44,21 +43,13 @@ async function createJob(
 
   switch (action) {
     case 'submitted': {
-      const contributorInfo = getContributorInfo(sender);
-      const contributorsRes = await upsertDataToDB<ContributorSchema>(
-        CollectionNames.CONTRIBUTORS,
-        contributorInfo
-      );
-      await io.wait('wait for first call', 5);
+      const contributor = await contributors.update(getContributorInfo(sender));
 
-      const prInfo = await getPrInfo(
-        pull_request,
-        repository,
-        organization,
-        sender,
-        contributorsRes
+      await io.wait('wait for first call', 5);
+      await items.update(
+        await getPrInfo(pull_request, repository, organization, sender, contributor),
+        true
       );
-      await upsertDataToDB(CollectionNames.ITEMS, prInfo);
       break;
     }
     default: {

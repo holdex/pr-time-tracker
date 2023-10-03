@@ -56,14 +56,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
       .toArray();
   };
 
-  async makeContributorIds(itemId: number, contributor: ContributorSchema | null) {
-    const item = await items.getOne({
-      type: ItemType.PULL_REQUEST,
-      id: itemId
-    });
-    const contributorIds = new Set((item?.contributor_ids || []).concat(contributor?.id || []));
-
-    return Array.from(contributorIds);
+  async makeContributorIds(item: ItemSchema, contributor: ContributorSchema | null) {
+    return Array.from(new Set((item?.contributor_ids || []).concat(contributor?.id || [])));
   }
 
   makeFilter(searchParams?: URLSearchParams) {

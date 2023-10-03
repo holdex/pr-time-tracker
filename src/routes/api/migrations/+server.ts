@@ -33,10 +33,6 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
         if (!contributor.role) {
           contributor.role = UserRole.CONTRIBUTOR;
 
-          if (contributor.id === 1125014) {
-            contributor.role = UserRole.MANAGER;
-          }
-
           await contributors.update(contributor);
         }
 
