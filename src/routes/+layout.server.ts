@@ -23,7 +23,7 @@ export const load: LayoutServerLoad = async ({ fetch, depends, url, cookies }) =
     const { _id, ...contributor } = (await contributors.getOne({ id: data.user.id }))! || {};
 
     user = { ...data.user, ...contributor, _id: _id?.toString() };
-    // if (dev) user.role = 'Manager' as any;
+    if (dev) user.role = 'Manager' as any;
     data.user = user;
     cookies.set(cookieNames.role, user.role);
   }
