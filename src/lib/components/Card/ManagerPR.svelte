@@ -21,7 +21,7 @@
 
 <PR {isReadonly} {isAdmin} {loading} {data} {onSubmit}>
   <svelte:fragment slot="author-et-al">
-    <div class="flex gap-4 my-4 px-4 justify-between text-t3">
+    <!-- <div class="flex gap-4 my-4 px-4 justify-between text-t3">
       <div>
         <span class="flex gap-1.5 flex-col max-w-content">
           <span class="text-sm">Author:</span>
@@ -39,6 +39,6 @@
           </span>
         </span>
       </div>
-    </div>
+    </div> -->
   </svelte:fragment>
 </PR>
