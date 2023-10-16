@@ -5,6 +5,7 @@
     ArrowPath,
     ArrowRightOnRectangle,
     CheckCircle,
+    ChevronUp,
     ExclamationTriangle,
     HandThumbDown,
     HandThumbUp,
@@ -24,6 +25,9 @@
   /** react-ibles */
   $: {
     switch (name) {
+      case 'chevron-up':
+        src = ChevronUp;
+        break;
       case 'information-circle':
         src = InformationCircle;
         break;

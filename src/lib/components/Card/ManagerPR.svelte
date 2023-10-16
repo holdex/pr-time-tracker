@@ -1,9 +1,11 @@
 <script lang="ts">
   import type { CardProps } from '../types';
 
-  import Avatar from '$lib/components/Avatar/index.svelte';
+  import Button from '$lib/components/Button/index.svelte';
+  import Icon from '$lib/components/Icon/index.svelte';
 
   import PR from './PR.svelte';
+  import Breakdown from './__Breakdown.svelte';
 
   /** props */
   export let isReadonly = false;
@@ -14,6 +16,7 @@
 
   /** vars */
   let openedAt: Date | undefined;
+  let showBreakdown = false;
 
   /** react-ibles */
   $: openedAt = data.created_at ? new Date(data.created_at) : undefined;
@@ -67,4 +70,16 @@
       <span class="text-h6-s">0</span>
     </div>
   </div>
+
+  <Button class="gap-1" variant="secondary" onClick={() => (showBreakdown = !showBreakdown)}>
+    {showBreakdown ? 'Hide' : 'Show'} Breakdown <Icon
+      name="chevron-up"
+      class="w-5 h-5 transition {!showBreakdown ? 'rotate-180' : ''}" />
+  </Button>
+
+  <svelte:fragment slot="breakdown">
+    {#if showBreakdown}
+      <Breakdown />
+    {/if}
+  </svelte:fragment>
 </PR>

@@ -52,6 +52,7 @@ type AllowedTags = 'path' | 'circle' | 'rect' | 'polygon' | 'polyline' | 'line';
 
 /** Add names of icons you use (or include) here (for stricter typing and intellisense [name suggestions]). */
 export type IconName =
+  | 'chevron-up'
   | 'pr-open'
   | 'pr-closed'
   | 'information-circle'

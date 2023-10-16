@@ -70,6 +70,8 @@
     <slot />
   </div>
 
+  <slot name="breakdown" />
+
   <form
     class="px-4 my-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4"
     name={data.title}
