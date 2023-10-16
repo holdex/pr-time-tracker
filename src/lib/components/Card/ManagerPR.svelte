@@ -41,4 +41,30 @@
       </div>
     </div> -->
   </svelte:fragment>
+
+  <div class="grid grid-cols-4 border border-l4 rounded-2xl">
+    <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
+      <span class="text-t3 text-sm">Total Cost:</span>
+      <span class="text-h6-s">$ 0</span>
+    </div>
+
+    <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
+      <span class="text-t3 text-sm">Cycle time:</span>
+      <span class="text-h6-s">
+        0 <span class="text-t3">hours</span>
+      </span>
+    </div>
+
+    <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
+      <span class="text-t3 text-sm">Rejected:</span>
+      <span class="text-h6-s">
+        0 <span class="text-t3">times</span>
+      </span>
+    </div>
+
+    <div class="flex flex-col gap-2 p-4">
+      <span class="text-t3 text-sm">Comments:</span>
+      <span class="text-h6-s">0</span>
+    </div>
+  </div>
 </PR>

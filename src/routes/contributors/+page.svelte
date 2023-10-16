@@ -26,7 +26,7 @@
       return response.data.result;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-      $snackbar = { text: e.message || e, type: 'error' };
+      $snackbar = { text: e?.message || e, type: 'error' };
       return [];
     }
   };

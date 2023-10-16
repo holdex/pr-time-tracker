@@ -6,6 +6,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { responseHeadersInit } from '$lib/config';
 import { contributors } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
+import { jsonError } from '$lib/utils';
 
 export const GET: RequestHandler = async ({ cookies, url }) => {
   try {
@@ -17,9 +18,6 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
-    return json(
-      { message: e.message || e, result: null, error: true },
-      { status: StatusCode.ServerErrorInternal }
-    );
+    return jsonError(e, '/api/contributors');
   }
 };

@@ -1,4 +1,4 @@
-import ax, { type InternalAxiosRequestConfig } from 'axios';
+import ax, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { json } from '@sveltejs/kit';
 
 import type { MongoServerError } from 'mongodb';
@@ -79,6 +79,17 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
   return config;
 });
+
+axios.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error: AxiosError) => {
+    error.message = (error.response?.data as any).message || error.message;
+
+    return Promise.reject(error);
+  }
+);
 
 export interface PRsQuery {
   contributor_id: number;

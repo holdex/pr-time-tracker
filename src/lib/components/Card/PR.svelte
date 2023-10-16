@@ -61,9 +61,14 @@
       aria-label="GitHub" />
   </div>
 
-  <p class="p-4 border-y border-l4 text-h4-l font-satoshi">{data.title}</p>
+  <div class="flex flex-col gap-4 p-4 border-y border-l4">
+    <p class="text-h4-l font-satoshi">
+      {data.title}
+    </p>
 
-  <slot name="author-et-al" />
+    <slot name="author-et-al" />
+    <slot />
+  </div>
 
   <form
     class="px-4 my-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4"
@@ -138,7 +143,6 @@
     {#if !isReadonly || isAdmin}
       <Button
         isSubmitBtn
-        title="Coming soon..."
         size="small"
         text={isAdmin
           ? `${submissionApproved ? 'Disapprov' : 'Approv'}${loading ? 'ing...' : 'e'}`
