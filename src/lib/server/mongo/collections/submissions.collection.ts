@@ -1,4 +1,4 @@
-import type { ObjectId, OptionalId } from 'mongodb';
+import { ObjectId, type OptionalId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
@@ -36,7 +36,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
         id: item_id,
         submission_ids: Array.from(
           new Set((item.submission_ids || []).concat(submission._id).map(String))
-        ) as unknown as ObjectId[]
+        ).map((_id) => new ObjectId(_id))
       });
       session.commitTransaction();
 

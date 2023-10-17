@@ -111,37 +111,42 @@
       loading = false;
       isReadonly = data.submission?.approval === Approval.APPROVED;
     }}>
-    <span class="flex gap-1.5 items-center max-w-content">
-      <span>Hours:</span>
-      {#if isReadonly}
-        <span class="text-t1">{data.submission?.hours || '...'}</span>
-      {:else}
-        <Input
-          required
-          min="0.5"
-          bind:value={submissionPayload.hours}
-          disabled={loading || isAdmin} />
-      {/if}
-    </span>
+    {#if !isAdmin}
+      <span class="flex gap-1.5 items-center max-w-content">
+        <span>Hours:</span>
+        {#if isReadonly}
+          <span class="text-t1">{data.submission?.hours || '...'}</span>
+        {:else}
+          <Input
+            required
+            min="0.5"
+            bind:value={submissionPayload.hours}
+            disabled={loading || isAdmin} />
+        {/if}
+      </span>
 
-    <span class="flex gap-1.5 items-center sm:ml-3 {isReadonly ? 'sm:mr-auto' : ''}">
-      <span>Experience:</span>
-      {#if isReadonly || isAdmin}
-        <span
-          class="capitalize {data.submission?.experience === 'negative' ? 'text-neg' : 'text-t1'}">
-          {data.submission?.experience || '...'}
-        </span>
-      {:else}
-        <Toggle isReactionToggle bind:activeButton={activeReactionButton} />
-      {/if}
-    </span>
+      <span class="flex gap-1.5 items-center sm:ml-3 {isReadonly ? 'sm:mr-auto' : ''}">
+        <span>Experience:</span>
+        {#if isReadonly}
+          <span
+            class="capitalize {data.submission?.experience === 'negative'
+              ? 'text-neg'
+              : 'text-t1'}">
+            {data.submission?.experience || '...'}
+          </span>
+        {:else}
+          <Toggle isReactionToggle bind:activeButton={activeReactionButton} />
+        {/if}
+      </span>
 
-    {#if !isAdmin && data.submission}
-      <div class="flex gap-1.5">
-        <span>Approval:</span>
-        <span class="text-t1 capitalize">{data.submission.approval || '...'}</span>
-      </div>
+      {#if data.submission}
+        <div class="flex gap-1.5">
+          <span>Approval:</span>
+          <span class="text-t1 capitalize">{data.submission.approval || '...'}</span>
+        </div>
+      {/if}
     {/if}
+
     {#if !isReadonly || isAdmin}
       <Button
         isSubmitBtn

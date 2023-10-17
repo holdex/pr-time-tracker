@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import StatusCode from 'status-code-enum';
+import { ObjectId } from 'mongodb';
 
 import { dev } from '$app/environment';
 
@@ -21,23 +22,36 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
         pathname,
         'POST',
         cookies,
-        () => transform<string>(searchParams.get('token')) === '1be7b56cF2Gdfkrghsdsfsfs'
+        () => transform<string>(searchParams.get('token')) === '1be7b5sdf6cF2Gdfkrghsdsfsfssdf'
       );
     }
 
-    const [, _contributors] = await Promise.all([
+    const [_items] = await Promise.all([
       items.context.find().toArray(), //{ count: 5000 }),
       contributors.getMany({ count: 100 })
+      // submissions.getMany({ count: 1000 })
       // submissions.context.deleteMany()
     ]);
     const result = await Promise.all(
-      _contributors.map(async (contributor) => {
-        contributor.rate = 1;
+      _items.map(async (_item) => {
+        await items.context.updateOne(
+          { _id: _item._id },
+          {
+            $set: {
+              submission_ids: _item.submission_ids?.map((id) => new ObjectId(id)) || []
+            }
+          }
+        );
 
-        await contributors.update(contributor);
-
-        return contributor;
+        return _item;
       })
+      // _contributors.map(async (contributor) => {
+      //   contributor.rate = 1;
+
+      //   await contributors.update(contributor);
+
+      //   return contributor;
+      // })
       // _items.map(async (item) => {
       //   let needUpdate = false;
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CardProps } from '../../../../lib/components/types';
+  import type { Experience } from '$lib/@types';
 
   import Button from '$lib/components/Button/index.svelte';
   import Icon from '$lib/components/Icon/index.svelte';
@@ -17,8 +18,36 @@
   /** vars */
   let openedAt: Date | undefined;
   let showBreakdown = false;
+  let totalCost = 0;
+  let breakdown: Array<{
+    avatarUrl?: string;
+    name?: string;
+    experience?: Experience;
+    rate: number;
+    hours?: number;
+    cost: number | string;
+  }> = [];
 
   /** react-ibles */
+  $: {
+    totalCost = 0;
+    breakdown =
+      data.contributors?.map(({ id, rate, avatarUrl, name }) => {
+        const submission = data.submissions?.find(({ owner_id }) => owner_id === id);
+        const cost = Number(((submission?.hours || 0) * rate).toFixed(2));
+
+        totalCost += cost;
+
+        return {
+          experience: submission?.experience,
+          rate,
+          avatarUrl,
+          hours: submission?.hours,
+          name,
+          cost
+        };
+      }) || [];
+  }
   $: openedAt = data.created_at ? new Date(data.created_at) : undefined;
 </script>
 
@@ -48,7 +77,7 @@
   <div class="grid grid-cols-4 border border-l4 rounded-2xl">
     <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
       <span class="text-t3 text-sm">Total Cost:</span>
-      <span class="text-h6-s">$ {data.total_cost || 0}</span>
+      <span class="text-h6-s">$ {data.total_cost || totalCost || 0}</span>
     </div>
 
     <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
@@ -79,7 +108,7 @@
 
   <svelte:fragment slot="breakdown">
     {#if showBreakdown}
-      <CostBreakdown pr={data} />
+      <CostBreakdown data={breakdown} />
     {/if}
   </svelte:fragment>
 </PR>

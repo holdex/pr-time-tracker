@@ -29,8 +29,6 @@ export const GET: RequestHandler = async ({ params, cookies, url, fetch }) => {
 
     contributor.prs = (await prsResponse.json()).data || [];
 
-    console.log(contributor.prs?.[0].submissions);
-    // console.log(contributor.prs?.[0].contributors);
     return json(
       { message: 'success', result: contributor },
       { status: StatusCode.SuccessOK, headers: responseHeadersInit }
