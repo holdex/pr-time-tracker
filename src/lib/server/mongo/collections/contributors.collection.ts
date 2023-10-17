@@ -8,6 +8,7 @@ export class ContributorsCollection extends BaseCollection<ContributorSchema> {
   async update(_payload: Partial<ContributorSchema>): Promise<WithId<ContributorSchema>> {
     return await super.update(_payload, (payload) => {
       if (!payload.role) payload.role = UserRole.CONTRIBUTOR;
+      if (!payload.rate) payload.rate = 1;
 
       return payload;
     });
@@ -29,6 +30,10 @@ export const contributors = new ContributorsCollection(CollectionNames.CONTRIBUT
     },
     avatarUrl: {
       bsonType: 'string'
+    },
+    rate: {
+      bsonType: ['int', 'double'],
+      description: 'must be provided.'
     },
     login: {
       bsonType: 'string',

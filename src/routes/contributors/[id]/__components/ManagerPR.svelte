@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { CardProps } from '../types';
+  import type { CardProps } from '../../../../lib/components/types';
 
   import Button from '$lib/components/Button/index.svelte';
   import Icon from '$lib/components/Icon/index.svelte';
 
-  import PR from './PR.svelte';
-  import Breakdown from './__Breakdown.svelte';
+  import PR from '../../../../lib/components/Card/PR.svelte';
+  import CostBreakdown from './CostBreakdown.svelte';
 
   /** props */
   export let isReadonly = false;
@@ -48,7 +48,7 @@
   <div class="grid grid-cols-4 border border-l4 rounded-2xl">
     <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
       <span class="text-t3 text-sm">Total Cost:</span>
-      <span class="text-h6-s">$ 0</span>
+      <span class="text-h6-s">$ {data.total_cost || 0}</span>
     </div>
 
     <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
@@ -79,7 +79,7 @@
 
   <svelte:fragment slot="breakdown">
     {#if showBreakdown}
-      <Breakdown />
+      <CostBreakdown pr={data} />
     {/if}
   </svelte:fragment>
 </PR>

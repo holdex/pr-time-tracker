@@ -8,7 +8,8 @@
   import PRs from '$lib/layouts/PRs/index.svelte';
   import { activeTab } from '$lib/components/Toggle';
   import { getPRs } from '$lib/utils';
-  import ManagerPR from '$lib/components/Card/ManagerPR.svelte';
+
+  import ManagerPR from './__components/ManagerPR.svelte';
 
   import { Approval, type ItemSchema } from '$lib/@types';
 

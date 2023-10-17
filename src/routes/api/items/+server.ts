@@ -1,11 +1,13 @@
 import { json } from '@sveltejs/kit';
 
 import type { RequestHandler } from '@sveltejs/kit';
-import type { ItemSchema } from '$lib/@types';
 
 import { jsonError, transform } from '$lib/utils';
 import { items } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
+import { cookieNames } from '$lib/server/cookie';
+
+import { UserRole, type ItemSchema } from '$lib/@types';
 
 //   if (archived === ArchiveState.ARCHIVED) {
 //     const deadline = new Date();
@@ -17,6 +19,11 @@ import { verifyAuth } from '$lib/server/github';
 export const GET: RequestHandler = async ({ url: { searchParams, pathname }, cookies }) => {
   try {
     await verifyAuth(pathname, 'GET', cookies);
+
+    if (cookies.get(cookieNames.role) === UserRole.MANAGER) {
+      searchParams.append('contributors', 'true');
+      searchParams.append('submissions', 'true');
+    }
 
     return json({ data: await items.getMany(searchParams) });
   } catch (e) {

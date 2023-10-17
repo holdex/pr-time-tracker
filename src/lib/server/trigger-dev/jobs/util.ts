@@ -15,7 +15,7 @@ import type {
 import { ItemType } from '$lib/constants';
 import { items } from '$lib/server/mongo/collections';
 
-const getContributorInfo = (user: User): Omit<ContributorSchema, 'role'> => ({
+const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'> => ({
   id: user.id,
   name: user.login,
   login: user.login,

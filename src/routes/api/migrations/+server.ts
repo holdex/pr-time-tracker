@@ -1,6 +1,8 @@
 import { json } from '@sveltejs/kit';
 import StatusCode from 'status-code-enum';
 
+import { dev } from '$app/environment';
+
 import type { RequestHandler } from '@sveltejs/kit';
 
 import { responseHeadersInit } from '$lib/config';
@@ -8,20 +10,20 @@ import { jsonError, transform } from '$lib/utils';
 import { contributors, items } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 
-import { UserRole } from '$lib/@types';
-
 export const POST: RequestHandler = async ({ url: { searchParams, pathname }, cookies }) => {
   // const canUnsetDeprecated =
   // hostname.includes('invoice.holdex.io') &&
   // transform<boolean>(searchParams.get('unset_deprecated'));
 
   try {
-    await verifyAuth(
-      pathname,
-      'POST',
-      cookies,
-      () => transform<string>(searchParams.get('token')) === '1be7b56cF2Gdfkrghsdsf'
-    );
+    if (!dev) {
+      await verifyAuth(
+        pathname,
+        'POST',
+        cookies,
+        () => transform<string>(searchParams.get('token')) === '1be7b56cF2Gdfkrghsdsfsfs'
+      );
+    }
 
     const [, _contributors] = await Promise.all([
       items.context.find().toArray(), //{ count: 5000 }),
@@ -30,11 +32,9 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
     ]);
     const result = await Promise.all(
       _contributors.map(async (contributor) => {
-        if (!contributor.role) {
-          contributor.role = UserRole.CONTRIBUTOR;
+        contributor.rate = 1;
 
-          await contributors.update(contributor);
-        }
+        await contributors.update(contributor);
 
         return contributor;
       })

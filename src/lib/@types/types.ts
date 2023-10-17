@@ -59,6 +59,7 @@ export interface ItemSchema extends TimeStamps {
   contributors?: ContributorSchema[];
   type: ItemType;
   url: string;
+  total_cost?: number;
   merged?: boolean;
   created_at?: string | number;
   updated_at?: string | number;
@@ -78,6 +79,8 @@ export interface ContributorSchema extends TimeStamps {
   url: string;
   avatarUrl: string;
   role: UserRole;
+  /** Hourly rate (in $/hr) */
+  rate: number;
   /** `prs` here is just for type safety. It may be populated on contributor retrieval. */
   prs?: ItemSchema[];
 }

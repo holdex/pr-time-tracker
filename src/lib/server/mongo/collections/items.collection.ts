@@ -1,4 +1,4 @@
-import type { WithId, Filter } from 'mongodb';
+import type { WithId, Filter, Document } from 'mongodb';
 
 import { DESCENDING, ItemType, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
@@ -20,6 +20,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
     const filter = this.makeFilter(searchParams);
     const approvals = transform<Approval[]>(searchParams.get('approvals'));
+    const withContributors = transform<boolean>(searchParams.get('contributors'));
+    const withSubmissions = transform<boolean>(searchParams.get('submissions'));
     const submitted = transform<boolean>(searchParams.get('submitted'));
     const definesSubmitted = typeof submitted === 'boolean';
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
@@ -27,29 +29,59 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     if (filter.merged === undefined) delete filter.merged;
 
     return await this.context
-      .aggregate<WithId<ItemSchema>>([
-        { $match: filter },
-        {
-          $lookup: {
-            from: CollectionNames.SUBMISSIONS,
-            localField: 'id',
-            foreignField: 'item_id',
-            pipeline: [
-              { $match: { owner_id: contributor_id ? { $eq: contributor_id } : { $ne: '' } } }
-            ],
-            as: 'submission'
+      .aggregate<WithId<ItemSchema>>(
+        [
+          { $match: filter } as Document,
+          {
+            $lookup: {
+              from: CollectionNames.SUBMISSIONS,
+              localField: 'id',
+              foreignField: 'item_id',
+              pipeline: [
+                { $match: { owner_id: contributor_id ? { $eq: contributor_id } : { $ne: '' } } }
+              ],
+              as: 'submission'
+            }
+          },
+          {
+            $unwind: { path: '$submission', preserveNullAndEmptyArrays: true }
+          },
+          {
+            $match: {
+              submission: definesSubmitted ? { $exists: submitted } : { $ne: '' },
+              'submission.approval': submitted && approvals ? { $in: approvals } : { $ne: '' }
+            }
           }
-        },
-        {
-          $unwind: { path: '$submission', preserveNullAndEmptyArrays: true }
-        },
-        {
-          $match: {
-            submission: definesSubmitted ? { $exists: submitted } : { $ne: '' },
-            'submission.approval': submitted && approvals ? { $in: approvals } : { $ne: '' }
-          }
-        }
-      ])
+        ]
+          .concat(
+            withContributors
+              ? [
+                  {
+                    $lookup: {
+                      from: CollectionNames.CONTRIBUTORS,
+                      localField: 'contributor_ids',
+                      foreignField: 'id',
+                      as: 'contributors'
+                    }
+                  }
+                ]
+              : []
+          )
+          .concat(
+            withSubmissions
+              ? [
+                  {
+                    $lookup: {
+                      from: CollectionNames.SUBMISSIONS,
+                      localField: 'submission_ids',
+                      foreignField: 'id',
+                      as: 'submissions'
+                    }
+                  }
+                ]
+              : []
+          )
+      )
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
       .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
@@ -72,7 +104,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
   required: [
-    // 'contributor_ids',
+    'contributor_ids',
     'id',
     'merged',
     'org',
@@ -80,10 +112,10 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     'repo',
     'type',
     'url',
-    'title'
-    // 'submission_ids',
+    'title',
+    'submission_ids',
     // 'created_at',
-    // 'updated_at',
+    'updated_at'
     // 'closed_at'
   ],
   properties: {
@@ -98,6 +130,10 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
     },
     org: {
       bsonType: 'string',
+      description: 'must be provided.'
+    },
+    total_cost: {
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     owner: {

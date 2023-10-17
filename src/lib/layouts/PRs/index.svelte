@@ -9,7 +9,7 @@
   import { axios, getPRs, type PRsQuery } from '$lib/utils/request';
   import { createEffect } from '$lib/utils';
   import { activeTab } from '$lib/components/Toggle';
-  import type ManagerPR from '$lib/components/Card/ManagerPR.svelte';
+  import type ManagerPR from '$routes/contributors/[id]/__components/ManagerPR.svelte';
 
   import {
     Approval,

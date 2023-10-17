@@ -5,12 +5,12 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 import { ItemType } from '$lib/constants';
 import { responseHeadersInit } from '$lib/config';
-import { contributors, items } from '$lib/server/mongo/collections';
+import { contributors } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 
 import { Approval } from '$lib/@types';
 
-export const GET: RequestHandler = async ({ params, cookies, url }) => {
+export const GET: RequestHandler = async ({ params, cookies, url, fetch }) => {
   try {
     await verifyAuth(url, 'GET', cookies);
 
@@ -19,13 +19,15 @@ export const GET: RequestHandler = async ({ params, cookies, url }) => {
 
     if (!contributor) throw Error(`Contributor, "${id}", not found.`);
 
-    contributor.prs = await items.getMany(
-      new URLSearchParams({
+    const prsResponse = await fetch(
+      `/api/items?${new URLSearchParams({
         type: ItemType.PULL_REQUEST,
         contributor_id: String(id),
         approvals: JSON.stringify([Approval.PENDING, Approval.REJECTED])
-      })
+      }).toString()}`
     );
+
+    contributor.prs = (await prsResponse.json()).data || [];
 
     return json(
       { message: 'success', result: contributor },
