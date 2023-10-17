@@ -74,7 +74,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
                     $lookup: {
                       from: CollectionNames.SUBMISSIONS,
                       localField: 'submission_ids',
-                      foreignField: 'id',
+                      foreignField: '_id',
                       as: 'submissions'
                     }
                   }

@@ -16,6 +16,7 @@
     hours?: number;
   }> = [];
 
+  $: console.log({ pr });
   $: rows =
     pr.contributors?.map(({ id, rate, avatarUrl, name }) => {
       const submission = pr.submissions?.find(({ owner_id }) => owner_id === id);
@@ -39,12 +40,12 @@
         {/each}
       </thead>
       <tbody class="text-t3 bg-l1">
-        {#each rows as { avatarUrl: avatar_url, name, experience, rate, hours }, i}
+        {#each rows as { avatarUrl, name, experience, rate, hours }, i}
           <tr class={i === rows.length - 1 ? '' : 'border-b border-b-l4'}>
             <td class="border-r border-r-l4 py-1.5 px-2.5">
               <span class="flex justify-between items-center gap-2">
                 <span class="inline-flex gap-2 items-center">
-                  <Avatar size="extra-small" url={avatar_url} />
+                  <Avatar size="extra-small" url={avatarUrl} />
                   {name}
                 </span>
 
@@ -56,7 +57,8 @@
               </span>
             </td>
             <td class="border-r border-r-l4 py-1.5 px-2.5">$ {rate} / hr</td>
-            <td class="border-r border-r-l4 py-1.5 px-2.5">{hours} hr{hours === 1 ? '' : 's'}</td>
+            <td class="border-r border-r-l4 py-1.5 px-2.5"
+              >{hours ? `hr${hours === 1 ? '' : 's'}` : '--'}</td>
             <td class="px-2.5">$ {((hours || 0) * rate).toFixed(2)}</td>
           </tr>
         {/each}

@@ -3,8 +3,8 @@
 
   import Button from '$lib/components/Button/index.svelte';
   import Icon from '$lib/components/Icon/index.svelte';
+  import PR from '$lib/components/Card/PR.svelte';
 
-  import PR from '../../../../lib/components/Card/PR.svelte';
   import CostBreakdown from './CostBreakdown.svelte';
 
   /** props */
