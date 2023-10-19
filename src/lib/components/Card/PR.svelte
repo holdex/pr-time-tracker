@@ -29,36 +29,47 @@
     : data.submission?.experience === 'negative'
     ? 'right'
     : 'left';
+  let closedAndNotMerged = false;
+  let closedAt: Date | undefined;
 
   /** react-ibles */
+  $: closedAndNotMerged = !!data.closed_at && !data.merged;
   $: submissionApproved = data.submission?.approval === Approval.APPROVED;
   $: if (submissionApproved && !isAdmin) isReadonly = true;
   $: data.number = Number(data.url?.split('/').slice(-1));
+  $: closedAt = data.closed_at ? new Date(data.closed_at) : undefined;
 </script>
 
 <li
   {...$$restProps}
   class={`Card ${
     $$restProps.class || ''
-  } relative border border-solid border-l4 bg-l1 shadow-input rounded-xl text-t1 transition-all list-none animate-fadeIn  ${
-    submissionApproved && !isAdmin ? 'opacity-80' : ''
+  } max-w-full relative border border-solid border-l4 bg-l1 shadow-input rounded-xl text-t1 transition-all list-none animate-fadeIn  ${
+    (submissionApproved && !isAdmin) || closedAndNotMerged ? 'opacity-70' : ''
   } dark:bg-l2 xs:w-full`}>
   <div class="p-4 flex gap-4 items-center">
     <span title={data.merged ? 'Closed' : 'Open'}>
-      <Icon name="pr-{data.merged ? 'closed' : 'open'}" class="w-5 h-5 min-w-fit" />
+      <Icon
+        name="pr-{data.merged ? 'closed' : 'open'}"
+        class="w-5 h-5 min-w-fit {closedAndNotMerged
+          ? 'text-neg'
+          : !data.merged
+          ? 'text-accent2-default'
+          : ''}" />
     </span>
 
     <a {href} target="_blank" class="link">
       <h2 class="text-t3">{data.org} / {data.repo} / #{data.number}</h2>
     </a>
 
-    <Button
-      {href}
-      variant="icon"
-      iconProps={{ name: 'github', width: '1.25rem' }}
-      class="px-0 ml-auto"
-      target="_blank"
-      aria-label="GitHub" />
+    {#if closedAt}
+      <span class="flex gap-1.5 text-sm ml-auto max-w-content">
+        <span class="text-t3">Closed:</span>
+        <span class="text-footnote">
+          {closedAt.toDateString().replace(/\w{3,3}\s/, '') || '...'}
+        </span>
+      </span>
+    {/if}
   </div>
 
   <div class="flex flex-col gap-4 p-4 border-y border-l4">

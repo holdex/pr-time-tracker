@@ -22,7 +22,8 @@
     : size === 'extra-small'
     ? 'w-6 h-6'
     : 'w-12 h-12'} relative text-t3">
-  <span class="inline-flex w-full h-full rounded-full overflow-clip items-center bg-l3">
+  <span
+    class="inline-flex w-full h-full rounded-full overflow-clip items-center justify-center bg-l3">
     {#if !displayAvatarFallback}
       <img
         src={url}

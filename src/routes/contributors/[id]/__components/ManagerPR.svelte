@@ -18,7 +18,6 @@
   export let onSubmit: CardProps['onSubmit'] = undefined;
 
   /** vars */
-  let openedAt: Date | undefined;
   let showBreakdown = false;
   let totalCost = 0;
   let breakdown: Array<{
@@ -29,38 +28,63 @@
     hours?: number;
     cost: number | string;
   }> = [];
-  let owner: ContributorSchema;
+  let owner: ContributorSchema | undefined = undefined;
   let otherContributors: ContributorSchema[] = [];
   const submissionsMap: Record<string, SubmissionSchema | undefined> = {};
+  const summary = [
+    { title: 'Total Cost', primary: '', secondary: '' },
+    { title: 'Cycle Time', primary: '', secondary: 'hours' },
+    { title: 'Rejected', primary: '0', secondary: 'times' },
+    { title: 'Comments', primary: '0' }
+  ];
 
+  /** funcs */
   const useSubmissionEffect = createEffect();
 
+  const computeCycleTime = (_openedAt: string | number | undefined, closedAt?: string | null) => {
+    const time = (
+      ((closedAt ? new Date(closedAt) : new Date()).getTime() - new Date(_openedAt!).getTime()) /
+      1000 / // ms in 1 sec
+      60 / // s in 1 min
+      60
+    ) // min in 1 hr
+      .toFixed(2);
+    const float = Number(time.split('.')[1]);
+
+    return `${parseInt(time)}${float ? `:${Math.ceil(Number(`0.${float}`) * 60)}` : ''}`;
+  };
+
   /** react-ibles */
-  $: useSubmissionEffect(() => {
-    totalCost = 0;
-    otherContributors = [];
-    breakdown =
-      data.contributors?.map((contributor) => {
-        const { id, rate, avatarUrl, name } = contributor;
-        const submission = data.submissions?.find(({ owner_id }) => owner_id === id);
-        const cost = Number(((submission?.hours || 0) * rate).toFixed(2));
+  $: useSubmissionEffect(
+    () => {
+      totalCost = 0;
+      otherContributors = [];
+      breakdown =
+        data.contributors?.map((contributor) => {
+          const { id, rate, avatarUrl, name } = contributor;
+          const submission = data.submissions?.find(({ owner_id }) => owner_id === id);
+          const cost = Number(((submission?.hours || 0) * rate).toFixed(2));
 
-        totalCost += cost;
-        if (name === data.owner) owner = contributor;
-        else otherContributors.push(contributor);
-        submissionsMap[name] = submission;
+          totalCost += cost;
+          if (name === data.owner) owner = contributor;
+          else otherContributors.push(contributor);
+          submissionsMap[name] = submission;
 
-        return {
-          experience: submission?.experience,
-          rate,
-          avatarUrl,
-          hours: submission?.hours,
-          name,
-          cost
-        };
-      }) || [];
-  }, [data.submissions?.length]);
-  $: openedAt = data.created_at ? new Date(data.created_at) : undefined;
+          return {
+            experience: submission?.experience,
+            rate,
+            avatarUrl,
+            hours: submission?.hours,
+            name,
+            cost
+          };
+        }) || [];
+      summary[0].primary = `$ ${totalCost}`;
+      summary[1].primary = computeCycleTime(data.created_at, data.closed_at);
+    },
+    [data.submissions?.length],
+    true
+  );
 </script>
 
 <PR {isReadonly} {isAdmin} {loading} {data} {onSubmit}>
@@ -70,12 +94,12 @@
         <span class="flex gap-1.5 flex-col max-w-content">
           <span class="text-sm">Owner:</span>
           <Avatar
-            url={owner.avatarUrl}
-            alt={owner.name}
+            url={owner?.avatarUrl}
+            alt={owner?.name}
             size="extra-small"
             withIcon={{
               name: 'check-circle',
-              class: submissionsMap[owner.name] ? 'text-accent2-default' : undefined
+              class: owner?.name && submissionsMap[owner.name] ? 'text-accent2-default' : undefined
             }} />
         </span>
 
@@ -96,44 +120,21 @@
           </div>
         </div>
       </div>
-
-      <!-- <div>
-        <span class="flex gap-1.5 text-sm flex-col max-w-content">
-          <span class="">Opened:</span>
-          <span class="text-t1">
-            {openedAt?.toDateString().replace(/\w{3,3}\s/, '') || '...'}
-            <span class="text-t3 text-sm"
-              >@ {openedAt?.toLocaleTimeString().replace(/(\d\d:\d\d).*/, '$1') || '...'}</span>
-          </span>
-        </span>
-      </div> -->
     </div>
   </svelte:fragment>
 
-  <div class="grid grid-cols-4 border border-l4 rounded-2xl">
-    <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
-      <span class="text-t3 text-sm">Total Cost:</span>
-      <span class="text-h6-s">$ {data.total_cost || totalCost || 0}</span>
-    </div>
-
-    <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
-      <span class="text-t3 text-sm">Cycle time:</span>
-      <span class="text-h6-s">
-        0 <span class="text-t3">hours</span>
-      </span>
-    </div>
-
-    <div class="flex flex-col gap-2 p-4 border-r border-r-l4">
-      <span class="text-t3 text-sm">Rejected:</span>
-      <span class="text-h6-s">
-        0 <span class="text-t3">times</span>
-      </span>
-    </div>
-
-    <div class="flex flex-col gap-2 p-4">
-      <span class="text-t3 text-sm">Comments:</span>
-      <span class="text-h6-s">0</span>
-    </div>
+  <div class="grid grid-cols-2 border border-l4 rounded-2xl sm:flex">
+    {#each summary as { title, primary, secondary }, i}
+      <div
+        class="flex flex-col grow gap-2 p-2.5 border-l-l4 {i !== 0
+          ? `${i === 2 ? 'sm:border-l' : 'border-l'}`
+          : ''} w-fit sm:p-4">
+        <span class="text-t3 text-sm truncate">{title}:</span>
+        <span class="text-h6-s">
+          {primary} <span class="text-t3">{secondary || ''}</span>
+        </span>
+      </div>
+    {/each}
   </div>
 
   <Button class="gap-1" variant="secondary" onClick={() => (showBreakdown = !showBreakdown)}>

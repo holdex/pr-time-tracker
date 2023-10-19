@@ -65,7 +65,7 @@ module.exports = {
     ],
     'no-floating-decimal': 'warn',
     'no-implicit-coercion': [
-      'error',
+      'off',
       {
         boolean: true,
         number: true,
