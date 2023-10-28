@@ -19,8 +19,9 @@ import config from '$lib/server/config';
 import { default as clientConfig } from '$lib/config';
 
 import { cookieNames } from '../cookie';
+import { contributors } from '../mongo/collections';
 
-import { UserRole } from '$lib/@types';
+import { UserRole, type ContributorSchema } from '$lib/@types';
 
 const app = new App({
   appId: config.github.appId,
@@ -61,7 +62,7 @@ export const verifyAuth = async (
   pathnameOrURL: string | URL,
   action: 'POST' | 'GET' | 'PATCH' | 'DELETE',
   cookie: Cookies,
-  customCheck?: (role: UserRole | undefined) => Promise<boolean> | boolean
+  customCheck?: (contributor: ContributorSchema) => Promise<boolean> | boolean
 ) => {
   await checkAuthToken(cookie);
   await authorize(
@@ -92,19 +93,21 @@ export const authorize = async (
   pathname: string,
   action: 'POST' | 'GET' | 'PATCH' | 'DELETE',
   cookie: Cookies,
-  customCheck?: (role: UserRole | undefined) => Promise<boolean> | boolean
+  customCheck?: (contributor: ContributorSchema) => Promise<boolean> | boolean
 ) => {
   const resource = pathname.replace('/api/', '') as
     | 'items'
     | 'submissions'
     | 'migrations'
     | 'contributors';
-  const role = cookie.get(cookieNames.role) as UserRole | undefined;
+  const role = cookie.get(cookieNames.contributorRole) as UserRole | undefined;
+  const id = cookie.get(cookieNames.contributorId) as string | undefined;
   const isManager = role === UserRole.MANAGER;
   const isContributor = role === UserRole.CONTRIBUTOR;
+  const contributor = id && (await contributors.getOne({ id: +id }));
 
   try {
-    if (customCheck && !(await customCheck(role))) throw false;
+    if (!contributor || (customCheck && !(await customCheck(contributor)))) throw false;
 
     switch (resource) {
       case 'items':

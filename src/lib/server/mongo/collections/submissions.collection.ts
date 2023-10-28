@@ -1,9 +1,16 @@
-import { ObjectId, type OptionalId } from 'mongodb';
+import { ObjectId, type OptionalId, type OptionalUnlessRequiredId, type WithId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
 
-import { Approval, CollectionNames, Experience, type SubmissionSchema } from '$lib/@types';
+import {
+  Approval,
+  CollectionNames,
+  Experience,
+  type ContributorSchema,
+  type SubmissionSchema,
+  UserRole
+} from '$lib/@types';
 
 export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
   async create({ item_id, owner_id, ...resource }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
@@ -46,6 +53,19 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
       throw e;
     }
   }
+
+  async update(payload: Partial<SubmissionSchema>, extra?: { user?: ContributorSchema }) {
+    const { user } = extra || {};
+    const prevSubmission = payload._id && (await this.getOne(payload._id.toString()));
+
+    if (prevSubmission?.approval === Approval.APPROVED && user?.role !== UserRole.MANAGER) {
+      throw Error(
+        `You can no longer make any changes/updates to this submission as it has already been approved, hence, archived.`
+      );
+    }
+
+    return super.update(payload, { existing: prevSubmission });
+  }
 }
 
 export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS, {
@@ -70,6 +90,10 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
     },
     owner_id: {
       bsonType: 'int',
+      description: 'must be provided.'
+    },
+    rate: {
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     created_at: {

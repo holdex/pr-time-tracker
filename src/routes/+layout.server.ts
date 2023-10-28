@@ -25,7 +25,8 @@ export const load: LayoutServerLoad = async ({ fetch, depends, url, cookies }) =
     user = { ...data.user, ...contributor, _id: _id?.toString() };
     if (dev) user.role = 'Manager' as any;
     data.user = user;
-    cookies.set(cookieNames.role, user.role);
+    cookies.set(cookieNames.contributorId, user.id.toString());
+    cookies.set(cookieNames.contributorRole, user.role);
   }
 
   if (!user && !url.pathname.includes(routes.login.path)) {

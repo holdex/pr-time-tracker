@@ -93,6 +93,8 @@ export interface SubmissionSchema extends TimeStamps {
   /** Note that this is equivalent to `contributor_id`(s) in `ItemSchema`. */
   owner_id: number;
   item_id: number;
+  /** This is used to calculate the PR `cost` at the time of submission relative to the `contributor`'s rate at the time. It will be stored once (on item submission) */
+  rate: number;
 }
 
 export enum Approval {

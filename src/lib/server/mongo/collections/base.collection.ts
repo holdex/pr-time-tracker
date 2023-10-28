@@ -12,7 +12,8 @@ import type {
   QueryProps,
   CollectionNames,
   JSONSchema,
-  GetManyParams
+  GetManyParams,
+  ContributorSchema
 } from '$lib/@types';
 
 import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
@@ -102,13 +103,19 @@ export abstract class BaseCollection<
 
   async update(
     { _id, id, ...payload }: Partial<CollectionType>,
-    onCreateIfNotExist?:
-      | boolean
-      | ((_payload: Omit<CollectionType, '_id'>) => OptionalUnlessRequiredId<CollectionType>)
+    extra?: {
+      onCreateIfNotExist?:
+        | boolean
+        | ((_payload: Omit<CollectionType, '_id'>) => OptionalUnlessRequiredId<CollectionType>);
+      existing?: CollectionType | null;
+      user?: ContributorSchema;
+    }
   ) {
+    const { onCreateIfNotExist, existing: _existing } = extra || {};
+
     payload.updated_at = new Date().toISOString();
 
-    const existing = onCreateIfNotExist && Boolean(await this.getOne(_id || { id: id! }));
+    const existing = onCreateIfNotExist && (_existing || (await this.getOne(_id || { id: id! })));
     const result =
       existing || !onCreateIfNotExist
         ? await this.context.updateOne(

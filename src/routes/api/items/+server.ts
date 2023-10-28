@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ url: { searchParams, pathname }, coo
   try {
     await verifyAuth(pathname, 'GET', cookies);
 
-    if (cookies.get(cookieNames.role) === UserRole.MANAGER) {
+    if (cookies.get(cookieNames.contributorRole) === UserRole.MANAGER) {
       searchParams.append('contributors', 'true');
       searchParams.append('submissions', 'true');
     }

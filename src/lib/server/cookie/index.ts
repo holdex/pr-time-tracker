@@ -3,7 +3,8 @@ import type { CookieSerializeOptions } from 'cookie';
 import { isDev } from '$lib/config';
 
 export const cookieNames = {
-  role: 'invoicingRole',
+  contributorId: 'invoicingContributorId',
+  contributorRole: 'invoicingContributorRole',
   accessTokenCookieName: 'invoicingAccessToken',
   refreshTokenCookieName: 'invoicingRefreshToken'
 };

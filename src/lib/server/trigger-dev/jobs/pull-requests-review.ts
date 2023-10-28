@@ -48,7 +48,7 @@ async function createJob(
       await io.wait('wait for first call', 5);
       await items.update(
         await getPrInfo(pull_request, repository, organization, sender, contributor),
-        true
+        { onCreateIfNotExist: true }
       );
       break;
     }
