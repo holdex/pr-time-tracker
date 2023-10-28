@@ -61,7 +61,7 @@
       otherContributors = [];
       breakdown =
         data.contributors?.map((contributor) => {
-          const { id, rate, avatarUrl, name } = contributor;
+          const { id, rate, avatarUrl, name, login } = contributor;
           const submission = data.submissions?.find(({ owner_id }) => owner_id === id);
           const cost = Number(
             ((submission?.hours || 0) * (submission?.rate || rate || 0)).toFixed(2)
@@ -77,7 +77,7 @@
             rate,
             avatarUrl,
             hours: submission?.hours,
-            name,
+            name: name || login,
             cost
           };
         }) || [];

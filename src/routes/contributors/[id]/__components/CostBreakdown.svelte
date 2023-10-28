@@ -30,7 +30,7 @@
             <td class="border-r border-r-l4 py-1.5 px-2.5">
               <span class="flex justify-between items-center gap-2">
                 <span class="inline-flex gap-2 items-center">
-                  <Avatar size="extra-small" url={avatarUrl} />
+                  <Avatar size="extra-small" url={avatarUrl} alt={name} />
                   {name}
                 </span>
 
