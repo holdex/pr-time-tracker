@@ -92,6 +92,8 @@
                   name: 'check-circle',
                   class: submissionsMap[name] ? 'text-accent2-default' : undefined
                 }} />
+            {:else}
+              --
             {/each}
           </div>
         </div>
