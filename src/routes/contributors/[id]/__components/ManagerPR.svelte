@@ -29,37 +29,41 @@
     hours?: number;
     cost: number | string;
   }> = [];
-  let owner: ContributorSchema;
+  let owner: ContributorSchema | undefined;
   let otherContributors: ContributorSchema[] = [];
   const submissionsMap: Record<string, SubmissionSchema | undefined> = {};
 
   const useSubmissionEffect = createEffect();
 
   /** react-ibles */
-  $: useSubmissionEffect(() => {
-    totalCost = 0;
-    otherContributors = [];
-    breakdown =
-      data.contributors?.map((contributor) => {
-        const { id, rate, avatarUrl, name } = contributor;
-        const submission = data.submissions?.find(({ owner_id }) => owner_id === id);
-        const cost = Number(((submission?.hours || 0) * rate).toFixed(2));
+  $: useSubmissionEffect(
+    () => {
+      totalCost = 0;
+      otherContributors = [];
+      breakdown =
+        data.contributors?.map((contributor) => {
+          const { id, rate, avatarUrl, name } = contributor;
+          const submission = data.submissions?.find(({ owner_id }) => owner_id === id);
+          const cost = Number(((submission?.hours || 0) * rate).toFixed(2));
 
-        totalCost += cost;
-        if (name === data.owner) owner = contributor;
-        else otherContributors.push(contributor);
-        submissionsMap[name] = submission;
+          totalCost += cost;
+          if (name === data.owner) owner = contributor;
+          else otherContributors.push(contributor);
+          submissionsMap[name] = submission;
 
-        return {
-          experience: submission?.experience,
-          rate,
-          avatarUrl,
-          hours: submission?.hours,
-          name,
-          cost
-        };
-      }) || [];
-  }, [data.submissions?.length]);
+          return {
+            experience: submission?.experience,
+            rate,
+            avatarUrl,
+            hours: submission?.hours,
+            name,
+            cost
+          };
+        }) || [];
+    },
+    [data.submissions?.length],
+    true
+  );
   $: openedAt = data.created_at ? new Date(data.created_at) : undefined;
 </script>
 
@@ -69,14 +73,18 @@
       <div class="flex gap-8">
         <span class="flex gap-1.5 flex-col max-w-content">
           <span class="text-sm">Owner:</span>
-          <Avatar
-            url={owner.avatarUrl}
-            alt={owner.name}
-            size="extra-small"
-            withIcon={{
-              name: 'check-circle',
-              class: submissionsMap[owner.name] ? 'text-accent2-default' : undefined
-            }} />
+          {#if owner}
+            <Avatar
+              url={owner.avatarUrl}
+              alt={owner.name}
+              size="extra-small"
+              withIcon={{
+                name: 'check-circle',
+                class: submissionsMap[owner.name] ? 'text-accent2-default' : undefined
+              }} />
+          {:else}
+            --
+          {/if}
         </span>
 
         <div class="flex gap-1.5 flex-col max-w-content">
