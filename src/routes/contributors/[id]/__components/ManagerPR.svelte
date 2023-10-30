@@ -80,7 +80,7 @@
         </span>
 
         <div class="flex gap-1.5 flex-col max-w-content">
-          <span class="text-sm">Contributors:</span>
+          <span class="text-sm">Participants:</span>
 
           <div class="flex gap-3">
             {#each otherContributors as { avatarUrl, name }}

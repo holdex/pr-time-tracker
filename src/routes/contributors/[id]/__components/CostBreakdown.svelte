@@ -20,7 +20,7 @@
   <div class="overflow-auto border border-l4 rounded-2xl">
     <table class="w-full">
       <thead class="font-bold border-b border-b-l4">
-        {#each ['Participants', 'Rate', 'Time', 'Cost'] as title, i}
+        {#each ['Contributors', 'Rate', 'Time', 'Cost'] as title, i}
           <th class="py-1.5 px-2.5 {i === 3 ? '' : 'border-r border-r-l4'}">{title}</th>
         {/each}
       </thead>
