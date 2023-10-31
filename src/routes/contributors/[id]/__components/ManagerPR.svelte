@@ -93,14 +93,18 @@
       <div class="flex gap-8">
         <span class="flex gap-1.5 flex-col max-w-content">
           <span class="text-sm">Owner:</span>
-          <Avatar
-            url={owner?.avatarUrl}
-            alt={owner?.name}
-            size="extra-small"
-            withIcon={{
-              name: 'check-circle',
-              class: owner?.name && submissionsMap[owner.name] ? 'text-accent2-default' : undefined
-            }} />
+          {#if owner}
+            <Avatar
+              url={owner.avatarUrl}
+              alt={owner.name}
+              size="extra-small"
+              withIcon={{
+                name: 'check-circle',
+                class: submissionsMap[owner.name] ? 'text-accent2-default' : undefined
+              }} />
+          {:else}
+            --
+          {/if}
         </span>
 
         <div class="flex gap-1.5 flex-col max-w-content">

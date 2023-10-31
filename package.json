@@ -5,7 +5,7 @@
   "scripts": {
     "postinstall": "npx husky install",
     "pre-dev": "node pull-env.js",
-    "dev": "pnpm pre-dev && pnpm type-check && pnpm check && vite dev --port 3000",
+    "dev": "pnpm pre-dev && vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "format": "npx prettier . --write --ignore-path .gitignore --plugin prettier-plugin-svelte --plugin @prettier/plugin-pug",
