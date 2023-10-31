@@ -2,7 +2,7 @@
 export const ONE_MONTH = 1;
 export const HOUR_IN_MILISECOND = 3600000;
 export const FIXED_DECIMAL_HOUR = 2;
-export const MAX_DATA_CHUNK = 50; //10;
+export const MAX_DATA_CHUNK = 50 * 2; //10;
 export const DESCENDING = -1;
 export const ASCENDING = 1;
 
