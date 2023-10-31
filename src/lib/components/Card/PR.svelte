@@ -45,10 +45,15 @@
   class={`Card ${
     $$restProps.class || ''
   } max-w-full relative border border-solid border-l4 bg-l1 shadow-input rounded-xl text-t1 transition-all list-none animate-fadeIn  ${
-    (submissionApproved && !isAdmin) || closedAndNotMerged ? 'opacity-70' : ''
+    (submissionApproved && !isAdmin) || closedAndNotMerged ? 'opacity-60' : ''
   } dark:bg-l2 xs:w-full`}>
   <div class="p-4 flex gap-4 items-center">
-    <span title={data.merged ? 'Closed' : 'Open'}>
+    <span
+      title={data.merged
+        ? 'Closed and merged'
+        : closedAndNotMerged
+        ? 'Closed but not merged'
+        : 'Open'}>
       <Icon
         name="pr-{data.merged ? 'closed' : 'open'}"
         class="w-5 h-5 min-w-fit {closedAndNotMerged

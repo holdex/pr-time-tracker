@@ -44,14 +44,16 @@
   const computeCycleTime = (_openedAt: string | number | undefined, closedAt?: string | null) => {
     const time = (
       ((closedAt ? new Date(closedAt) : new Date()).getTime() - new Date(_openedAt!).getTime()) /
-      1000 / // ms in 1 sec
-      60 / // s in 1 min
-      60
-    ) // min in 1 hr
-      .toFixed(2);
-    const float = Number(time.split('.')[1]);
+      /** ms in 1 sec */ 1000 /
+      /** s in 1 min */ 60 /
+      /** min in 1 hr */ 60
+    ).toFixed(2);
+    const [hours, floatPart] = time.split('.').map(Number);
+    const minutes = Math.ceil(Number(`0.${floatPart}`) * 60);
 
-    return `${parseInt(time)}${float ? `:${Math.ceil(Number(`0.${float}`) * 60)}` : ''}`;
+    return `${floatPart > 98 ? hours + 1 : hours}${
+      floatPart && floatPart < 99 ? `:${minutes < 10 ? 0 : ''}${minutes}` : ''
+    }`;
   };
 
   /** react-ibles */
@@ -95,18 +97,22 @@
       <div class="flex gap-8">
         <span class="flex gap-1.5 flex-col max-w-content">
           <span class="text-sm">Owner:</span>
-          <Avatar
-            url={owner?.avatarUrl}
-            alt={owner?.name || owner?.login}
-            size="extra-small"
-            withIcon={{
-              name: 'check-circle',
-              class: owner?.name && submissionsMap[owner.name] ? 'text-accent2-default' : undefined
-            }} />
+          {#if owner}
+            <Avatar
+              url={owner.avatarUrl}
+              alt={owner.name || owner.login}
+              size="extra-small"
+              withIcon={{
+                name: 'check-circle',
+                class: submissionsMap[owner.name] ? 'text-accent2-default' : undefined
+              }} />
+          {:else}
+            --
+          {/if}
         </span>
 
         <div class="flex gap-1.5 flex-col max-w-content">
-          <span class="text-sm">Contributors:</span>
+          <span class="text-sm">Participants:</span>
 
           <div class="flex gap-3">
             {#each otherContributors as { avatarUrl, name }}
@@ -118,6 +124,8 @@
                   name: 'check-circle',
                   class: submissionsMap[name] ? 'text-accent2-default' : undefined
                 }} />
+            {:else}
+              --
             {/each}
           </div>
         </div>
