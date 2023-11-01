@@ -102,6 +102,8 @@ export interface PRsQuery {
 
 export const getPRs = async (query: PRsQuery, noCache = false) => {
   try {
+    snackbar.set({ type: 'busy' });
+
     const { contributor_id, type, submitted, approvals, merged, archived } = query;
     const response = await axios.get<{ data: ItemSchema[] }>(
       `/items?type=${
@@ -110,6 +112,8 @@ export const getPRs = async (query: PRsQuery, noCache = false) => {
         approvals && JSON.stringify(approvals)
       }&${noCache ? `&cache_bust=${String(Math.random()).slice(2, 10)}` : ''}`
     );
+
+    snackbar.set({ open: false });
 
     return response.data.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

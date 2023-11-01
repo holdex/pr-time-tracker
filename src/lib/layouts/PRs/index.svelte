@@ -83,7 +83,7 @@
   <ul class="grid gap-4 md:gap-5">
     {#each prs as pr, i}
       <!-- Force component destroy/re-render to get updated `pr` object values. -->
-      {#key `${i}${invalidateCache ? pr.submission?.updated_at : $activeTab.position}`}
+      {#key `${i}${invalidateCache ? Date.now() : $activeTab.position}`}
         <svelte:component
           this={PRCard}
           data={pr}

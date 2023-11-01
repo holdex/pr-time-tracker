@@ -12,7 +12,7 @@ import { UserRole } from '$lib/@types';
 export const load: LayoutServerLoad = async ({ parent }) => {
   const data = await parent();
 
-  if (data.user?.role === UserRole.MANAGER || dev) return data;
+  if (data.user?.role === UserRole.MANAGER) return data;
 
   throw redirect(REDIRECT_TEMP, routes.prs.path);
 };

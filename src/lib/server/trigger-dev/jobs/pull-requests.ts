@@ -58,8 +58,10 @@ async function createJob(
 
       await io.wait('wait for first call', 5);
 
-      const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
-      await items.update(prInfo, { onCreateIfNotExist: true });
+      await items.update(
+        await getPrInfo(pull_request, repository, organization, sender, contributor),
+        { onCreateIfNotExist: true }
+      );
       break;
     }
     default: {

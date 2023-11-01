@@ -13,7 +13,13 @@ import {
 } from '$lib/@types';
 
 export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
-  async create({ item_id, owner_id, ...resource }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
+  async create({
+    item_id,
+    owner_id,
+    rate,
+    hours,
+    experience
+  }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
@@ -33,7 +39,9 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
       const submission = await super.create({
         item_id,
         owner_id,
-        ...resource,
+        rate,
+        hours,
+        experience,
         approval: Approval.PENDING,
         created_at,
         updated_at: created_at

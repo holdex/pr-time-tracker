@@ -1,11 +1,14 @@
 import { json } from '@sveltejs/kit';
 
+import { dev } from '$app/environment';
+
 import type { RequestHandler } from '@sveltejs/kit';
 
 import { SUCCESS_OK } from '$lib/constants';
 import { jsonError, transform } from '$lib/utils';
 import { items, submissions } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
+import { cookieNames } from '$lib/server/cookie';
 
 import { UserRole, type SubmissionSchema, type ContributorSchema } from '$lib/@types';
 
@@ -46,12 +49,19 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
     let user: ContributorSchema;
 
     await verifyAuth(url, 'PATCH', cookies, async (contributor) => {
+      user = contributor;
+
+      if (dev) {
+        user.role = (cookies.get(cookieNames.contributorRole) as UserRole | null) || user.role;
+      }
+
       body = transform<SubmissionSchema>(await request.json(), {
         pick: ['_id' as keyof SubmissionSchema].concat(
-          contributor.role === UserRole.MANAGER ? ['approval'] : ['hours', 'experience']
+          user.role === UserRole.MANAGER ? ['approval'] : ['hours', 'experience', 'owner_id']
         )
       })!;
-      user = contributor;
+
+      if (user.role !== UserRole.MANAGER && body.owner_id !== user.id) return false;
 
       return true;
     });

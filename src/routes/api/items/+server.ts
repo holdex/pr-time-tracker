@@ -30,13 +30,3 @@ export const GET: RequestHandler = async ({ url: { searchParams, pathname }, coo
     return jsonError(e, '/api/items');
   }
 };
-
-export const PATCH: RequestHandler = async ({ request, url: { pathname }, cookies }) => {
-  try {
-    await verifyAuth(pathname, 'PATCH', cookies);
-
-    return json({ data: await items.update(transform<ItemSchema>(await request.json())!) });
-  } catch (e) {
-    return jsonError(e, '/api/items', 'PATCH');
-  }
-};
