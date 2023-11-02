@@ -10,14 +10,15 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
   if (accessToken) await logout(accessToken);
 
-  cookies.getAll().map(({ name }) => {
+  // eslint-disable-next-line guard-for-in
+  for (const name in cookieNames) {
     cookies.delete(
       name,
       serializeCookie({
         expires: new Date(0)
       })
     );
-  });
+  }
 
   return json({}, { status: 200 });
 };
