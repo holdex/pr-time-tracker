@@ -81,16 +81,14 @@
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-5">
   <ul class="grid gap-4 md:gap-5">
-    {#each prs as pr, i}
+    {#each prs as pr (pr.id)}
       <!-- Force component destroy/re-render to get updated `pr` object values. -->
-      {#key `${i}${invalidateCache ? Date.now() : $activeTab.position}`}
-        <svelte:component
-          this={PRCard}
-          data={pr}
-          {onSubmit}
-          isAdmin={isContributorContext}
-          isReadonly={pr.submission?.approval === Approval.APPROVED} />
-      {/key}
+      <svelte:component
+        this={PRCard}
+        data={pr}
+        {onSubmit}
+        isAdmin={isContributorContext}
+        isReadonly={pr.submission?.approval === Approval.APPROVED} />
     {:else}
       <li class="text-t3">
         {#if !$activeTab.title || !contributorId}
