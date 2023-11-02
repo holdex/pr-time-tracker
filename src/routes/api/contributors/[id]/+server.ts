@@ -23,7 +23,8 @@ export const GET: RequestHandler = async ({ params, cookies, url, fetch }) => {
       `/api/items?${new URLSearchParams({
         type: ItemType.PULL_REQUEST,
         contributor_id: String(id),
-        approvals: JSON.stringify([Approval.PENDING, Approval.REJECTED])
+        approvals: JSON.stringify([Approval.PENDING, Approval.REJECTED]),
+        count: '100'
       }).toString()}`
     );
 

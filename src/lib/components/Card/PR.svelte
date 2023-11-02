@@ -47,7 +47,7 @@
   } max-w-full relative border border-solid border-l4 bg-l1 shadow-input rounded-xl text-t1 transition-all list-none animate-fadeIn  ${
     (submissionApproved && !isAdmin) || closedAndNotMerged ? 'opacity-60' : ''
   } dark:bg-l2 xs:w-full`}>
-  <div class="p-4 flex gap-4 items-center">
+  <div class="p-4 flex gap-4 items-start">
     <span
       title={data.merged
         ? 'Closed and merged'
@@ -68,7 +68,7 @@
     </a>
 
     {#if closedAt}
-      <span class="flex gap-1.5 text-sm ml-auto max-w-content">
+      <span class="flex gap-1.5 text-sm ml-auto flex-wrap max-w-content">
         <span class="text-t3">Closed:</span>
         <span class="text-footnote">
           {closedAt.toDateString().replace(/\w{3,3}\s/, '') || '...'}
@@ -167,6 +167,13 @@
       <Button
         isSubmitBtn
         size="small"
+        title={loading
+          ? 'Loading...'
+          : !data.merged
+          ? 'Not merged yet'
+          : isAdmin && !data.submission
+          ? `${$page.data.contributor.login} hasn't made a submission yet`
+          : undefined}
         text={isAdmin
           ? `${submissionApproved ? 'Disapprov' : 'Approv'}${loading ? 'ing...' : 'e'}`
           : `${data.submission ? 'Re-' : ''}Submit${loading ? 'ting...' : ''}`}

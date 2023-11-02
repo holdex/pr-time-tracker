@@ -49,7 +49,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
           {
             $match: {
               submission: definesSubmitted ? { $exists: submitted } : { $ne: '' },
-              'submission.approval': submitted && approvals ? { $in: approvals } : { $ne: '' }
+              'submission.approval': approvals
+                ? { $in: approvals.concat(!submitted ? (null as any) : []) }
+                : { $ne: '' }
             }
           }
         ]
@@ -82,9 +84,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
               : []
           )
       )
+      .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
-      .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
       .toArray();
   };
 
