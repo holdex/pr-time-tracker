@@ -39,6 +39,12 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
           {
             $set: {
               submission_ids: _item.submission_ids?.map((id) => new ObjectId(id)) || []
+            },
+            $unset: {
+              submission: '',
+              submissions: '',
+              __submission_ids: '',
+              contributors: ''
             }
           }
         );
