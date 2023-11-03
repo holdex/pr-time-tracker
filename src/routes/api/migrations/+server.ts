@@ -1,14 +1,14 @@
 import { json } from '@sveltejs/kit';
 import StatusCode from 'status-code-enum';
-import { ObjectId } from 'mongodb';
 
 import { dev } from '$app/environment';
 
 import type { RequestHandler } from '@sveltejs/kit';
+import type { ContributorSchema } from '$lib/@types';
 
 import { responseHeadersInit } from '$lib/config';
 import { jsonError, transform } from '$lib/utils';
-import { contributors, items } from '$lib/server/mongo/collections';
+import { contributors, submissions } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 
 export const POST: RequestHandler = async ({ url: { searchParams, pathname }, cookies }) => {
@@ -26,30 +26,36 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
       );
     }
 
-    const [_items] = await Promise.all([
-      items.context.find().toArray(), //{ count: 5000 }),
+    const contributorsMap: Record<number, ContributorSchema> = {};
+    const [_submissions, _contributors] = await Promise.all([
+      submissions.context
+        .find({
+          created_at: { $lt: '2023-11-01T00:00:00.000Z' }
+        })
+        .sort('updated_at', 'descending')
+        .toArray(), //{ count: 5000 }),
       contributors.getMany({ count: 100 })
       // submissions.getMany({ count: 1000 })
       // submissions.context.deleteMany()
     ]);
     const result = await Promise.all(
-      _items.map(async (_item) => {
-        await items.context.updateOne(
-          { _id: _item._id },
+      _submissions.map(async (_submission) => {
+        const contributor =
+          contributorsMap[_submission.owner_id] ||
+          _contributors.find(({ id }) => id === _submission.owner_id);
+
+        if (contributor) contributorsMap[contributor.id] = contributor;
+
+        await submissions.context.updateOne(
+          { _id: _submission._id },
           {
             $set: {
-              submission_ids: _item.submission_ids?.map((id) => new ObjectId(id)) || []
-            },
-            $unset: {
-              submission: '',
-              submissions: '',
-              __submission_ids: '',
-              contributors: ''
+              rate: _submission.rate || contributor.rate
             }
           }
         );
 
-        return _item;
+        return _submission;
       })
       // _contributors.map(async (contributor) => {
       //   contributor.rate = 1;
