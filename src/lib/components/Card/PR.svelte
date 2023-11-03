@@ -91,12 +91,19 @@
   <form
     class="px-4 my-4 text-t3 flex justify-between items-center flex-wrap gap-2 gap-y-4"
     name={data.title}
-    on:submit|preventDefault={async (e) => {
+    on:submit={async (e) => {
       if (!onSubmit) return;
 
       if (!activeReactionButton) {
         return ($snackbar = {
           text: `Please, rate your experience with #${data.number}.`,
+          type: 'info'
+        });
+      }
+
+      if ((submissionPayload.hours || 0) < 0) {
+        return ($snackbar = {
+          text: `Hours should be greater than or equal to 0.`,
           type: 'info'
         });
       }

@@ -44,8 +44,9 @@
               </span>
             </td>
             <td class="border-r border-r-l4 py-1.5 px-2.5">$ {rate} / hr</td>
-            <td class="border-r border-r-l4 py-1.5 px-2.5"
-              >{hours ? `${hours} hr${hours === 1 ? '' : 's'}` : '--'}</td>
+            <td class="border-r border-r-l4 py-1.5 px-2.5">
+              {typeof hours === 'number' ? `${hours} hr${hours === 1 ? '' : 's'}` : '--'}
+            </td>
             <td class="px-2.5">$ {cost}</td>
           </tr>
         {/each}
