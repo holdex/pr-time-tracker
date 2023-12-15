@@ -15,7 +15,9 @@ const config: Config = {
     baseUrl: 'https://github.com',
     apiUrl: 'https://api.github.com',
     clientId: PUB_GITHUB_CLIENT_ID,
-    authorizeRedirectUrl: dev ? `https://curvy-hound-39.telebit.io/api/github/auth/authorize` : ''
+    authorizeRedirectUrl: dev
+      ? `https://alert-seemingly-moccasin.ngrok-free.app/api/github/auth/authorize`
+      : ''
   }
 };
 

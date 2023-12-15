@@ -1,9 +1,7 @@
 import { Github, events } from '@trigger.dev/github';
 
-import type { Document, ModifyResult } from 'mongodb';
-import type { CollectionNames, ContributorSchema, ItemSchema } from '$lib/@types';
+import type { ContributorSchema, ItemSchema } from '$lib/@types';
 
-import clientPromise from '$lib/server/mongo';
 import config from '$lib/server/config';
 import type {
   PullRequest,
