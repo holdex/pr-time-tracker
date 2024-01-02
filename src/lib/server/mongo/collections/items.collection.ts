@@ -87,6 +87,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
       .sort({ [sort_by || 'updated_at']: sort_order || DESCENDING })
       .skip(skip || 0)
       .limit(count || MAX_DATA_CHUNK)
+      .map((r) => ({ ...r, url: replaceUrl(r.url) }))
       .toArray();
   };
 
@@ -97,12 +98,24 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
   makeFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
     const contributorId = transform<number>(searchParams?.get('contributor_id'));
+    const lastItems = transform<number>(searchParams?.get('last'));
 
     if (contributorId) filter.contributor_ids = { $in: [contributorId] };
+
+    const now = new Date();
+    const priorDate = new Date(new Date().setDate(now.getDate() - 30));
+    if (lastItems) filter.created_at = { $lte: now.toISOString(), $gte: priorDate.toISOString() };
 
     return filter;
   }
 }
+
+const replaceUrl = (url: string) => {
+  return url.replace(
+    /https:\/\/api\.github\.com\/repos\/([^\/]+)\/([^\/]+)\/pulls\/(\d+)/,
+    'https://github.com/$1/$2/pull/$3'
+  );
+};
 
 export const items = new ItemsCollection(CollectionNames.ITEMS, {
   required: [
