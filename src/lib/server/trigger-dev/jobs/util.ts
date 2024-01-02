@@ -11,7 +11,7 @@ import type {
   Organization
 } from '$lib/server/github';
 import { ItemType } from '$lib/constants';
-import { items } from '$lib/server/mongo/collections';
+import { items, submissions } from '$lib/server/mongo/collections';
 
 const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'> => ({
   id: user.id,
@@ -51,9 +51,24 @@ const getPrInfo = async (
   };
 };
 
+const getSubmissionStatus = async (
+  ownerId: number,
+  itemId: number
+): Promise<null | { hours: number; approved: any }> => {
+  const submission = await submissions.getOne({ owner_id: ownerId, item_id: itemId });
+
+  if (submission) {
+    return {
+      hours: submission.hours,
+      approved: submission.approval
+    };
+  }
+  return null;
+};
+
 const github = new Github({
   id: 'github',
   token: config.github.token
 });
 
-export { getContributorInfo, getPrInfo, github, events };
+export { getContributorInfo, getPrInfo, github, events, getSubmissionStatus };

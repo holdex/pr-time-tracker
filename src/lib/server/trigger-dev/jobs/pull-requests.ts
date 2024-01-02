@@ -4,7 +4,7 @@ import type { PullRequestEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
 
 import { client } from '../';
-import { getContributorInfo, getPrInfo, github, events } from './util';
+import { getContributorInfo, getPrInfo, github, events, getSubmissionStatus } from './util';
 
 // Your first job
 // This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline
@@ -18,6 +18,9 @@ client.defineJob({
     event: events.onPullRequest,
     org: 'clearpool-finance'
   }),
+  integrations: {
+    github
+  },
   run: async (payload, io, ctx) => createJob(payload, io, ctx)
 });
 
@@ -31,6 +34,9 @@ client.defineJob({
     event: events.onPullRequest,
     org: 'holdex'
   }),
+  integrations: {
+    github
+  },
   run: async (payload, io, ctx) => createJob(payload, io, ctx)
 });
 
@@ -76,6 +82,22 @@ async function createJob(
         await getPrInfo(pull_request, repository, organization, sender, contributor),
         { onCreateIfNotExist: true }
       );
+      break;
+    }
+    case 'review_requested': {
+      const { user, id, number } = pull_request;
+
+      if (io.github !== undefined) {
+        const submission = await getSubmissionStatus(user.id, id);
+        await io.github.createIssueComment('create comment', {
+          owner: organization?.login, // the name of the owner of the repository
+          repo: repository.name, // the name of the repository
+          issueNumber: number, // the number of the issue
+          body: submission
+            ? `Pull request submission provided: ${submission.hours} hours`
+            : 'Pull request submission is required to be able to get reviewed' // the contents of the comment
+        });
+      }
       break;
     }
     default: {
