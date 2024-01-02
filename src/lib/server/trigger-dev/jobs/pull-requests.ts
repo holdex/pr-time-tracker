@@ -1,4 +1,5 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
+import type { Github } from '@trigger.dev/github';
 
 import type { PullRequestEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
@@ -56,7 +57,7 @@ client.defineJob({
 
 async function createJob(
   payload: PullRequestEvent,
-  io: IOWithIntegrations<any>,
+  io: IOWithIntegrations<{ github: Github } | any>,
   ctx: TriggerContext
 ) {
   const { action, pull_request, repository, organization, sender } = payload;
@@ -85,18 +86,17 @@ async function createJob(
       break;
     }
     case 'review_requested': {
-      const { user, id, number } = pull_request;
-
       if (io.github !== undefined) {
-        const submission = await getSubmissionStatus(user.id, id);
+        const submission = await getSubmissionStatus(pull_request.user.id, pull_request.id);
         await io.github.createIssueComment('create comment', {
-          owner: organization?.login, // the name of the owner of the repository
-          repo: repository.name, // the name of the repository
-          issueNumber: number, // the number of the issue
+          owner: repository.owner.login,
+          repo: repository.name,
+          issueNumber: pull_request.number, // the number of the issue
           body: submission
             ? `Pull request submission provided: ${submission.hours} hours`
             : 'Pull request submission is required to be able to get reviewed' // the contents of the comment
         });
+        return { payload, ctx };
       }
       break;
     }
