@@ -49,13 +49,15 @@ export enum CollectionNames {
 }
 
 export interface EventsSchema extends TimeStamps {
-  _id?: ObjectId;
-  action: string;
+  id: number;
+  organization: string;
+  repository: string;
+  action: EventType;
   title: string;
   owner: string;
   sender: string;
-  url: string;
   label?: string;
+  payload?: number;
   index: number;
 }
 
@@ -123,4 +125,32 @@ export enum Experience {
 export enum UserRole {
   MANAGER = 'Manager',
   CONTRIBUTOR = 'Contributor'
+}
+
+export enum EventType {
+  PR_OPENED = 'PR_OPENED',
+  PR_MERGED = 'PR_MERGED',
+  PR_EDITED = 'PR_EDITED',
+  PR_CLOSED = 'PR_CLOSED',
+  PR_ASSIGNED = 'PR_ASSIGNED',
+  PR_UNASSIGNED = 'PR_UNASSIGNED',
+  PR_LABELED = 'PR_LABELED',
+  PR_UNLABELED = 'PR_UNLABELED',
+  PR_REVIEW_REQUESTED = 'PR_REVIEW_REQUESTED',
+  PR_CONVERTED_TO_DRAFT = 'PR_CONVERTED_TO_DRAFT',
+  PR_READY_TO_REVIEW = 'PR_READY_TO_REVIEW',
+  PR_REOPENED = 'PR_REOPENED',
+  ISSUE_OPENED = 'ISSUE_OPENED',
+  ISSUE_LABELED = 'ISSUE_LABELED',
+  ISSUE_UNLABELED = 'ISSUE_UNLABELED',
+  ISSUE_ASSIGNED = 'ISSUE_ASSIGNED',
+  ISSUE_UNASSIGNED = 'ISSUE_UNSIGNED',
+  ISSSUE_CLOSED = 'ISSSUE_CLOSED',
+  ISSUED_REOPENED = 'ISSUED_REOPENED',
+  PR_REVIEW_REQUEST_REMOVED = 'PR_REVIEW_REQUEST_REMOVED',
+  PR_REVIEW_DISMISSED = 'PR_REVIEW_DISMISSED',
+  PR_REVIEW_SUBMITTED = 'PR_REVIEW_SUBMITTED',
+  PR_SUBMISSION_CREATED = 'PR_SUBMISSION_CREATED',
+  PR_SUBMISSION_APPROVED = 'PR_SUBMISSION_APPROVED',
+  PR_SUBMISSION_REJECTED = 'PR_SUBMISSION_REJECTED'
 }

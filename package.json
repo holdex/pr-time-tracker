@@ -16,6 +16,7 @@
     "proxy": "npx ngrok config add-authtoken 2T98NpdbPildowmwFLNYeB1JHQi_3hNtGwx8YQC1R3jEkYsDd && ngrok http --domain=alert-seemingly-moccasin.ngrok-free.app 3000"
   },
   "dependencies": {
+    "@google-cloud/bigquery": "^7.3.0",
     "@octokit/oauth-methods": "^4.0.0",
     "@octokit/webhooks-types": "^7.1.0",
     "@prettier/plugin-pug": "^3.0.0",
