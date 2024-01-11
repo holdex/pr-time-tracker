@@ -43,8 +43,20 @@ export type QueryProps<CollectionType = ItemSchema> = {
 
 export enum CollectionNames {
   ITEMS = 'items',
+  EVENTS = 'events',
   CONTRIBUTORS = 'contributors',
   SUBMISSIONS = 'submissions'
+}
+
+export interface EventsSchema extends TimeStamps {
+  _id?: ObjectId;
+  action: string;
+  title: string;
+  owner: string;
+  sender: string;
+  url: string;
+  label?: string;
+  index: number;
 }
 
 export interface ItemSchema extends TimeStamps {
