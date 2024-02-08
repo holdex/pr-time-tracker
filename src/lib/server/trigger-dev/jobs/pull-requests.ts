@@ -1,56 +1,14 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 
 import type { PullRequestEvent } from '$lib/server/github';
+import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { client } from '../';
-import { getContributorInfo, getPrInfo, github, events } from './util';
+import { getContributorInfo, getPrInfo } from './util';
 
-// TODO: sync events
+import { EventType } from '$lib/@types';
 
-// Your first job
-// This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-streaming_clearpool',
-  name: 'Streaming pull requests for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.org({
-    event: events.onPullRequest,
-    org: 'clearpool-finance'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-streaming_holdex',
-  name: 'Streaming pull requests for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.org({
-    event: events.onPullRequest,
-    org: 'holdex'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-streaming_ithaca_interface',
-  name: 'Streaming pull requests for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.repo({
-    event: events.onPullRequest,
-    owner: 'ithaca-protocol',
-    repo: 'ithaca-interface'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-async function createJob(
+export async function createJob(
   payload: PullRequestEvent,
   io: IOWithIntegrations<any>,
   ctx: TriggerContext
@@ -62,11 +20,31 @@ async function createJob(
     case 'edited':
     case 'synchronize':
     case 'closed': {
-      const { user } = pull_request;
+      const { user, merged } = pull_request;
       let contributorInfo;
 
       if (action === 'opened' || action === 'closed') {
         contributorInfo = getContributorInfo(user);
+
+        // store these events in gcloud
+        await insertEvent({
+          action:
+            action === 'opened'
+              ? EventType.PR_OPENED
+              : merged
+              ? EventType.PR_MERGED
+              : EventType.PR_CLOSED,
+          id: pull_request.id,
+          index: 1,
+          organization: organization?.login || 'holdex',
+          owner: pull_request.user.login,
+          repository: repository.name,
+          sender: pull_request.user.login,
+          title: pull_request.title,
+          created_at: pull_request.created_at,
+          updated_at: pull_request.updated_at
+        });
+        await io.wait('wait for call', 5);
       } else {
         contributorInfo = getContributorInfo(sender);
       }

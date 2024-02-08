@@ -2,64 +2,38 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 
 import type { PullRequestReviewEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
+import { insertEvent } from '$lib/server/gcloud';
 
-import { client } from '../';
-import { getContributorInfo, getPrInfo, github, events } from './util';
+import { getContributorInfo, getPrInfo } from './util';
 
-// Your first job
-// This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-review-streaming_clearpool',
-  name: 'Streaming pull requests review for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.org({
-    event: events.onPullRequestReview,
-    org: 'clearpool-finance'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
+import { EventType } from '$lib/@types';
 
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-review-streaming_holdex',
-  name: 'Streaming pull requests review for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.org({
-    event: events.onPullRequestReview,
-    org: 'holdex'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-review-streaming_ithaca_interface',
-  name: 'Streaming pull requests review for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.repo({
-    event: events.onPullRequestReview,
-    owner: 'ithaca-protocol',
-    repo: 'ithaca-interface'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-async function createJob(
+export async function createJob(
   payload: PullRequestReviewEvent,
   io: IOWithIntegrations<any>,
   ctx: TriggerContext
 ) {
-  const { action, pull_request, repository, organization, sender } = payload;
+  const { action, pull_request, repository, organization, sender, review } = payload;
 
   switch (action) {
     case 'submitted': {
       const contributor = await contributors.update(getContributorInfo(sender));
-
       await io.wait('wait for first call', 5);
+
+      // store these events in gcloud
+      await insertEvent({
+        action: review.state === 'approved' ? EventType.PR_APPROVED : EventType.PR_REJECTED,
+        id: pull_request.id,
+        index: 1,
+        organization: organization?.login || 'holdex',
+        owner: pull_request.user.login,
+        repository: repository.name,
+        sender: pull_request.user.login,
+        title: pull_request.title,
+        created_at: pull_request.created_at,
+        updated_at: pull_request.updated_at
+      });
+
       await items.update(
         await getPrInfo(pull_request, repository, organization, sender, contributor),
         { onCreateIfNotExist: true }

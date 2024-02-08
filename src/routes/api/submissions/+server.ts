@@ -9,8 +9,9 @@ import { jsonError, transform } from '$lib/utils';
 import { items, submissions } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 import { cookieNames } from '$lib/server/cookie';
+import { insertEvent } from '$lib/server/gcloud';
 
-import { UserRole, type SubmissionSchema, type ContributorSchema } from '$lib/@types';
+import { UserRole, type SubmissionSchema, type ContributorSchema, EventType } from '$lib/@types';
 
 export const GET: RequestHandler = async ({ url: { searchParams, pathname }, cookies }) => {
   try {
@@ -27,14 +28,33 @@ export const GET: RequestHandler = async ({ url: { searchParams, pathname }, coo
 
 export const POST: RequestHandler = async ({ url, request, cookies }) => {
   try {
-    let body: SubmissionSchema;
+    let body: SubmissionSchema = {} as SubmissionSchema;
+    let contributor: string;
 
-    await verifyAuth(url, 'POST', cookies, async ({ role, rate }) => {
+    await verifyAuth(url, 'POST', cookies, async ({ role, rate, login }) => {
       body = transform<SubmissionSchema>({ ...(await request.json()), rate })!;
+      contributor = login;
 
       return role !== UserRole.MANAGER;
     });
 
+    // get pr item
+    const pr = await items.getOne({ id: body?.item_id });
+    if (pr) {
+      // store these events in gcloud
+      await insertEvent({
+        action: EventType.PR_SUBMISSION_CREATED,
+        id: pr.id,
+        index: 1,
+        organization: pr.org,
+        owner: pr.owner,
+        repository: pr.repo,
+        sender: contributor!,
+        title: pr.title,
+        payload: body?.hours,
+        created_at: body?.created_at
+      });
+    }
     return json({
       data: await submissions.create(body!)
     });
@@ -65,6 +85,27 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
 
       return true;
     });
+
+    // get pr item
+    const pr = await items.getOne({ id: body!.item_id });
+    if (pr) {
+      // store these events in gcloud
+      await insertEvent({
+        action:
+          user!.role === UserRole.MANAGER
+            ? EventType.PR_SUBMISSION_APPROVED
+            : EventType.PR_SUBMISSION_UPDATED,
+        id: pr.id,
+        index: 1,
+        organization: pr.org,
+        owner: pr.owner,
+        repository: pr.repo,
+        sender: user!.login,
+        title: pr.title,
+        payload: body!.hours,
+        created_at: body!.created_at
+      });
+    }
 
     const submission = await submissions.update(body!, { user: user! });
 
