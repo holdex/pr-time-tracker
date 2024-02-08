@@ -37,9 +37,9 @@ export async function createJob(
           id: pull_request.id,
           index: 1,
           organization: organization?.login || 'holdex',
-          owner: pull_request.user.login,
+          owner: user.login,
           repository: repository.name,
-          sender: pull_request.user.login,
+          sender: user.login,
           title: pull_request.title,
           created_at: pull_request.created_at,
           updated_at: pull_request.updated_at
