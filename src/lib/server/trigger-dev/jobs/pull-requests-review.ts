@@ -21,18 +21,20 @@ export async function createJob(
       await io.wait('wait for first call', 5);
 
       // store these events in gcloud
-      await insertEvent({
-        action: review.state === 'approved' ? EventType.PR_APPROVED : EventType.PR_REJECTED,
-        id: pull_request.id,
-        index: 1,
-        organization: organization?.login || 'holdex',
-        owner: pull_request.user.login,
-        repository: repository.name,
-        sender: pull_request.user.login,
-        title: pull_request.title,
-        created_at: pull_request.created_at,
-        updated_at: pull_request.updated_at
-      });
+      if (review.state === 'approved' || review.state === 'changes_requested') {
+        await insertEvent({
+          action: review.state === 'approved' ? EventType.PR_APPROVED : EventType.PR_REJECTED,
+          id: pull_request.id,
+          index: 1,
+          organization: organization?.login || 'holdex',
+          owner: pull_request.user.login,
+          repository: repository.name,
+          sender: pull_request.user.login,
+          title: pull_request.title,
+          created_at: pull_request.created_at,
+          updated_at: pull_request.updated_at
+        });
+      }
 
       await items.update(
         await getPrInfo(pull_request, repository, organization, sender, contributor),
