@@ -128,6 +128,24 @@ export const authorize = async (
   }
 };
 
+export const dispatchWorkflow = async (org: string, repo: string, prNumber: number, hours: any) => {
+  const { data } = await app.octokit.rest.pulls.get({
+    owner: org,
+    repo: repo,
+    pull_number: prNumber
+  });
+
+  await app.octokit.rest.actions.createWorkflowDispatch({
+    owner: org,
+    repo: repo,
+    workflow_id: 'cost.yml',
+    ref: data.head.ref,
+    inputs: {
+      cost: hours
+    }
+  });
+};
+
 type GitHubAppAuthenticationWithRefreshToken = oauthMethods.GitHubAppAuthenticationWithRefreshToken;
 export type {
   PullRequestEvent,

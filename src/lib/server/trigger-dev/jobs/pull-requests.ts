@@ -9,9 +9,9 @@ import { getContributorInfo, getPrInfo, getSubmissionStatus } from './util';
 
 import { EventType } from '$lib/@types';
 
-export async function createJob(
+export async function createJob<T extends IOWithIntegrations<{ github: Github }>>(
   payload: PullRequestEvent,
-  io: IOWithIntegrations<{ github: Github } | any>,
+  io: T,
   ctx: TriggerContext
 ) {
   const { action, pull_request, repository, organization, sender } = payload;
@@ -62,14 +62,17 @@ export async function createJob(
     case 'review_requested': {
       if (io.github !== undefined) {
         const submission = await getSubmissionStatus(pull_request.user.id, pull_request.id);
-        await io.github.createIssueComment('create comment', {
-          owner: repository.owner.login,
-          repo: repository.name,
-          issueNumber: pull_request.number, // the number of the issue
-          body: submission
-            ? `Pull cost was provided: ${submission.hours} hours`
-            : 'Pull const submission is required for the review' // the contents of the comment
-        });
+        await io.github.runTask('run-workflow', async (octokit) =>
+          octokit.rest.actions.createWorkflowDispatch({
+            owner: repository.owner.login,
+            repo: repository.name,
+            workflow_id: 'cost.yml',
+            ref: pull_request.head.ref,
+            inputs: {
+              cost: submission?.hours?.toString() || ''
+            }
+          })
+        );
         return { payload, ctx };
       }
       break;
