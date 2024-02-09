@@ -1,4 +1,4 @@
-import { App } from 'octokit';
+import { App, Octokit } from 'octokit';
 import oauthMethods from '@octokit/oauth-methods';
 
 import type {
@@ -29,6 +29,10 @@ const app = new App({
   webhooks: {
     secret: config.webhookSecret
   }
+});
+
+export const personalApp = new Octokit({
+  auth: config.github.token
 });
 
 export async function exchangeWebFlowCode(code: string) {
@@ -126,25 +130,6 @@ export const authorize = async (
       }.`
     );
   }
-};
-
-export const dispatchWorkflow = async (org: string, repo: string, prNumber: number, hours: any) => {
-  const { data } = await app.octokit.rest.pulls.get({
-    owner: org,
-    repo: repo,
-    pull_number: prNumber
-  });
-
-  await app.octokit.rest.actions.createWorkflowDispatch({
-    owner: org,
-    repo: repo,
-    workflow_id: 'cost.yml',
-    ref: data.head.ref,
-    inputs: {
-      cost: hours,
-      pr_number: prNumber.toString()
-    }
-  });
 };
 
 type GitHubAppAuthenticationWithRefreshToken = oauthMethods.GitHubAppAuthenticationWithRefreshToken;

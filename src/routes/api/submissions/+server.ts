@@ -7,7 +7,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { SUCCESS_OK } from '$lib/constants';
 import { jsonError, transform } from '$lib/utils';
 import { items, submissions } from '$lib/server/mongo/collections';
-import { verifyAuth, dispatchWorkflow } from '$lib/server/github';
+import { verifyAuth } from '$lib/server/github';
 import { cookieNames } from '$lib/server/cookie';
 import { insertEvent } from '$lib/server/gcloud';
 
@@ -109,10 +109,6 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         updated_at: Math.round(new Date(body!.updated_at as string).getTime() / 1000).toFixed(0)
       };
       await insertEvent(gcEvent);
-
-      if (body!.approval) {
-        await dispatchWorkflow(pr.org, pr.repo, pr.number as number, body!.hours?.toString());
-      }
     }
 
     const submission = await submissions.update(body!, { user: user! });

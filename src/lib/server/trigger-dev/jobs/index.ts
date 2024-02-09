@@ -1,6 +1,4 @@
 // import all your job files here
-import type { IOWithIntegrations } from '@trigger.dev/sdk';
-
 import { github, events } from './util';
 import { client } from '../';
 import { createJob as createPrJob } from './pull-requests';
@@ -19,9 +17,7 @@ import { createJob as createPrReviewJob } from './pull-requests-review';
       event: events.onPullRequest,
       org: org.name
     }),
-    integrations: { github },
-    run: async (payload, io, ctx) =>
-      createPrJob<IOWithIntegrations<{ github: typeof github }>>(payload, io, ctx)
+    run: async (payload, io, ctx) => createPrJob<any>(payload, io, ctx)
   });
 
   client.defineJob({
