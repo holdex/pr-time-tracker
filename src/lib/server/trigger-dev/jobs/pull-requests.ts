@@ -2,60 +2,14 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Github } from '@trigger.dev/github';
 
 import type { PullRequestEvent } from '$lib/server/github';
+import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { client } from '../';
-import { getContributorInfo, getPrInfo, github, events, getSubmissionStatus } from './util';
+import { getContributorInfo, getPrInfo, getSubmissionStatus } from './util';
 
-// Your first job
-// This Job will be triggered by an event, log a joke to the console, and then wait 5 seconds before logging the punchline
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-streaming_clearpool',
-  name: 'Streaming pull requests for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.org({
-    event: events.onPullRequest,
-    org: 'clearpool-finance'
-  }),
-  integrations: {
-    github
-  },
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
+import { EventType } from '$lib/@types';
 
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-streaming_holdex',
-  name: 'Streaming pull requests for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.org({
-    event: events.onPullRequest,
-    org: 'holdex'
-  }),
-  integrations: {
-    github
-  },
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-client.defineJob({
-  // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-  id: 'pull-requests-streaming_ithaca_interface',
-  name: 'Streaming pull requests for Github using app',
-  version: '0.0.1',
-  // This is triggered by an event using eventTrigger. You can also trigger Jobs with webhooks, on schedules, and more: https://trigger.dev/docs/documentation/concepts/triggers/introduction
-  trigger: github.triggers.repo({
-    event: events.onPullRequest,
-    owner: 'ithaca-protocol',
-    repo: 'ithaca-interface'
-  }),
-  run: async (payload, io, ctx) => createJob(payload, io, ctx)
-});
-
-async function createJob(
+export async function createJob(
   payload: PullRequestEvent,
   io: IOWithIntegrations<{ github: Github } | any>,
   ctx: TriggerContext
@@ -67,11 +21,31 @@ async function createJob(
     case 'edited':
     case 'synchronize':
     case 'closed': {
-      const { user } = pull_request;
+      const { user, merged } = pull_request;
       let contributorInfo;
 
       if (action === 'opened' || action === 'closed') {
         contributorInfo = getContributorInfo(user);
+
+        // store these events in gcloud
+        await insertEvent({
+          action:
+            action === 'opened'
+              ? EventType.PR_OPENED
+              : merged
+              ? EventType.PR_MERGED
+              : EventType.PR_CLOSED,
+          id: pull_request.number,
+          index: 1,
+          organization: organization?.login || 'holdex',
+          owner: user.login,
+          repository: repository.name,
+          sender: user.login,
+          title: pull_request.title,
+          created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
+          updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
+        });
+        await io.wait('wait for call', 5);
       } else {
         contributorInfo = getContributorInfo(sender);
       }
@@ -93,8 +67,8 @@ async function createJob(
           repo: repository.name,
           issueNumber: pull_request.number, // the number of the issue
           body: submission
-            ? `Pull request submission provided: ${submission.hours} hours`
-            : 'Pull request submission is required to be able to get reviewed' // the contents of the comment
+            ? `Pull cost was provided: ${submission.hours} hours`
+            : 'Pull const submission is required for the review' // the contents of the comment
         });
         return { payload, ctx };
       }

@@ -103,12 +103,10 @@ export const authorize = async (
   const role = cookie.get(cookieNames.contributorRole) as UserRole | undefined;
   const id = cookie.get(cookieNames.contributorId) as string | undefined;
   const isManager = role === UserRole.MANAGER;
-  const isContributor = role === UserRole.CONTRIBUTOR;
   const contributor = id && (await contributors.getOne({ id: +id }));
 
   try {
     if (!contributor || (customCheck && !(await customCheck(contributor)))) throw false;
-
     switch (resource) {
       case 'items':
         if (action !== 'GET' && !isManager) throw false;
@@ -117,7 +115,6 @@ export const authorize = async (
         if (!isManager) throw false;
         return true;
       case 'submissions':
-        if (action === 'POST' && !isContributor) throw false;
         return true;
       case 'migrations':
         return true;

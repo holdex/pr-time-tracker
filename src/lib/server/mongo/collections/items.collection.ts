@@ -147,6 +147,10 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       bsonType: 'string',
       description: 'must be provided.'
     },
+    number: {
+      bsonType: ['int'],
+      description: 'must be provided.'
+    },
     total_cost: {
       bsonType: ['int', 'double'],
       description: 'must be provided.'

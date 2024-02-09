@@ -38,6 +38,7 @@ const getPrInfo = async (
     type: ItemType.PULL_REQUEST,
     id: pr.id,
     title: pr.title,
+    number: pr.number,
     org: organization?.login ?? 'holdex',
     repo: repository.name,
     owner: pr.user.login || sender.login,
