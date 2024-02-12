@@ -1,0 +1,11 @@
+{
+  "include": ["./src/**/*.ts", "tsup.config.ts"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "declaration": false,
+    "declarationMap": false,
+    "baseUrl": ".",
+    "stripInternal": true
+  },
+  "exclude": ["node_modules"]
+}
