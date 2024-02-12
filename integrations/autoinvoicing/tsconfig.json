@@ -1,11 +1,17 @@
 {
   "include": ["./src/**/*.ts", "tsup.config.ts"],
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "lib": ["DOM", "DOM.Iterable", "ES2019", "ES2021"],
     "declaration": false,
     "declarationMap": false,
     "baseUrl": ".",
-    "stripInternal": true
+    "stripInternal": true,
+    "module": "commonjs",
+    "target": "ES2021",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "exclude": ["node_modules"]
 }
