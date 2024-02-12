@@ -14,7 +14,8 @@
       "$lib": ["src/lib"],
       "$lib/*": ["src/lib/*"],
       "$components/*": ["src/lib/components/*"],
-      "$routes/*": ["src/routes/*"]
+      "$routes/*": ["src/routes/*"],
+      "@trigger-dev/autoinvoicing": ["integrations/autoinvoicing"]
     }
   }
   // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
