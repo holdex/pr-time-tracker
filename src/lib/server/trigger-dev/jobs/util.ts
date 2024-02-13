@@ -1,4 +1,4 @@
-import { Github, events } from '@trigger.dev/github';
+import { Autoinvoicing, events } from '@holdex/autoinvoicing';
 
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
 
@@ -67,7 +67,7 @@ const getSubmissionStatus = async (
   return null;
 };
 
-const github = new Github({
+const github = new Autoinvoicing({
   id: 'github',
   token: config.github.token
 });

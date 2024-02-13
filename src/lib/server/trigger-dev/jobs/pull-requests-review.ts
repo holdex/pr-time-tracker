@@ -1,9 +1,5 @@
-import type {
-  TriggerContext,
-  IOWithIntegrations,
-  TriggerIntegration,
-  IntegrationClient
-} from '@trigger.dev/sdk';
+import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
+import type { Autoinvoicing } from '@holdex/autoinvoicing';
 
 import type { PullRequestReviewEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
@@ -13,9 +9,11 @@ import { getContributorInfo, getPrInfo } from './util';
 
 import { EventType } from '$lib/@types';
 
-export async function createJob<
-  T extends Record<string, TriggerIntegration<IntegrationClient<any, any>>>
->(payload: PullRequestReviewEvent, io: IOWithIntegrations<T>, ctx: TriggerContext) {
+export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
+  payload: PullRequestReviewEvent,
+  io: T,
+  ctx: TriggerContext
+) {
   const { action, pull_request, repository, organization, sender, review } = payload;
 
   switch (action) {

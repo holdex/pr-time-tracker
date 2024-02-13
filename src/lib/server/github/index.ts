@@ -5,6 +5,8 @@ import type {
   PullRequestEvent,
   IssuesEvent,
   PullRequestReviewEvent,
+  CheckRunEvent,
+  CheckSuiteEvent,
   PullRequestReviewCommentEvent,
   InstallationEvent,
   User,
@@ -151,6 +153,8 @@ type GitHubAppAuthenticationWithRefreshToken = oauthMethods.GitHubAppAuthenticat
 export type {
   PullRequestEvent,
   IssuesEvent,
+  CheckRunEvent,
+  CheckSuiteEvent,
   PullRequestReviewEvent,
   PullRequestReviewCommentEvent,
   InstallationEvent,

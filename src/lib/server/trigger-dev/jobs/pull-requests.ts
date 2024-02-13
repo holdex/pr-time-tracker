@@ -1,15 +1,15 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
-import type { Github } from '@trigger.dev/github';
+import type { Autoinvoicing } from '@holdex/autoinvoicing';
 
 import type { PullRequestEvent } from '$lib/server/github';
 import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { getContributorInfo, getPrInfo, getSubmissionStatus } from './util';
+import { getContributorInfo, getPrInfo } from './util';
 
 import { EventType } from '$lib/@types';
 
-export async function createJob<T extends IOWithIntegrations<{ github: Github }>>(
+export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: PullRequestEvent,
   io: T,
   ctx: TriggerContext
@@ -57,25 +57,6 @@ export async function createJob<T extends IOWithIntegrations<{ github: Github }>
         await getPrInfo(pull_request, repository, organization, sender, contributor),
         { onCreateIfNotExist: true }
       );
-      break;
-    }
-    case 'review_requested': {
-      if (io.github !== undefined) {
-        const submission = await getSubmissionStatus(pull_request.user.id, pull_request.id);
-        await io.github.runTask('run-workflow', async (octokit) =>
-          octokit.rest.actions.createWorkflowDispatch({
-            owner: repository.owner.login,
-            repo: repository.name,
-            workflow_id: 'cost.yml',
-            ref: pull_request.head.ref,
-            inputs: {
-              cost: submission?.hours?.toString() || '',
-              pr_number: pull_request.number.toString()
-            }
-          })
-        );
-        return { payload, ctx };
-      }
       break;
     }
     default: {
