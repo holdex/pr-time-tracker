@@ -11,9 +11,6 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   const { action, repository, organization, sender, check_run } = payload;
 
   switch (action) {
-    case 'created': {
-      break;
-    }
     default: {
       io.logger.log('current action for check run is not in the parse candidate', payload);
     }
