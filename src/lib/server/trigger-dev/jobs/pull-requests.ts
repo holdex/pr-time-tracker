@@ -13,7 +13,8 @@ import { EventType } from '$lib/@types';
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: PullRequestEvent,
   io: T,
-  ctx: TriggerContext
+  ctx: TriggerContext,
+  org: { name: string; installationId: number }
 ) {
   const { action, pull_request, repository, organization, sender } = payload;
 
@@ -64,9 +65,9 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       await io.github.runTask(
         'create-check-run',
         async () => {
-          const octokit = await app.getInstallationOctokit(40473624);
+          const octokit = await app.getInstallationOctokit(org.installationId);
           await octokit.request('POST /repos/{owner}/{repo}/check-runs', {
-            owner: organization?.login || 'holdex',
+            owner: org.name,
             repo: repository.name,
             head_sha: pull_request.head.sha,
             name: submissionCheckName
