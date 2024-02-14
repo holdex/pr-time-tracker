@@ -1,14 +1,15 @@
 // import all your job files here
 import type { IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
+
 import { isDev } from '$lib/config';
 
 import { github, events } from './util';
 import { client } from '../';
-
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createCheckRunJob } from './check-run';
+import { createJob as createCheckSuiteJob } from './check-suite';
 
 [
   { id: 'clearpool', name: 'clearpool-finance' },
@@ -55,16 +56,16 @@ import { createJob as createCheckRunJob } from './check-run';
       createCheckRunJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
   });
 
-  // client.defineJob({
-  //   id: `check_suite_streaming_${org.id}`,
-  //   name: 'Streaming check suite for Github using app',
-  //   version: '0.0.1',
-  //   trigger: github.triggers.org({
-  //     event: events.onCheckSuite,
-  //     org: org.name
-  //   }),
-  //   integrations: { github },
-  //   run: async (payload, io, ctx) =>
-  //     createCheckSuiteJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
-  // });
+  client.defineJob({
+    id: `check_suite_streaming_${org.id}${isDev ? '_dev' : ''}`,
+    name: 'Streaming check suite for Github using app',
+    version: '0.0.1',
+    trigger: github.triggers.org({
+      event: events.onCheckSuite,
+      org: org.name
+    }),
+    integrations: { github },
+    run: async (payload, io, ctx) =>
+      createCheckSuiteJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
+  });
 });
