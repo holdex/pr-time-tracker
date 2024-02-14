@@ -2,6 +2,8 @@
 import type { IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 
+import { isDev } from '$lib/config';
+
 import { github, events } from './util';
 import { client } from '../';
 import { createJob as createPrJob } from './pull-requests';
@@ -14,7 +16,7 @@ import { createJob as createCheckRunJob } from './check-run';
 ].forEach((org) => {
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `pull-requests-streaming_${org.id}`,
+    id: `pull-requests-streaming_${org.id}${isDev ? '_dev' : ''}`,
     name: 'Streaming pull requests for Github using app',
     version: '0.0.1',
     trigger: github.triggers.org({
@@ -28,7 +30,7 @@ import { createJob as createCheckRunJob } from './check-run';
 
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `pull-requests-review-streaming_${org.id}`,
+    id: `pull-requests-review-streaming_${org.id}${isDev ? '_dev' : ''}`,
     name: 'Streaming pull requests review for Github using app',
     version: '0.0.1',
     trigger: github.triggers.org({
@@ -41,7 +43,7 @@ import { createJob as createCheckRunJob } from './check-run';
   });
 
   client.defineJob({
-    id: `check_run_streaming_${org.id}`,
+    id: `check_run_streaming_${org.id}${isDev ? '_dev' : ''}`,
     name: 'Streaming check runs for Github using app',
     version: '0.0.1',
     trigger: github.triggers.org({
