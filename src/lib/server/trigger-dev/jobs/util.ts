@@ -21,6 +21,8 @@ const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'
   avatarUrl: user.avatar_url
 });
 
+const submissionCheckName = 'Cost Submission';
+
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
   repository: Repository,
@@ -72,4 +74,4 @@ const github = new Autoinvoicing({
   token: config.github.token
 });
 
-export { getContributorInfo, getPrInfo, github, events, getSubmissionStatus };
+export { getContributorInfo, getPrInfo, github, events, getSubmissionStatus, submissionCheckName };

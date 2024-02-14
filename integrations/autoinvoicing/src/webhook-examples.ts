@@ -2319,11 +2319,616 @@ export const pullRequestReviewSubmitted: EventSpecificationExample = {
 export const checkRunCreated: EventSpecificationExample = {
   id: 'check_run.created',
   name: 'Check run created',
-  payload: {}
+  payload: {
+    action: 'created',
+    sender: {
+      id: 8217518,
+      url: 'https://api.github.com/users/georgeciubotaru',
+      type: 'User',
+      login: 'georgeciubotaru',
+      node_id: 'MDQ6VXNlcjgyMTc1MTg=',
+      html_url: 'https://github.com/georgeciubotaru',
+      gists_url: 'https://api.github.com/users/georgeciubotaru/gists{/gist_id}',
+      repos_url: 'https://api.github.com/users/georgeciubotaru/repos',
+      avatar_url: 'https://avatars.githubusercontent.com/u/8217518?v=4',
+      events_url: 'https://api.github.com/users/georgeciubotaru/events{/privacy}',
+      site_admin: false,
+      gravatar_id: '',
+      starred_url: 'https://api.github.com/users/georgeciubotaru/starred{/owner}{/repo}',
+      followers_url: 'https://api.github.com/users/georgeciubotaru/followers',
+      following_url: 'https://api.github.com/users/georgeciubotaru/following{/other_user}',
+      organizations_url: 'https://api.github.com/users/georgeciubotaru/orgs',
+      subscriptions_url: 'https://api.github.com/users/georgeciubotaru/subscriptions',
+      received_events_url: 'https://api.github.com/users/georgeciubotaru/received_events'
+    },
+    check_run: {
+      id: 21559698622,
+      app: {
+        id: 8329,
+        name: 'Vercel',
+        slug: 'vercel',
+        owner: {
+          id: 14985020,
+          url: 'https://api.github.com/users/vercel',
+          type: 'Organization',
+          login: 'vercel',
+          node_id: 'MDEyOk9yZ2FuaXphdGlvbjE0OTg1MDIw',
+          html_url: 'https://github.com/vercel',
+          gists_url: 'https://api.github.com/users/vercel/gists{/gist_id}',
+          repos_url: 'https://api.github.com/users/vercel/repos',
+          avatar_url: 'https://avatars.githubusercontent.com/u/14985020?v=4',
+          events_url: 'https://api.github.com/users/vercel/events{/privacy}',
+          site_admin: false,
+          gravatar_id: '',
+          starred_url: 'https://api.github.com/users/vercel/starred{/owner}{/repo}',
+          followers_url: 'https://api.github.com/users/vercel/followers',
+          following_url: 'https://api.github.com/users/vercel/following{/other_user}',
+          organizations_url: 'https://api.github.com/users/vercel/orgs',
+          subscriptions_url: 'https://api.github.com/users/vercel/subscriptions',
+          received_events_url: 'https://api.github.com/users/vercel/received_events'
+        },
+        events: [
+          'branch_protection_rule',
+          'check_run',
+          'deployment',
+          'membership',
+          'pull_request',
+          'pull_request_review',
+          'push',
+          'repository',
+          'status',
+          'team'
+        ],
+        node_id: 'MDM6QXBwODMyOQ==',
+        html_url: 'https://github.com/apps/vercel',
+        created_at: '2018-01-19T21:51:06Z',
+        updated_at: '2024-01-23T20:58:47Z',
+        description:
+          'Vercel for GitHub automatically deploys your PRs to Vercel.\r\nPreview every PR live, without any configuration required.\r\n\r\nFor more information, see our [documentation](https://vercel.com/docs/github?utm_source=github&utm_medium=marketplace&utm_campaign=vercel-app).\r\n\r\n![](https://assets.vercel.com/image/upload/v1597943727/front/github/github-comment-monorepo.png)',
+        permissions: {
+          checks: 'write',
+          emails: 'read',
+          issues: 'write',
+          members: 'read',
+          contents: 'write',
+          metadata: 'read',
+          statuses: 'write',
+          deployments: 'write',
+          pull_requests: 'write',
+          administration: 'write',
+          repository_hooks: 'write'
+        },
+        external_url: 'https://vercel.com/github'
+      },
+      url: 'https://api.github.com/repos/holdex/autoinvoice/check-runs/21559698622',
+      name: 'Vercel Preview Comments',
+      output: {
+        text: null,
+        title: '✅ No unresolved feedback',
+        summary:
+          '💬 **0 unresolved**, 0 resolved. [Go to feedback](https://vercel.live/open-feedback/autoinvoice-git-feat-check-runs-holdex-accelerator.vercel.app?via=pr-comment-feedback-link)',
+        annotations_url:
+          'https://api.github.com/repos/holdex/autoinvoice/check-runs/21559698622/annotations',
+        annotations_count: 0
+      },
+      status: 'completed',
+      node_id: 'CR_kwDOJ95vdM8AAAAFBQ7kvg',
+      head_sha: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+      html_url: 'https://github.com/holdex/autoinvoice/runs/21559698622',
+      conclusion: 'success',
+      started_at: '2024-02-14T10:19:41Z',
+      check_suite: {
+        id: 20743203090,
+
+        app: {
+          id: 8329,
+          name: 'Vercel',
+          slug: 'vercel',
+          owner: {
+            id: 14985020,
+            url: 'https://api.github.com/users/vercel',
+            type: 'Organization',
+            login: 'vercel',
+            node_id: 'MDEyOk9yZ2FuaXphdGlvbjE0OTg1MDIw',
+            html_url: 'https://github.com/vercel',
+            gists_url: 'https://api.github.com/users/vercel/gists{/gist_id}',
+            repos_url: 'https://api.github.com/users/vercel/repos',
+            avatar_url: 'https://avatars.githubusercontent.com/u/14985020?v=4',
+            events_url: 'https://api.github.com/users/vercel/events{/privacy}',
+            site_admin: false,
+            gravatar_id: '',
+            starred_url: 'https://api.github.com/users/vercel/starred{/owner}{/repo}',
+            followers_url: 'https://api.github.com/users/vercel/followers',
+            following_url: 'https://api.github.com/users/vercel/following{/other_user}',
+            organizations_url: 'https://api.github.com/users/vercel/orgs',
+            subscriptions_url: 'https://api.github.com/users/vercel/subscriptions',
+            received_events_url: 'https://api.github.com/users/vercel/received_events'
+          },
+          events: [
+            'branch_protection_rule',
+            'check_run',
+            'deployment',
+            'membership',
+            'pull_request',
+            'pull_request_review',
+            'push',
+            'repository',
+            'status',
+            'team'
+          ],
+          node_id: 'MDM6QXBwODMyOQ==',
+          html_url: 'https://github.com/apps/vercel',
+          created_at: '2018-01-19T21:51:06Z',
+          updated_at: '2024-01-23T20:58:47Z',
+          description:
+            'Vercel for GitHub automatically deploys your PRs to Vercel.\r\nPreview every PR live, without any configuration required.\r\n\r\nFor more information, see our [documentation](https://vercel.com/docs/github?utm_source=github&utm_medium=marketplace&utm_campaign=vercel-app).\r\n\r\n![](https://assets.vercel.com/image/upload/v1597943727/front/github/github-comment-monorepo.png)',
+          permissions: {
+            checks: 'write',
+            emails: 'read',
+            issues: 'write',
+            members: 'read',
+            contents: 'write',
+            metadata: 'read',
+            statuses: 'write',
+            deployments: 'write',
+            pull_requests: 'write',
+            administration: 'write',
+            repository_hooks: 'write'
+          },
+          external_url: 'https://vercel.com/github'
+        },
+        url: 'https://api.github.com/repos/holdex/autoinvoice/check-suites/20743203090',
+        after: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+        before: 'f973fb9f8ac9cf1b58f5446d4779380b875840e3',
+        status: 'completed',
+        node_id: 'CS_kwDOJ95vdM8AAAAE1GQpEg',
+        head_sha: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+        conclusion: 'success',
+        created_at: '2024-02-14T10:19:39Z',
+        updated_at: '2024-02-14T10:19:42Z',
+        head_branch: 'feat/check-runs',
+        pull_requests: [
+          {
+            id: 1725339158,
+
+            url: 'https://api.github.com/repos/holdex/autoinvoice/pulls/203',
+
+            base: {
+              ref: 'main',
+
+              sha: '3e200c70ef491a43ad22fe726528205fa3563baa',
+
+              repo: {
+                id: 668888948,
+
+                url: 'https://api.github.com/repos/holdex/autoinvoice',
+
+                name: 'autoinvoice'
+              }
+            },
+
+            head: {
+              ref: 'feat/check-runs',
+
+              sha: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+
+              repo: {
+                id: 668888948,
+
+                url: 'https://api.github.com/repos/holdex/autoinvoice',
+
+                name: 'autoinvoice'
+              }
+            },
+
+            number: 203
+          }
+        ]
+      },
+      details_url: 'https://vercel.com/github',
+      external_id: '',
+      completed_at: '2024-02-14T10:19:41Z',
+      pull_requests: [
+        {
+          id: 1725339158,
+          url: 'https://api.github.com/repos/holdex/autoinvoice/pulls/203',
+          base: {
+            ref: 'main',
+            sha: '3e200c70ef491a43ad22fe726528205fa3563baa',
+            repo: {
+              id: 668888948,
+              url: 'https://api.github.com/repos/holdex/autoinvoice',
+              name: 'autoinvoice'
+            }
+          },
+          head: {
+            ref: 'feat/check-runs',
+            sha: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+            repo: {
+              id: 668888948,
+              url: 'https://api.github.com/repos/holdex/autoinvoice',
+              name: 'autoinvoice'
+            }
+          },
+          number: 203
+        }
+      ]
+    },
+    repository: {
+      id: 668888948,
+      url: 'https://api.github.com/repos/holdex/autoinvoice',
+      fork: false,
+      name: 'autoinvoice',
+      size: 705,
+      forks: 0,
+      owner: {
+        id: 35802110,
+        url: 'https://api.github.com/users/holdex',
+        type: 'Organization',
+        login: 'holdex',
+        node_id: 'MDEyOk9yZ2FuaXphdGlvbjM1ODAyMTEw',
+        html_url: 'https://github.com/holdex',
+        gists_url: 'https://api.github.com/users/holdex/gists{/gist_id}',
+        repos_url: 'https://api.github.com/users/holdex/repos',
+        avatar_url: 'https://avatars.githubusercontent.com/u/35802110?v=4',
+        events_url: 'https://api.github.com/users/holdex/events{/privacy}',
+        site_admin: false,
+        gravatar_id: '',
+        starred_url: 'https://api.github.com/users/holdex/starred{/owner}{/repo}',
+        followers_url: 'https://api.github.com/users/holdex/followers',
+        following_url: 'https://api.github.com/users/holdex/following{/other_user}',
+        organizations_url: 'https://api.github.com/users/holdex/orgs',
+        subscriptions_url: 'https://api.github.com/users/holdex/subscriptions',
+        received_events_url: 'https://api.github.com/users/holdex/received_events'
+      },
+      topics: [],
+      git_url: 'git://github.com/holdex/autoinvoice.git',
+      license: null,
+      node_id: 'R_kgDOJ95vdA',
+      private: true,
+      ssh_url: 'git@github.com:holdex/autoinvoice.git',
+      svn_url: 'https://github.com/holdex/autoinvoice',
+      archived: false,
+      disabled: false,
+      has_wiki: false,
+      homepage: 'https://autoinvoice-theta.vercel.app',
+      html_url: 'https://github.com/holdex/autoinvoice',
+      keys_url: 'https://api.github.com/repos/holdex/autoinvoice/keys{/key_id}',
+      language: 'TypeScript',
+      tags_url: 'https://api.github.com/repos/holdex/autoinvoice/tags',
+      watchers: 0,
+      blobs_url: 'https://api.github.com/repos/holdex/autoinvoice/git/blobs{/sha}',
+      clone_url: 'https://github.com/holdex/autoinvoice.git',
+      forks_url: 'https://api.github.com/repos/holdex/autoinvoice/forks',
+      full_name: 'holdex/autoinvoice',
+      has_pages: false,
+      hooks_url: 'https://api.github.com/repos/holdex/autoinvoice/hooks',
+      pulls_url: 'https://api.github.com/repos/holdex/autoinvoice/pulls{/number}',
+      pushed_at: '2024-02-14T10:19:41Z',
+      teams_url: 'https://api.github.com/repos/holdex/autoinvoice/teams',
+      trees_url: 'https://api.github.com/repos/holdex/autoinvoice/git/trees{/sha}',
+      created_at: '2023-07-20T20:46:54Z',
+      events_url: 'https://api.github.com/repos/holdex/autoinvoice/events',
+      has_issues: true,
+      issues_url: 'https://api.github.com/repos/holdex/autoinvoice/issues{/number}',
+      labels_url: 'https://api.github.com/repos/holdex/autoinvoice/labels{/name}',
+      merges_url: 'https://api.github.com/repos/holdex/autoinvoice/merges',
+      mirror_url: null,
+      updated_at: '2023-08-31T09:39:01Z',
+      visibility: 'private',
+      archive_url: 'https://api.github.com/repos/holdex/autoinvoice/{archive_format}{/ref}',
+      commits_url: 'https://api.github.com/repos/holdex/autoinvoice/commits{/sha}',
+      compare_url: 'https://api.github.com/repos/holdex/autoinvoice/compare/{base}...{head}',
+      description: null,
+      forks_count: 0,
+      is_template: false,
+      open_issues: 15,
+      branches_url: 'https://api.github.com/repos/holdex/autoinvoice/branches{/branch}',
+      comments_url: 'https://api.github.com/repos/holdex/autoinvoice/comments{/number}',
+      contents_url: 'https://api.github.com/repos/holdex/autoinvoice/contents/{+path}',
+      git_refs_url: 'https://api.github.com/repos/holdex/autoinvoice/git/refs{/sha}',
+      git_tags_url: 'https://api.github.com/repos/holdex/autoinvoice/git/tags{/sha}',
+      has_projects: true,
+      releases_url: 'https://api.github.com/repos/holdex/autoinvoice/releases{/id}',
+      statuses_url: 'https://api.github.com/repos/holdex/autoinvoice/statuses/{sha}',
+      allow_forking: false,
+      assignees_url: 'https://api.github.com/repos/holdex/autoinvoice/assignees{/user}',
+      downloads_url: 'https://api.github.com/repos/holdex/autoinvoice/downloads',
+      has_downloads: true,
+      languages_url: 'https://api.github.com/repos/holdex/autoinvoice/languages',
+      default_branch: 'main',
+      milestones_url: 'https://api.github.com/repos/holdex/autoinvoice/milestones{/number}',
+      stargazers_url: 'https://api.github.com/repos/holdex/autoinvoice/stargazers',
+      watchers_count: 0,
+      deployments_url: 'https://api.github.com/repos/holdex/autoinvoice/deployments',
+      git_commits_url: 'https://api.github.com/repos/holdex/autoinvoice/git/commits{/sha}',
+      has_discussions: false,
+      subscribers_url: 'https://api.github.com/repos/holdex/autoinvoice/subscribers',
+      contributors_url: 'https://api.github.com/repos/holdex/autoinvoice/contributors',
+      issue_events_url: 'https://api.github.com/repos/holdex/autoinvoice/issues/events{/number}',
+      stargazers_count: 0,
+      subscription_url: 'https://api.github.com/repos/holdex/autoinvoice/subscription',
+      collaborators_url:
+        'https://api.github.com/repos/holdex/autoinvoice/collaborators{/collaborator}',
+      custom_properties: {},
+      issue_comment_url: 'https://api.github.com/repos/holdex/autoinvoice/issues/comments{/number}',
+      notifications_url:
+        'https://api.github.com/repos/holdex/autoinvoice/notifications{?since,all,participating}',
+      open_issues_count: 15,
+      web_commit_signoff_required: false
+    },
+    organization: {
+      id: 35802110,
+      url: 'https://api.github.com/orgs/holdex',
+      login: 'holdex',
+      node_id: 'MDEyOk9yZ2FuaXphdGlvbjM1ODAyMTEw',
+      hooks_url: 'https://api.github.com/orgs/holdex/hooks',
+      repos_url: 'https://api.github.com/orgs/holdex/repos',
+      avatar_url: 'https://avatars.githubusercontent.com/u/35802110?v=4',
+      events_url: 'https://api.github.com/orgs/holdex/events',
+      issues_url: 'https://api.github.com/orgs/holdex/issues',
+      description: '',
+      members_url: 'https://api.github.com/orgs/holdex/members{/member}',
+      public_members_url: 'https://api.github.com/orgs/holdex/public_members{/member}'
+    }
+  }
 };
 
-export const checkSuiteCreated: EventSpecificationExample = {
-  id: 'check_suite.created',
-  name: 'Check suite created',
-  payload: {}
+export const checkSuiteCompleted: EventSpecificationExample = {
+  id: 'check_suite.completed',
+  name: 'Check suite completed',
+  payload: {
+    action: 'completed',
+    sender: {
+      id: 8217518,
+      url: 'https://api.github.com/users/georgeciubotaru',
+      type: 'User',
+      login: 'georgeciubotaru',
+      node_id: 'MDQ6VXNlcjgyMTc1MTg=',
+      html_url: 'https://github.com/georgeciubotaru',
+      gists_url: 'https://api.github.com/users/georgeciubotaru/gists{/gist_id}',
+      repos_url: 'https://api.github.com/users/georgeciubotaru/repos',
+      avatar_url: 'https://avatars.githubusercontent.com/u/8217518?v=4',
+      events_url: 'https://api.github.com/users/georgeciubotaru/events{/privacy}',
+      site_admin: false,
+      gravatar_id: '',
+      starred_url: 'https://api.github.com/users/georgeciubotaru/starred{/owner}{/repo}',
+      followers_url: 'https://api.github.com/users/georgeciubotaru/followers',
+      following_url: 'https://api.github.com/users/georgeciubotaru/following{/other_user}',
+      organizations_url: 'https://api.github.com/users/georgeciubotaru/orgs',
+      subscriptions_url: 'https://api.github.com/users/georgeciubotaru/subscriptions',
+      received_events_url: 'https://api.github.com/users/georgeciubotaru/received_events'
+    },
+    repository: {
+      id: 668888948,
+      url: 'https://api.github.com/repos/holdex/autoinvoice',
+      fork: false,
+      name: 'autoinvoice',
+      size: 705,
+      forks: 0,
+      owner: {
+        id: 35802110,
+        url: 'https://api.github.com/users/holdex',
+        type: 'Organization',
+        login: 'holdex',
+        node_id: 'MDEyOk9yZ2FuaXphdGlvbjM1ODAyMTEw',
+        html_url: 'https://github.com/holdex',
+        gists_url: 'https://api.github.com/users/holdex/gists{/gist_id}',
+        repos_url: 'https://api.github.com/users/holdex/repos',
+        avatar_url: 'https://avatars.githubusercontent.com/u/35802110?v=4',
+        events_url: 'https://api.github.com/users/holdex/events{/privacy}',
+        site_admin: false,
+        gravatar_id: '',
+        starred_url: 'https://api.github.com/users/holdex/starred{/owner}{/repo}',
+        followers_url: 'https://api.github.com/users/holdex/followers',
+        following_url: 'https://api.github.com/users/holdex/following{/other_user}',
+        organizations_url: 'https://api.github.com/users/holdex/orgs',
+        subscriptions_url: 'https://api.github.com/users/holdex/subscriptions',
+        received_events_url: 'https://api.github.com/users/holdex/received_events'
+      },
+      topics: [],
+      git_url: 'git://github.com/holdex/autoinvoice.git',
+      license: null,
+      node_id: 'R_kgDOJ95vdA',
+      private: true,
+      ssh_url: 'git@github.com:holdex/autoinvoice.git',
+      svn_url: 'https://github.com/holdex/autoinvoice',
+      archived: false,
+      disabled: false,
+      has_wiki: false,
+      homepage: 'https://autoinvoice-theta.vercel.app',
+      html_url: 'https://github.com/holdex/autoinvoice',
+      keys_url: 'https://api.github.com/repos/holdex/autoinvoice/keys{/key_id}',
+      language: 'TypeScript',
+      tags_url: 'https://api.github.com/repos/holdex/autoinvoice/tags',
+      watchers: 0,
+      blobs_url: 'https://api.github.com/repos/holdex/autoinvoice/git/blobs{/sha}',
+      clone_url: 'https://github.com/holdex/autoinvoice.git',
+      forks_url: 'https://api.github.com/repos/holdex/autoinvoice/forks',
+      full_name: 'holdex/autoinvoice',
+      has_pages: false,
+      hooks_url: 'https://api.github.com/repos/holdex/autoinvoice/hooks',
+      pulls_url: 'https://api.github.com/repos/holdex/autoinvoice/pulls{/number}',
+      pushed_at: '2024-02-14T10:19:41Z',
+      teams_url: 'https://api.github.com/repos/holdex/autoinvoice/teams',
+      trees_url: 'https://api.github.com/repos/holdex/autoinvoice/git/trees{/sha}',
+      created_at: '2023-07-20T20:46:54Z',
+      events_url: 'https://api.github.com/repos/holdex/autoinvoice/events',
+      has_issues: true,
+      issues_url: 'https://api.github.com/repos/holdex/autoinvoice/issues{/number}',
+      labels_url: 'https://api.github.com/repos/holdex/autoinvoice/labels{/name}',
+      merges_url: 'https://api.github.com/repos/holdex/autoinvoice/merges',
+      mirror_url: null,
+      updated_at: '2023-08-31T09:39:01Z',
+      visibility: 'private',
+      archive_url: 'https://api.github.com/repos/holdex/autoinvoice/{archive_format}{/ref}',
+      commits_url: 'https://api.github.com/repos/holdex/autoinvoice/commits{/sha}',
+      compare_url: 'https://api.github.com/repos/holdex/autoinvoice/compare/{base}...{head}',
+      description: null,
+      forks_count: 0,
+      is_template: false,
+      open_issues: 15,
+      branches_url: 'https://api.github.com/repos/holdex/autoinvoice/branches{/branch}',
+      comments_url: 'https://api.github.com/repos/holdex/autoinvoice/comments{/number}',
+      contents_url: 'https://api.github.com/repos/holdex/autoinvoice/contents/{+path}',
+      git_refs_url: 'https://api.github.com/repos/holdex/autoinvoice/git/refs{/sha}',
+      git_tags_url: 'https://api.github.com/repos/holdex/autoinvoice/git/tags{/sha}',
+      has_projects: true,
+      releases_url: 'https://api.github.com/repos/holdex/autoinvoice/releases{/id}',
+      statuses_url: 'https://api.github.com/repos/holdex/autoinvoice/statuses/{sha}',
+      allow_forking: false,
+      assignees_url: 'https://api.github.com/repos/holdex/autoinvoice/assignees{/user}',
+      downloads_url: 'https://api.github.com/repos/holdex/autoinvoice/downloads',
+      has_downloads: true,
+      languages_url: 'https://api.github.com/repos/holdex/autoinvoice/languages',
+      default_branch: 'main',
+      milestones_url: 'https://api.github.com/repos/holdex/autoinvoice/milestones{/number}',
+      stargazers_url: 'https://api.github.com/repos/holdex/autoinvoice/stargazers',
+      watchers_count: 0,
+      deployments_url: 'https://api.github.com/repos/holdex/autoinvoice/deployments',
+      git_commits_url: 'https://api.github.com/repos/holdex/autoinvoice/git/commits{/sha}',
+      has_discussions: false,
+      subscribers_url: 'https://api.github.com/repos/holdex/autoinvoice/subscribers',
+      contributors_url: 'https://api.github.com/repos/holdex/autoinvoice/contributors',
+      issue_events_url: 'https://api.github.com/repos/holdex/autoinvoice/issues/events{/number}',
+      stargazers_count: 0,
+      subscription_url: 'https://api.github.com/repos/holdex/autoinvoice/subscription',
+      collaborators_url:
+        'https://api.github.com/repos/holdex/autoinvoice/collaborators{/collaborator}',
+      custom_properties: {},
+      issue_comment_url: 'https://api.github.com/repos/holdex/autoinvoice/issues/comments{/number}',
+      notifications_url:
+        'https://api.github.com/repos/holdex/autoinvoice/notifications{?since,all,participating}',
+      open_issues_count: 15,
+      web_commit_signoff_required: false
+    },
+    check_suite: {
+      id: 20743203090,
+      app: {
+        id: 8329,
+        name: 'Vercel',
+        slug: 'vercel',
+        owner: {
+          id: 14985020,
+          url: 'https://api.github.com/users/vercel',
+          type: 'Organization',
+          login: 'vercel',
+          node_id: 'MDEyOk9yZ2FuaXphdGlvbjE0OTg1MDIw',
+          html_url: 'https://github.com/vercel',
+          gists_url: 'https://api.github.com/users/vercel/gists{/gist_id}',
+          repos_url: 'https://api.github.com/users/vercel/repos',
+          avatar_url: 'https://avatars.githubusercontent.com/u/14985020?v=4',
+          events_url: 'https://api.github.com/users/vercel/events{/privacy}',
+          site_admin: false,
+          gravatar_id: '',
+          starred_url: 'https://api.github.com/users/vercel/starred{/owner}{/repo}',
+          followers_url: 'https://api.github.com/users/vercel/followers',
+          following_url: 'https://api.github.com/users/vercel/following{/other_user}',
+          organizations_url: 'https://api.github.com/users/vercel/orgs',
+          subscriptions_url: 'https://api.github.com/users/vercel/subscriptions',
+          received_events_url: 'https://api.github.com/users/vercel/received_events'
+        },
+        events: [
+          'branch_protection_rule',
+          'check_run',
+          'deployment',
+          'membership',
+          'pull_request',
+          'pull_request_review',
+          'push',
+          'repository',
+          'status',
+          'team'
+        ],
+        node_id: 'MDM6QXBwODMyOQ==',
+        html_url: 'https://github.com/apps/vercel',
+        created_at: '2018-01-19T21:51:06Z',
+        updated_at: '2024-01-23T20:58:47Z',
+        description:
+          'Vercel for GitHub automatically deploys your PRs to Vercel.\r\nPreview every PR live, without any configuration required.\r\n\r\nFor more information, see our [documentation](https://vercel.com/docs/github?utm_source=github&utm_medium=marketplace&utm_campaign=vercel-app).\r\n\r\n![](https://assets.vercel.com/image/upload/v1597943727/front/github/github-comment-monorepo.png)',
+        permissions: {
+          checks: 'write',
+          emails: 'read',
+          issues: 'write',
+          members: 'read',
+          contents: 'write',
+          metadata: 'read',
+          statuses: 'write',
+          deployments: 'write',
+          pull_requests: 'write',
+          administration: 'write',
+          repository_hooks: 'write'
+        },
+        external_url: 'https://vercel.com/github'
+      },
+      url: 'https://api.github.com/repos/holdex/autoinvoice/check-suites/20743203090',
+      after: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+      before: 'f973fb9f8ac9cf1b58f5446d4779380b875840e3',
+      status: 'completed',
+      node_id: 'CS_kwDOJ95vdM8AAAAE1GQpEg',
+      head_sha: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+      conclusion: 'success',
+      created_at: '2024-02-14T10:19:39Z',
+      updated_at: '2024-02-14T10:19:42Z',
+      head_branch: 'feat/check-runs',
+      head_commit: {
+        id: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+        author: {
+          name: 'George Ciubotaru',
+          email: 'geeku96@gmail.com'
+        },
+        message: 'feat: add check suite job',
+        tree_id: '403e36107f5b348ec98b5be943ee0cce60d7c561',
+        committer: {
+          name: 'George Ciubotaru',
+          email: 'geeku96@gmail.com'
+        },
+        timestamp: '2024-02-14T10:19:26Z'
+      },
+      pull_requests: [
+        {
+          id: 1725339158,
+          url: 'https://api.github.com/repos/holdex/autoinvoice/pulls/203',
+          base: {
+            ref: 'main',
+            sha: '3e200c70ef491a43ad22fe726528205fa3563baa',
+            repo: {
+              id: 668888948,
+              url: 'https://api.github.com/repos/holdex/autoinvoice',
+              name: 'autoinvoice'
+            }
+          },
+          head: {
+            ref: 'feat/check-runs',
+            sha: 'ff1339cc2dc53acd641885fcd14e00e9404aaa8a',
+            repo: {
+              id: 668888948,
+              url: 'https://api.github.com/repos/holdex/autoinvoice',
+              name: 'autoinvoice'
+            }
+          },
+          number: 203
+        }
+      ],
+      rerequestable: true,
+      check_runs_url:
+        'https://api.github.com/repos/holdex/autoinvoice/check-suites/20743203090/check-runs',
+      runs_rerequestable: true,
+      latest_check_runs_count: 1
+    },
+    organization: {
+      id: 35802110,
+      url: 'https://api.github.com/orgs/holdex',
+      login: 'holdex',
+      node_id: 'MDEyOk9yZ2FuaXphdGlvbjM1ODAyMTEw',
+      hooks_url: 'https://api.github.com/orgs/holdex/hooks',
+      repos_url: 'https://api.github.com/orgs/holdex/repos',
+      avatar_url: 'https://avatars.githubusercontent.com/u/35802110?v=4',
+      events_url: 'https://api.github.com/orgs/holdex/events',
+      issues_url: 'https://api.github.com/orgs/holdex/issues',
+      description: '',
+      members_url: 'https://api.github.com/orgs/holdex/members{/member}',
+      public_members_url: 'https://api.github.com/orgs/holdex/public_members{/member}'
+    }
+  }
 };

@@ -2,10 +2,11 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 
 import type { PullRequestEvent } from '$lib/server/github';
+import app from '$lib/server/github';
 import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { getContributorInfo, getPrInfo } from './util';
+import { getContributorInfo, getPrInfo, submissionCheckName } from './util';
 
 import { EventType } from '$lib/@types';
 
@@ -56,6 +57,22 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       await items.update(
         await getPrInfo(pull_request, repository, organization, sender, contributor),
         { onCreateIfNotExist: true }
+      );
+      break;
+    }
+    case 'review_requested': {
+      await io.github.runTask(
+        'create-check-run',
+        async () => {
+          const octokit = await app.getInstallationOctokit(40473624);
+          await octokit.request('POST /repos/{owner}/{repo}/check-runs', {
+            owner: organization?.login || 'holdex',
+            repo: repository.name,
+            head_sha: pull_request.head.sha,
+            name: submissionCheckName
+          });
+        },
+        { name: 'Create check run' }
       );
       break;
     }
