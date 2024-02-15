@@ -188,7 +188,7 @@
         class="w-full min-w-full ml-auto {submissionApproved && !loading
           ? '!text-neg'
           : ''} sm:min-w-fit"
-        disabled={loading || !data.merged || (isAdmin && !data.submission)} />
+        disabled={loading || data.merged || (isAdmin && !data.submission)} />
     {/if}
   </form>
 </li>

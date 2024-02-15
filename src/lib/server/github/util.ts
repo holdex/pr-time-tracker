@@ -1,18 +1,14 @@
 import { Autoinvoicing, events } from '@holdex/autoinvoicing';
 
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
+import type { PullRequest, User, SimplePullRequest, Repository, Organization } from './';
 
 import config from '$lib/server/config';
-import type {
-  PullRequest,
-  User,
-  SimplePullRequest,
-  Repository,
-  Organization
-} from '$lib/server/github';
 import { ItemType } from '$lib/constants';
 import { items, submissions } from '$lib/server/mongo/collections';
-import app from '$lib/server/github';
+
+import app from './';
+import { client } from '../trigger-dev';
 
 const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'> => ({
   id: user.id,
@@ -23,6 +19,7 @@ const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'
 });
 
 const submissionCheckName = 'Cost Submission';
+const submissionCommentHeader = 'pr_submission';
 
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
@@ -91,6 +88,39 @@ const createCheckRun = async (
   });
 };
 
+const reRequestCheckRun = async (
+  org: { name: string; installationId: number },
+  repoName: string,
+  senderId: number,
+  prNumber: number
+) => {
+  const octokit = await app.getInstallationOctokit(org.installationId);
+
+  const prInfo = await octokit.rest.pulls.get({
+    owner: org.name,
+    repo: repoName,
+    pull_number: prNumber
+  });
+  const { data } = await octokit.rest.checks.listForRef({
+    owner: org.name,
+    repo: repoName,
+    ref: prInfo.data.head.sha,
+    check_name: submissionCheckName
+  });
+
+  return client.sendEvent({
+    name: `${org.name}_pr_submission.created`,
+    payload: {
+      organization: org.name,
+      repo: repoName,
+      prId: prInfo.data.id,
+      prNumber: prNumber,
+      senderId: senderId,
+      checkRunId: data.check_runs[data.total_count - 1].id
+    }
+  });
+};
+
 const github = new Autoinvoicing({
   id: 'github',
   token: config.github.token
@@ -101,8 +131,10 @@ export {
   getPrInfo,
   github,
   events,
+  reRequestCheckRun,
   getSubmissionStatus,
   submissionCheckName,
+  submissionCommentHeader,
   createCheckRun,
   getInstallationId
 };

@@ -1,14 +1,16 @@
 // import all your job files here
-import type { IOWithIntegrations } from '@trigger.dev/sdk';
+import { type IOWithIntegrations, eventTrigger } from '@trigger.dev/sdk';
+import zod from 'zod';
+
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 
 import { isDev } from '$lib/config';
 
-import { github, events } from './util';
+import { github, events } from '../../github/util';
 import { client } from '../';
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
-import { createJob as createCheckRunJob } from './check-run';
+import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
 
 [
   { id: 'clearpool', name: 'clearpool-finance' },
@@ -26,6 +28,26 @@ import { createJob as createCheckRunJob } from './check-run';
     integrations: { github },
     run: async (payload, io, ctx) =>
       createPrJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
+  });
+
+  client.defineJob({
+    id: `custom-event-streaming_${org.id}${isDev ? '_dev' : ''}`,
+    name: 'Streaming custom events for Github using app',
+    version: '0.0.1',
+    trigger: eventTrigger({
+      name: `${org.name}_pr_submission.created`,
+      schema: zod.object({
+        organization: zod.string(),
+        repo: zod.string(),
+        prId: zod.number(),
+        prNumber: zod.number(),
+        checkRunId: zod.number(),
+        senderId: zod.number()
+      })
+    }),
+    integrations: { github },
+    run: async (payload, io, ctx) =>
+      createCheckEventJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
   });
 
   client.defineJob({

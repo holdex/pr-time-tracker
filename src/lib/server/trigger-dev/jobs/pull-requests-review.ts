@@ -5,7 +5,7 @@ import type { PullRequestReviewEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
 import { insertEvent } from '$lib/server/gcloud';
 
-import { getContributorInfo, getPrInfo } from './util';
+import { getContributorInfo, getPrInfo } from '../../github/util';
 
 import { EventType } from '$lib/@types';
 

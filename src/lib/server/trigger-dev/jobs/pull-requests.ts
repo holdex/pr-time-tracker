@@ -5,7 +5,12 @@ import type { PullRequestEvent } from '$lib/server/github';
 import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { createCheckRun, getContributorInfo, getInstallationId, getPrInfo } from './util';
+import {
+  createCheckRun,
+  getContributorInfo,
+  getInstallationId,
+  getPrInfo
+} from '../../github/util';
 
 import { EventType } from '$lib/@types';
 

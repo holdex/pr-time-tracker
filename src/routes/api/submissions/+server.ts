@@ -7,9 +7,10 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { SUCCESS_OK } from '$lib/constants';
 import { jsonError, transform } from '$lib/utils';
 import { items, submissions } from '$lib/server/mongo/collections';
-import { verifyAuth, dispatchWorkflow } from '$lib/server/github';
+import { verifyAuth } from '$lib/server/github';
 import { cookieNames } from '$lib/server/cookie';
 import { insertEvent } from '$lib/server/gcloud';
+import { getInstallationId, reRequestCheckRun } from '$lib/server/github/util';
 
 import { UserRole, type SubmissionSchema, type ContributorSchema, EventType } from '$lib/@types';
 
@@ -54,6 +55,16 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         created_at: Math.round(new Date().getTime() / 1000).toFixed(0),
         updated_at: Math.round(new Date().getTime() / 1000).toFixed(0)
       });
+
+      const installationInfo = await getInstallationId(pr.org);
+
+      // get last commit
+      await reRequestCheckRun(
+        { name: pr.org, installationId: installationInfo.data.id },
+        pr.repo,
+        body!.owner_id,
+        pr.number as number
+      );
     }
     return json({
       data: await submissions.create(body!)
@@ -110,8 +121,15 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
       };
       await insertEvent(gcEvent);
 
-      if (body!.approval) {
-        await dispatchWorkflow(pr.org, pr.repo, pr.number as number, body!.hours?.toString());
+      if (body!.approval === 'pending') {
+        const installationInfo = await getInstallationId(pr.org);
+        // get last commit
+        await reRequestCheckRun(
+          { name: pr.org, installationId: installationInfo.data.id },
+          pr.repo,
+          body!.owner_id,
+          pr.number as number
+        );
       }
     }
 
