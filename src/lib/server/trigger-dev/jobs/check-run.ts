@@ -19,9 +19,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     case 'rerequested': {
       if (check_run.name === submissionCheckName) {
         const submission = await getSubmissionStatus(sender.id, check_run.pull_requests[0].number);
-
         const octokit = await app.getInstallationOctokit(org.installationId);
-        await octokit.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', {
+        await octokit.rest.checks.update({
           owner: org.name,
           repo: repository.name,
           check_run_id: check_run.id,
@@ -31,12 +30,29 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           output: {
             title: submission
               ? `✅ cost submitted: ${submission.hours} hours.`
-              : '❌ Cost submission missing',
+              : '❌ cost submission missing',
             summary: submission
-              ? `Pull request cost submitted`
-              : `Submit cost. [Go to](https://invoice.holdex.io)`
+              ? `Pull request cost submitted. No actions required.`
+              : `Submit cost by following the [link](https://invoice.holdex.io).`
           }
         });
+
+        // await octokit.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', {
+        //   owner: org.name,
+        //   repo: repository.name,
+        //   check_run_id: check_run.id,
+        //   status: 'completed',
+        //   conclusion: submission ? 'success' : 'failure',
+        //   completed_at: new Date().toISOString(),
+        //   output: {
+        //     title: submission
+        //       ? `✅ cost submitted: ${submission.hours} hours.`
+        //       : '❌ Cost submission missing',
+        //     summary: submission
+        //       ? `Pull request cost submitted`
+        //       : `Submit cost. [Go to](https://invoice.holdex.io)`
+        //   }
+        // });
       }
       break;
     }

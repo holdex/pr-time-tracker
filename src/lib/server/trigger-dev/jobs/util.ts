@@ -12,6 +12,7 @@ import type {
 } from '$lib/server/github';
 import { ItemType } from '$lib/constants';
 import { items, submissions } from '$lib/server/mongo/collections';
+import app from '$lib/server/github';
 
 const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'> => ({
   id: user.id,
@@ -69,9 +70,38 @@ const getSubmissionStatus = async (
   return null;
 };
 
+const createCheckRun = async (
+  org: { name: string; installationId: number },
+  repoName: string,
+  headSha: string
+) => {
+  const octokit = await app.getInstallationOctokit(org.installationId);
+
+  await octokit.rest.checks.create({
+    owner: org.name,
+    repo: repoName,
+    head_sha: headSha,
+    name: submissionCheckName
+  });
+  // await octokit.request('POST /repos/{owner}/{repo}/check-runs', {
+  //   owner: org.name,
+  //   repo: repository.name,
+  //   head_sha: pull_request.head.sha,
+  //   name: submissionCheckName
+  // });
+};
+
 const github = new Autoinvoicing({
   id: 'github',
   token: config.github.token
 });
 
-export { getContributorInfo, getPrInfo, github, events, getSubmissionStatus, submissionCheckName };
+export {
+  getContributorInfo,
+  getPrInfo,
+  github,
+  events,
+  getSubmissionStatus,
+  submissionCheckName,
+  createCheckRun
+};

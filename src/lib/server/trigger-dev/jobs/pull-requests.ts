@@ -2,11 +2,10 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 
 import type { PullRequestEvent } from '$lib/server/github';
-import app from '$lib/server/github';
 import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { getContributorInfo, getPrInfo, submissionCheckName } from './util';
+import { createCheckRun, getContributorInfo, getPrInfo } from './util';
 
 import { EventType } from '$lib/@types';
 
@@ -59,20 +58,21 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         await getPrInfo(pull_request, repository, organization, sender, contributor),
         { onCreateIfNotExist: true }
       );
+      await io.wait('wait for first call', 5);
+
+      if (action === 'synchronize' && pull_request.requested_reviewers.length > 0) {
+        await io.github.runTask(
+          'create-check-run',
+          async () => createCheckRun(org, repository.name, pull_request.head.sha),
+          { name: 'Create check run' }
+        );
+      }
       break;
     }
     case 'review_requested': {
       await io.github.runTask(
         'create-check-run',
-        async () => {
-          const octokit = await app.getInstallationOctokit(org.installationId);
-          await octokit.request('POST /repos/{owner}/{repo}/check-runs', {
-            owner: org.name,
-            repo: repository.name,
-            head_sha: pull_request.head.sha,
-            name: submissionCheckName
-          });
-        },
+        async () => createCheckRun(org, repository.name, pull_request.head.sha),
         { name: 'Create check run' }
       );
       break;
