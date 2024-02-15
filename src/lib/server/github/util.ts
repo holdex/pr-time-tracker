@@ -18,7 +18,8 @@ const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'
   avatarUrl: user.avatar_url
 });
 
-const submissionCheckName = (login: string) => `Cost Submission (${login})`;
+const submissionCheckPrefix = 'Cost Submission';
+const submissionCheckName = (login: string) => `${submissionCheckPrefix} (${login})`;
 
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
@@ -135,6 +136,7 @@ export {
   events,
   reRequestCheckRun,
   getSubmissionStatus,
+  submissionCheckPrefix,
   submissionCheckName,
   createCheckRun,
   getInstallationId

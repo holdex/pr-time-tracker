@@ -7,7 +7,7 @@ import type { CheckRunEvent } from '$lib/server/github';
 import app from '$lib/server/github';
 import { contributors } from '$lib/server/mongo/collections';
 
-import { getInstallationId, getSubmissionStatus, submissionCheckName } from '../../github/util';
+import { getInstallationId, getSubmissionStatus, submissionCheckPrefix } from '../../github/util';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -19,7 +19,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   switch (action) {
     case 'created':
     case 'rerequested': {
-      if (check_run.name.startsWith(submissionCheckName(''))) {
+      if (check_run.name.startsWith(submissionCheckPrefix)) {
         const match = check_run.name.match(/\((.*?)\)/);
         const contributor = await contributors.getOne({ login: (match as string[])[1] });
         if (contributor) {
