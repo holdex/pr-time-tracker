@@ -18,8 +18,7 @@ const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'
   avatarUrl: user.avatar_url
 });
 
-const submissionCheckName = 'Cost Submission';
-const submissionCommentHeader = 'pr_submission';
+const submissionCheckName = (login: string) => `Cost Submission (${login})`;
 
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
@@ -76,6 +75,7 @@ const getInstallationId = async (orgName: string) => {
 const createCheckRun = async (
   org: { name: string; installationId: number },
   repoName: string,
+  senderLogin: string,
   headSha: string
 ) => {
   const octokit = await app.getInstallationOctokit(org.installationId);
@@ -84,7 +84,7 @@ const createCheckRun = async (
     owner: org.name,
     repo: repoName,
     head_sha: headSha,
-    name: submissionCheckName
+    name: submissionCheckName(senderLogin)
   });
 };
 
@@ -106,7 +106,7 @@ const reRequestCheckRun = async (
     owner: org.name,
     repo: repoName,
     ref: prInfo.data.head.sha,
-    check_name: submissionCheckName
+    check_name: submissionCheckName(senderLogin)
   });
 
   return client.sendEvent({
@@ -136,7 +136,6 @@ export {
   reRequestCheckRun,
   getSubmissionStatus,
   submissionCheckName,
-  submissionCommentHeader,
   createCheckRun,
   getInstallationId
 };

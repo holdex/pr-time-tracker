@@ -5,6 +5,7 @@ import type { User, Repository, IssueComment } from '@octokit/graphql-schema';
 
 import type { CheckRunEvent } from '$lib/server/github';
 import app from '$lib/server/github';
+import { contributors } from '$lib/server/mongo/collections';
 
 import { getInstallationId, getSubmissionStatus, submissionCheckName } from '../../github/util';
 
@@ -13,24 +14,28 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   io: T,
   ctx: TriggerContext
 ) {
-  const { action, repository, sender, check_run, organization } = payload;
+  const { action, repository, check_run, organization } = payload;
 
   switch (action) {
     case 'created':
     case 'rerequested': {
-      if (check_run.name === submissionCheckName) {
-        await runJob<T>(
-          {
-            organization: organization?.login as string,
-            repo: repository.name,
-            prId: check_run.pull_requests[0].id,
-            prNumber: check_run.pull_requests[0].number,
-            checkRunId: check_run.id,
-            senderId: sender.id,
-            senderLogin: sender.login
-          },
-          io
-        );
+      if (check_run.name.startsWith(submissionCheckName(''))) {
+        const match = check_run.name.match(/\((.*?)\)/);
+        const contributor = await contributors.getOne({ login: (match as string[])[1] });
+        if (contributor) {
+          await runJob<T>(
+            {
+              organization: organization?.login as string,
+              repo: repository.name,
+              prId: check_run.pull_requests[0].id,
+              prNumber: check_run.pull_requests[0].number,
+              checkRunId: check_run.id,
+              senderId: contributor.id,
+              senderLogin: contributor.login
+            },
+            io
+          );
+        }
       }
       break;
     }

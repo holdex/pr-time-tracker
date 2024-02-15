@@ -1,4 +1,4 @@
-import type { WithId } from 'mongodb';
+import type { Filter, WithId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 
@@ -14,6 +14,10 @@ export class ContributorsCollection extends BaseCollection<ContributorSchema> {
         return payload;
       }
     });
+  }
+
+  async getManyBy(filter: Partial<Filter<ContributorSchema>>) {
+    return await this.context.find(filter).toArray();
   }
 }
 

@@ -58,10 +58,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
       await io.wait('wait for first call', 5);
 
-      await items.update(
-        await getPrInfo(pull_request, repository, organization, sender, contributor),
-        { onCreateIfNotExist: true }
-      );
+      const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
+      await items.update(prInfo, { onCreateIfNotExist: true });
 
       if (action === 'synchronize' && pull_request.requested_reviewers.length > 0) {
         await io.wait('wait for second call', 5);
@@ -76,14 +74,21 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         );
 
         await io.github.runTask(
-          'create-check-run',
-          async () =>
-            createCheckRun(
-              { name: organization?.login as string, installationId: orgDetails.id },
-              repository.name,
-              pull_request.head.sha
-            ),
-          { name: 'Create check run' }
+          'create-check-runs',
+          async () => {
+            const list = await contributors.getManyBy({ id: { $in: prInfo.contributor_ids } });
+
+            for (const item of list) {
+              /* eslint-disable no-await-in-loop */
+              await createCheckRun(
+                { name: organization?.login as string, installationId: orgDetails.id },
+                repository.name,
+                item.login,
+                pull_request.head.sha
+              );
+            }
+          },
+          { name: 'Create check runs' }
         );
       }
       break;
@@ -99,14 +104,28 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       );
 
       await io.github.runTask(
-        'create-check-run',
-        async () =>
-          createCheckRun(
-            { name: organization?.login as string, installationId: orgDetails.id },
-            repository.name,
-            pull_request.head.sha
-          ),
-        { name: 'Create check run' }
+        'create-check-runs',
+        async () => {
+          const contributor = await contributors.update(getContributorInfo(sender));
+          const prInfo = await getPrInfo(
+            pull_request,
+            repository,
+            organization,
+            sender,
+            contributor
+          );
+          const list = await contributors.getManyBy({ id: { $in: prInfo.contributor_ids || [] } });
+          for (const item of list) {
+            /* eslint-disable no-await-in-loop */
+            await createCheckRun(
+              { name: organization?.login as string, installationId: orgDetails.id },
+              repository.name,
+              item.login,
+              pull_request.head.sha
+            );
+          }
+        },
+        { name: 'Create check runs' }
       );
       break;
     }
