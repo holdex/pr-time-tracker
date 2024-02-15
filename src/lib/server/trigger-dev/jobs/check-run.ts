@@ -125,8 +125,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
         owner: payload.organization,
         repo: payload.repo,
         body: bodyWithHeader(
-          `
-          Hi @${payload.senderLogin}
+          `Hi  @${payload.senderLogin}
           Your PR ${result.data.output.title?.slice(2) as string}
           View submission [on](https://invoice.holdex.io/contributors/${payload.senderId}).
         `,
