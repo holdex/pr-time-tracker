@@ -4,7 +4,7 @@ import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { CheckRunEvent } from '$lib/server/github';
 import app from '$lib/server/github';
 
-import { getSubmissionStatus, submissionCheckName } from './util';
+import { getInstallationId, getSubmissionStatus, submissionCheckName } from './util';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -17,18 +17,23 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     case 'created':
     case 'rerequested': {
       if (check_run.name === submissionCheckName) {
+        const orgDetails = await io.github.runTask(
+          'get org installation',
+          async () => {
+            const { data } = await getInstallationId(organization?.login as string);
+            return data;
+          },
+          { name: 'Get Organization installation' }
+        );
+
         await io.github.runTask(
           'update-check-run',
-          async (octokitInternal) => {
-            const orgDetails = await octokitInternal.rest.apps.getOrgInstallation({
-              org: organization?.login as string
-            });
-
+          async () => {
             const submission = await getSubmissionStatus(
               sender.id,
               check_run.pull_requests[0].number
             );
-            const octokit = await app.getInstallationOctokit(orgDetails.data.id);
+            const octokit = await app.getInstallationOctokit(orgDetails.id);
             await octokit.rest.checks.update({
               owner: organization?.login as string,
               repo: repository.name,

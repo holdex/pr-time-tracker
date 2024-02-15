@@ -70,6 +70,12 @@ const getSubmissionStatus = async (
   return null;
 };
 
+const getInstallationId = async (orgName: string) => {
+  return app.octokit.rest.apps.getOrgInstallation({
+    org: orgName
+  });
+};
+
 const createCheckRun = async (
   org: { name: string; installationId: number },
   repoName: string,
@@ -97,5 +103,6 @@ export {
   events,
   getSubmissionStatus,
   submissionCheckName,
-  createCheckRun
+  createCheckRun,
+  getInstallationId
 };

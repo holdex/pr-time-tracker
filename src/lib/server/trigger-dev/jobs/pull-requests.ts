@@ -5,7 +5,7 @@ import type { PullRequestEvent } from '$lib/server/github';
 import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
-import { createCheckRun, getContributorInfo, getPrInfo } from './util';
+import { createCheckRun, getContributorInfo, getInstallationId, getPrInfo } from './util';
 
 import { EventType } from '$lib/@types';
 
@@ -60,36 +60,47 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
       if (action === 'synchronize' && pull_request.requested_reviewers.length > 0) {
         await io.wait('wait for second call', 5);
+
+        const orgDetails = await io.github.runTask(
+          'get org installation',
+          async () => {
+            const { data } = await getInstallationId(organization?.login as string);
+            return data;
+          },
+          { name: 'Get Organization installation' }
+        );
+
         await io.github.runTask(
           'create-check-run',
-          async (octokit) => {
-            const orgDetails = await octokit.rest.apps.getOrgInstallation({
-              org: organization?.login as string
-            });
+          async () =>
             createCheckRun(
-              { name: organization?.login as string, installationId: orgDetails.data.id },
+              { name: organization?.login as string, installationId: orgDetails.id },
               repository.name,
               pull_request.head.sha
-            );
-          },
+            ),
           { name: 'Create check run' }
         );
       }
       break;
     }
     case 'review_requested': {
+      const orgDetails = await io.github.runTask(
+        'get org installation',
+        async () => {
+          const { data } = await getInstallationId(organization?.login as string);
+          return data;
+        },
+        { name: 'Get Organization installation' }
+      );
+
       await io.github.runTask(
         'create-check-run',
-        async (octokit) => {
-          const orgDetails = await octokit.rest.apps.getOrgInstallation({
-            org: organization?.login as string
-          });
-          return createCheckRun(
-            { name: organization?.login as string, installationId: orgDetails.data.id },
+        async () =>
+          createCheckRun(
+            { name: organization?.login as string, installationId: orgDetails.id },
             repository.name,
             pull_request.head.sha
-          );
-        },
+          ),
         { name: 'Create check run' }
       );
       break;
