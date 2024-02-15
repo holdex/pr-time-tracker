@@ -42,7 +42,8 @@ import { createJob as createCheckRunJob, createEventJob as createCheckEventJob }
         prId: zod.number(),
         prNumber: zod.number(),
         checkRunId: zod.number(),
-        senderId: zod.number()
+        senderId: zod.number(),
+        senderLogin: zod.string()
       })
     }),
     integrations: { github },

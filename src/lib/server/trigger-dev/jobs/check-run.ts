@@ -6,12 +6,7 @@ import type { User, Repository, IssueComment } from '@octokit/graphql-schema';
 import type { CheckRunEvent } from '$lib/server/github';
 import app from '$lib/server/github';
 
-import {
-  getInstallationId,
-  getSubmissionStatus,
-  submissionCheckName,
-  submissionCommentHeader
-} from '../../github/util';
+import { getInstallationId, getSubmissionStatus, submissionCheckName } from '../../github/util';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -31,7 +26,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             prId: check_run.pull_requests[0].id,
             prNumber: check_run.pull_requests[0].number,
             checkRunId: check_run.id,
-            senderId: sender.id
+            senderId: sender.id,
+            senderLogin: sender.login
           },
           io
         );
@@ -47,6 +43,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 export type EventSchema = {
   organization: string;
   senderId: number;
+  senderLogin: string;
   prId: number;
   prNumber: number;
   repo: string;
@@ -58,7 +55,7 @@ export async function createEventJob<T extends IOWithIntegrations<{ github: Auto
   io: T,
   ctx: TriggerContext
 ) {
-  const { organization, repo, senderId, checkRunId, prId, prNumber } = payload;
+  const { organization, repo, senderId, checkRunId, prId, prNumber, senderLogin } = payload;
 
   await runJob<T>(
     {
@@ -67,7 +64,8 @@ export async function createEventJob<T extends IOWithIntegrations<{ github: Auto
       prId,
       prNumber,
       checkRunId,
-      senderId
+      senderId,
+      senderLogin
     },
     io
   );
@@ -119,36 +117,35 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
       const previous = await getPreviousComment<typeof octokit>(
         { owner: payload.organization, repo: payload.repo },
         payload.prNumber,
-        submissionCommentHeader,
+        payload.senderId.toString(),
         octokit
       );
+
+      const params = {
+        owner: payload.organization,
+        repo: payload.repo,
+        body: bodyWithHeader(
+          `
+          Hi @${payload.senderLogin}
+          Your PR ${result.data.output.title?.slice(2) as string}
+          View submission [on](https://invoice.holdex.io/contributors/${payload.senderId}).
+        `,
+          payload.senderId.toString()
+        )
+      };
 
       if (previous) {
         // let's check if the comment is not already available
         return octokit.rest.issues.updateComment({
-          owner: payload.organization,
-          repo: payload.repo,
-          comment_id: Number(previous.id),
-          body: bodyWithHeader(
-            `${result.data.output.title as string}
-            View submission [on](https://invoice.holdex.io/contributors/${payload.senderId}).
-            `,
-            submissionCommentHeader
-          )
+          ...params,
+          comment_id: previous?.databaseId as number
         });
       }
 
       // let's check if the comment is not already available
       return octokit.rest.issues.createComment({
-        owner: payload.organization,
-        repo: payload.repo,
-        issue_number: payload.prNumber,
-        body: bodyWithHeader(
-          `${result.data.output.title as string}
-        View submission [on](https://invoice.holdex.io/contributors/${payload.senderId}).
-        `,
-          submissionCommentHeader
-        )
+        ...params,
+        issue_number: payload.prNumber
       });
     });
   }
@@ -175,6 +172,7 @@ async function getPreviousComment<T extends Octokit>(
             comments(first: 100 after: $after) {
               nodes {
                 id
+                databaseId
                 author {
                   login
                 }

@@ -63,6 +63,7 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         { name: pr.org, installationId: installationInfo.data.id },
         pr.repo,
         body!.owner_id,
+        contributor!,
         pr.number as number
       );
     }
@@ -128,6 +129,7 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
           { name: pr.org, installationId: installationInfo.data.id },
           pr.repo,
           body!.owner_id,
+          user!.login,
           pr.number as number
         );
       }

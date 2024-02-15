@@ -92,6 +92,7 @@ const reRequestCheckRun = async (
   org: { name: string; installationId: number },
   repoName: string,
   senderId: number,
+  senderLogin: string,
   prNumber: number
 ) => {
   const octokit = await app.getInstallationOctokit(org.installationId);
@@ -114,6 +115,7 @@ const reRequestCheckRun = async (
       organization: org.name,
       repo: repoName,
       prId: prInfo.data.id,
+      senderLogin: senderLogin,
       prNumber: prNumber,
       senderId: senderId,
       checkRunId: data.check_runs[data.total_count - 1].id
