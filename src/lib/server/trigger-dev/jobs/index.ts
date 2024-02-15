@@ -11,8 +11,8 @@ import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createCheckRunJob } from './check-run';
 
 [
-  { id: 'clearpool', name: 'clearpool-finance', installationId: 41221973 },
-  { id: 'holdex', name: 'holdex', installationId: 40473624 }
+  { id: 'clearpool', name: 'clearpool-finance' },
+  { id: 'holdex', name: 'holdex' }
 ].forEach((org) => {
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
@@ -25,7 +25,7 @@ import { createJob as createCheckRunJob } from './check-run';
     }),
     integrations: { github },
     run: async (payload, io, ctx) =>
-      createPrJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx, org)
+      createPrJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
   });
 
   client.defineJob({
@@ -52,6 +52,6 @@ import { createJob as createCheckRunJob } from './check-run';
     }),
     integrations: { github },
     run: async (payload, io, ctx) =>
-      createCheckRunJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx, org)
+      createCheckRunJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
   });
 });

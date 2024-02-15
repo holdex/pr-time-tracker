@@ -12,8 +12,7 @@ import { EventType } from '$lib/@types';
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: PullRequestEvent,
   io: T,
-  ctx: TriggerContext,
-  org: { name: string; installationId: number }
+  ctx: TriggerContext
 ) {
   const { action, pull_request, repository, organization, sender } = payload;
 
@@ -58,12 +57,21 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         await getPrInfo(pull_request, repository, organization, sender, contributor),
         { onCreateIfNotExist: true }
       );
-      await io.wait('wait for first call', 5);
 
       if (action === 'synchronize' && pull_request.requested_reviewers.length > 0) {
+        await io.wait('wait for second call', 5);
         await io.github.runTask(
           'create-check-run',
-          async () => createCheckRun(org, repository.name, pull_request.head.sha),
+          async (octokit) => {
+            const orgDetails = await octokit.rest.apps.getOrgInstallation({
+              org: organization?.login as string
+            });
+            createCheckRun(
+              { name: organization?.login as string, installationId: orgDetails.data.id },
+              repository.name,
+              pull_request.head.sha
+            );
+          },
           { name: 'Create check run' }
         );
       }
@@ -72,7 +80,16 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     case 'review_requested': {
       await io.github.runTask(
         'create-check-run',
-        async () => createCheckRun(org, repository.name, pull_request.head.sha),
+        async (octokit) => {
+          const orgDetails = await octokit.rest.apps.getOrgInstallation({
+            org: organization?.login as string
+          });
+          return createCheckRun(
+            { name: organization?.login as string, installationId: orgDetails.data.id },
+            repository.name,
+            pull_request.head.sha
+          );
+        },
         { name: 'Create check run' }
       );
       break;

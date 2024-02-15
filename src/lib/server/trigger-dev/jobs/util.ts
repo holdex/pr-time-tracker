@@ -83,12 +83,6 @@ const createCheckRun = async (
     head_sha: headSha,
     name: submissionCheckName
   });
-  // await octokit.request('POST /repos/{owner}/{repo}/check-runs', {
-  //   owner: org.name,
-  //   repo: repository.name,
-  //   head_sha: pull_request.head.sha,
-  //   name: submissionCheckName
-  // });
 };
 
 const github = new Autoinvoicing({
