@@ -117,7 +117,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
       const octokit = await app.getInstallationOctokit(orgDetails.id);
 
       const previous = await getPreviousComment<typeof octokit>(
-        { org: payload.organization, repo: payload.repo },
+        { owner: payload.organization, repo: payload.repo },
         payload.prNumber,
         submissionCommentHeader,
         octokit
@@ -155,7 +155,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
 }
 
 async function getPreviousComment<T extends Octokit>(
-  repo: { org: string; repo: string },
+  repo: { owner: string; repo: string },
   prNumber: number,
   header: string,
   octokit: T
