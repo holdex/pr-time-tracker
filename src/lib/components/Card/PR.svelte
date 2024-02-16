@@ -144,7 +144,7 @@
             required
             min="0.5"
             bind:value={submissionPayload.hours}
-            disabled={loading || isAdmin} />
+            disabled={loading || isAdmin || closedAndNotMerged} />
         {/if}
       </span>
 
@@ -188,7 +188,7 @@
         class="w-full min-w-full ml-auto {submissionApproved && !loading
           ? '!text-neg'
           : ''} sm:min-w-fit"
-        disabled={loading || data.merged || (isAdmin && !data.submission)} />
+        disabled={loading || closedAndNotMerged || (isAdmin && !data.submission)} />
     {/if}
   </form>
 </li>

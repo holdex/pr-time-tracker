@@ -35,5 +35,5 @@
 
 <PRs
   bind:prs={prs[isSubmittedPrs ? 'submitted' : 'unsubmitted']}
-  query={{ submitted: isSubmittedPrs, merged: true }}
+  query={{ submitted: isSubmittedPrs }}
   PRCard={PR} />
