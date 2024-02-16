@@ -89,6 +89,31 @@ const createCheckRun = async (
   });
 };
 
+const createCheckRunIfNotExists = async (
+  org: { name: string; installationId: number },
+  repoName: string,
+  senderLogin: string,
+  headSha: string
+) => {
+  const octokit = await app.getInstallationOctokit(org.installationId);
+
+  const { data } = await octokit.rest.checks.listForRef({
+    owner: org.name,
+    repo: repoName,
+    ref: headSha,
+    check_name: submissionCheckName(senderLogin)
+  });
+
+  if (data.total_count === 0) {
+    await octokit.rest.checks.create({
+      owner: org.name,
+      repo: repoName,
+      head_sha: headSha,
+      name: submissionCheckName(senderLogin)
+    });
+  }
+};
+
 const reRequestCheckRun = async (
   org: { name: string; installationId: number },
   repoName: string,
@@ -139,5 +164,6 @@ export {
   submissionCheckPrefix,
   submissionCheckName,
   createCheckRun,
+  createCheckRunIfNotExists,
   getInstallationId
 };
