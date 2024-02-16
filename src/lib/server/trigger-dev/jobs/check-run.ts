@@ -126,7 +126,17 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
         octokit
       );
 
-      const params = {
+      if (previous) {
+        // let's check if the comment is not already available
+        return octokit.rest.issues.deleteComment({
+          owner: payload.organization,
+          repo: payload.repo,
+          comment_id: previous?.databaseId as number
+        });
+      }
+
+      // let's check if the comment is not already available
+      return octokit.rest.issues.createComment({
         owner: payload.organization,
         repo: payload.repo,
         body: bodyWithHeader(
@@ -135,20 +145,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
           View submission [on](https://invoice.holdex.io/contributors/${payload.senderId}).
         `,
           payload.senderId.toString()
-        )
-      };
-
-      if (previous) {
-        // let's check if the comment is not already available
-        return octokit.rest.issues.updateComment({
-          ...params,
-          comment_id: previous?.databaseId as number
-        });
-      }
-
-      // let's check if the comment is not already available
-      return octokit.rest.issues.createComment({
-        ...params,
+        ),
         issue_number: payload.prNumber
       });
     });
