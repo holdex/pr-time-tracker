@@ -40,9 +40,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
         });
-      }
 
-      if (review.state === 'approved') {
         // check if the check run is already available, if not create one.
         const orgDetails = await io.github.runTask(
           'get org installation',
