@@ -41,6 +41,7 @@
 </script>
 
 <main class="max-w-container m-auto py-4 animate-fadeIn md:py-8">
+  <a href="/prs>Submit costs for my PRs</a>
   <ul class="grid gap-4 md:gap-8">
     {#each contributors as { avatarUrl, login, name, id }}
       <Contributor avatar_url={avatarUrl} {name} {id} username={login} />
