@@ -50,5 +50,7 @@
     : {
         leftButtonProps: { text: 'Pending' },
         rightButtonProps: { text: 'Approved' }
-      }} />
+      }}>
+  <a class="link block mb-4 underline text-accent1-default" href="/prs">Submit costs for my PRs</a>
+</Header>
 <slot />
