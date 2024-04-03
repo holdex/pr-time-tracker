@@ -53,13 +53,19 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
         await io.github.runTask(
           'create-check-run-if-not-exists',
-          async () =>
-            createCheckRunIfNotExists(
+          async () => {
+            io.logger.info('create check run for: ', {
+              login: sender.login,
+              sha: pull_request.head.sha,
+              org: { name: organization?.login, installationId: orgDetails.id }
+            });
+            return createCheckRunIfNotExists(
               { name: organization?.login as string, installationId: orgDetails.id },
               repository.name,
               sender.login,
               pull_request.head.sha
-            ),
+            );
+          },
           { name: 'Create check run for reviewer if not exists' }
         );
       }

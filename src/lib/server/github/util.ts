@@ -146,12 +146,19 @@ const reRequestCheckRun = async (
     repo: repoName,
     pull_number: prNumber
   });
-  const { data } = await octokit.rest.checks.listForRef({
-    owner: org.name,
-    repo: repoName,
-    ref: prInfo.data.head.sha,
-    check_name: submissionCheckName(senderLogin)
-  });
+  const { data } = await octokit.rest.checks
+    .listForRef({
+      owner: org.name,
+      repo: repoName,
+      ref: prInfo.data.head.sha,
+      check_name: submissionCheckName(senderLogin)
+    })
+    .catch(() => ({
+      data: {
+        total_count: 0,
+        check_runs: []
+      }
+    }));
 
   if (data.total_count > 0) {
     return client.sendEvent({
