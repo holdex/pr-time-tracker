@@ -127,7 +127,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
             : '❌ cost submission missing',
           summary: submission
             ? `Pull request cost submitted. No actions required.`
-            : `Submit cost by following the [link](https://invoice.holdex.io).`
+            : `Submit cost by following the [link](https://pr-time-tracker.vercel.app).`
         }
       });
     },
@@ -161,7 +161,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
         body: bodyWithHeader(
           `Hi  @${payload.senderLogin}
           Your PR ${result.data.output.title?.slice(2) as string}
-          View submission [on](https://invoice.holdex.io/contributors/${payload.senderId}).
+          View submission [on](https://pr-time-tracker.vercel.app/contributors/${payload.senderId}).
         `,
           payload.senderId.toString()
         ),
