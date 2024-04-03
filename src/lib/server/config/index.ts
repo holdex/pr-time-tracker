@@ -11,7 +11,8 @@ import {
   GCLOUD_CLIENT_EMAIL,
   GCLOUD_DATASET,
   GCLOUD_TABLE,
-  GCLOUD_PRIVATE_KEY
+  GCLOUD_PRIVATE_KEY,
+  APP_INTEGRATIONS_LIST
 } from '$env/static/private';
 
 type Config = {
@@ -35,6 +36,7 @@ type Config = {
     apiKey: string;
     apiUrl: string;
   };
+  integrationsList: Array<{ id: string; name: string }>;
 };
 
 const config: Config = {
@@ -57,7 +59,8 @@ const config: Config = {
   triggerDev: {
     apiKey: TRIGGER_API_KEY,
     apiUrl: TRIGGER_API_URL
-  }
+  },
+  integrationsList: JSON.parse(APP_INTEGRATIONS_LIST)
 };
 
 export default config;
