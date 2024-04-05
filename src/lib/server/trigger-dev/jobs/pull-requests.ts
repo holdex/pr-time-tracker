@@ -6,7 +6,7 @@ import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
 import {
-  createCheckRun,
+  createCheckRunIfNotExists,
   getContributorInfo,
   getInstallationId,
   getPrInfo
@@ -77,7 +77,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           const checkRunResult = await io.github.runTask(
             'create-check-run-for-contributor',
             async () => {
-              return createCheckRun(
+              return createCheckRunIfNotExists(
                 { name: organization?.login as string, installationId: orgDetails.id },
                 repository.name,
                 c.login,
@@ -121,7 +121,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         const checkRunResult = await io.github.runTask(
           'create-check-run-for-contributor',
           async () => {
-            return createCheckRun(
+            return createCheckRunIfNotExists(
               { name: organization?.login as string, installationId: orgDetails.id },
               repository.name,
               c.login,

@@ -85,24 +85,6 @@ const getInstallationId = async (orgName: string) => {
   });
 };
 
-const createCheckRun = async (
-  org: { name: string; installationId: number },
-  repoName: string,
-  senderLogin: string,
-  headSha: string
-) => {
-  const octokit = await app.getInstallationOctokit(org.installationId);
-
-  return octokit.rest.checks
-    .create({
-      owner: org.name,
-      repo: repoName,
-      head_sha: headSha,
-      name: submissionCheckName(senderLogin)
-    })
-    .catch((error) => ({ error }));
-};
-
 const createCheckRunIfNotExists = async (
   org: { name: string; installationId: number },
   repoName: string,
@@ -195,7 +177,6 @@ export {
   getSubmissionStatus,
   submissionCheckPrefix,
   submissionCheckName,
-  createCheckRun,
   createCheckRunIfNotExists,
   getInstallationId
 };
