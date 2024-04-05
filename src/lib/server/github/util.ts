@@ -93,12 +93,14 @@ const createCheckRun = async (
 ) => {
   const octokit = await app.getInstallationOctokit(org.installationId);
 
-  await octokit.rest.checks.create({
-    owner: org.name,
-    repo: repoName,
-    head_sha: headSha,
-    name: submissionCheckName(senderLogin)
-  });
+  return octokit.rest.checks
+    .create({
+      owner: org.name,
+      repo: repoName,
+      head_sha: headSha,
+      name: submissionCheckName(senderLogin)
+    })
+    .catch((error) => ({ error }));
 };
 
 const createCheckRunIfNotExists = async (
