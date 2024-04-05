@@ -102,18 +102,28 @@ const createCheckRunIfNotExists = async (
     })
     .catch(() => ({
       data: {
-        total_count: 0
+        total_count: 0,
+        check_runs: []
       }
     }));
 
   if (data.total_count === 0) {
-    return octokit.rest.checks.create({
+    return octokit.rest.checks
+      .create({
+        owner: org.name,
+        repo: repoName,
+        head_sha: headSha,
+        name: submissionCheckName(senderLogin)
+      })
+      .catch((err) => ({ error: err }));
+  } else {
+    return octokit.rest.checks.rerequestRun({
       owner: org.name,
       repo: repoName,
-      head_sha: headSha,
-      name: submissionCheckName(senderLogin)
+      check_run_id: data.check_runs[data.total_count - 1].id
     });
   }
+
   return Promise.resolve();
 };
 

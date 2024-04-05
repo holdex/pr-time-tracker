@@ -73,21 +73,26 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           id: { $in: prInfo.contributor_ids }
         });
 
-        contributorList.forEach(async (c) => {
-          const checkRunResult = await io.github.runTask(
-            'create-check-run-for-contributor',
-            async () => {
-              return createCheckRunIfNotExists(
-                { name: organization?.login as string, installationId: orgDetails.id },
-                repository.name,
-                c.login,
-                pull_request.head.sha
-              );
-            },
-            { name: `check run for ${c.login}` }
+        const taskChecks = [];
+        for (const c of contributorList) {
+          taskChecks.push(
+            io.github.runTask(
+              `create-check-run-for-contributor_${c.login}`,
+              async () => {
+                const result = await createCheckRunIfNotExists(
+                  { name: organization?.login as string, installationId: orgDetails.id },
+                  repository.name,
+                  c.login,
+                  pull_request.head.sha
+                );
+                await io.logger.info(`check result`, { result });
+                return Promise.resolve();
+              },
+              { name: `check run for ${c.login}` }
+            )
           );
-          return checkRunResult;
-        });
+        }
+        return Promise.allSettled(taskChecks);
       }
       break;
     }
@@ -117,22 +122,26 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         { name: 'Map contributors list' }
       );
 
-      contributorList.forEach(async (c) => {
-        const checkRunResult = await io.github.runTask(
-          'create-check-run-for-contributor',
-          async () => {
-            return createCheckRunIfNotExists(
-              { name: organization?.login as string, installationId: orgDetails.id },
-              repository.name,
-              c.login,
-              pull_request.head.sha
-            );
-          },
-          { name: `check run for ${c.login}` }
+      const taskChecks = [];
+      for (const c of contributorList) {
+        taskChecks.push(
+          io.github.runTask(
+            `create-check-run-for-contributor_${c.login}`,
+            async () => {
+              const result = await createCheckRunIfNotExists(
+                { name: organization?.login as string, installationId: orgDetails.id },
+                repository.name,
+                c.login,
+                pull_request.head.sha
+              );
+              await io.logger.info(`check result`, { result });
+              return Promise.resolve();
+            },
+            { name: `check run for ${c.login}` }
+          )
         );
-        return checkRunResult;
-      });
-      break;
+      }
+      return Promise.allSettled(taskChecks);
     }
     default: {
       io.logger.log('current action for pull request is not in the parse candidate', payload);
