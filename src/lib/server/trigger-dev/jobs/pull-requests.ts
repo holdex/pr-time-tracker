@@ -83,7 +83,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
                   { name: organization?.login as string, installationId: orgDetails.id },
                   repository.name,
                   c.login,
-                  pull_request.head.sha
+                  c.id,
+                  pull_request
                 );
                 await io.logger.info(`check result`, { result });
                 return Promise.resolve();
@@ -132,7 +133,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
                 { name: organization?.login as string, installationId: orgDetails.id },
                 repository.name,
                 c.login,
-                pull_request.head.sha
+                c.id,
+                pull_request
               );
               await io.logger.info(`check result`, { result });
               return Promise.resolve();

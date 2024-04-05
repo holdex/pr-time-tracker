@@ -89,7 +89,8 @@ const createCheckRunIfNotExists = async (
   org: { name: string; installationId: number },
   repoName: string,
   senderLogin: string,
-  headSha: string
+  senderId: number,
+  pull_request: PullRequest | SimplePullRequest
 ) => {
   const octokit = await app.getInstallationOctokit(org.installationId);
 
@@ -97,7 +98,7 @@ const createCheckRunIfNotExists = async (
     .listForRef({
       owner: org.name,
       repo: repoName,
-      ref: headSha,
+      ref: pull_request.head.sha,
       check_name: submissionCheckName(senderLogin)
     })
     .catch(() => ({
@@ -112,19 +113,24 @@ const createCheckRunIfNotExists = async (
       .create({
         owner: org.name,
         repo: repoName,
-        head_sha: headSha,
+        head_sha: pull_request.head.sha,
         name: submissionCheckName(senderLogin)
       })
       .catch((err) => ({ error: err }));
   } else {
-    return octokit.rest.checks.rerequestRun({
-      owner: org.name,
-      repo: repoName,
-      check_run_id: data.check_runs[data.total_count - 1].id
+    return client.sendEvent({
+      name: `${org.name}_pr_submission.created`,
+      payload: {
+        organization: org.name,
+        repo: repoName,
+        prId: pull_request.id,
+        senderLogin: senderLogin,
+        senderId: senderId,
+        prNumber: pull_request.number,
+        checkRunId: data.check_runs[data.total_count - 1].id
+      }
     });
   }
-
-  return Promise.resolve();
 };
 
 const reRequestCheckRun = async (

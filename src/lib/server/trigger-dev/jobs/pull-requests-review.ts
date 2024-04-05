@@ -58,7 +58,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
               { name: organization?.login as string, installationId: orgDetails.id },
               repository.name,
               sender.login,
-              pull_request.head.sha
+              sender.id,
+              pull_request
             );
           },
           { name: `Create check run for reviewer (${sender.login}) if not exists` }

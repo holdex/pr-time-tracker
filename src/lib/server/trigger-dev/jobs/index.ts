@@ -13,8 +13,7 @@ import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
 
-// config.integrationsList
-[{ id: 'holdex', name: 'holdex' }].forEach((org) => {
+config.integrationsList.forEach((org) => {
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
     id: `pull-requests-streaming_${org.id}${isDev ? '_dev' : ''}`,
