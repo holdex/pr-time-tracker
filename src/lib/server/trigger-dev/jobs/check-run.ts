@@ -45,8 +45,14 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             {
               organization: organization?.login as string,
               repo: repository.name,
-              prId: check_run.pull_requests[0].id || Number(prDetails.fullDatabaseId),
-              prNumber: check_run.pull_requests[0].number || prDetails.number,
+              prId:
+                check_run.pull_requests && check_run.pull_requests.length > 0
+                  ? check_run.pull_requests[0].id
+                  : Number(prDetails.fullDatabaseId),
+              prNumber:
+                check_run.pull_requests && check_run.pull_requests.length > 0
+                  ? check_run.pull_requests[0].number
+                  : prDetails.number,
               checkRunId: check_run.id,
               senderId: contributor.id,
               senderLogin: contributor.login
@@ -96,8 +102,7 @@ export async function createEventJob<T extends IOWithIntegrations<{ github: Auto
 
 async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
-  io: T,
-  queryPrInfo: boolean = false
+  io: T
 ) {
   const orgDetails = await io.github.runTask(
     'get org installation',
@@ -108,13 +113,20 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     { name: 'Get Organization installation' }
   );
 
+  const submission = await io.github.runTask(
+    'get-submission',
+    async () => {
+      return getSubmissionStatus(payload.senderId, payload.prId);
+    },
+    { name: 'Get Submission' }
+  );
+
   const result = await io.github.runTask(
     'update-check-run',
     async () => {
-      const submission = await getSubmissionStatus(payload.senderId, payload.prId);
       const octokit = await app.getInstallationOctokit(orgDetails.id);
 
-      return octokit.rest.checks.update({
+      const body = {
         owner: payload.organization,
         repo: payload.repo,
         check_run_id: payload.checkRunId,
@@ -129,7 +141,8 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
             ? `Pull request cost submitted. No actions required.`
             : `Submit cost by following the [link](https://pr-time-tracker.vercel.app).`
         }
-      });
+      } as any;
+      return octokit.rest.checks.update(body);
     },
     { name: 'Update check run' }
   );

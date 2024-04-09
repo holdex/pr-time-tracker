@@ -27,7 +27,11 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       await io.wait('wait for first call', 5);
 
       // store these events in gcloud
-      if (review.state === 'approved' || review.state === 'changes_requested') {
+      if (
+        review.state === 'approved' ||
+        review.state === 'changes_requested' ||
+        review.state === 'commented'
+      ) {
         await insertEvent({
           action: review.state === 'approved' ? EventType.PR_APPROVED : EventType.PR_REJECTED,
           id: pull_request.number,
