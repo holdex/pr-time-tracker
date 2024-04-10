@@ -29,7 +29,9 @@ const getPrInfo = async (
   contributor: ContributorSchema
 ): Promise<ItemSchema> => {
   const item = await items.getOne({ id: pr.id });
-  const contributorIds = item ? await items.makeContributorIds(item, contributor) : [];
+  const contributorIds = item
+    ? await items.makeContributorIds(item, contributor)
+    : [contributor.id];
   let prMerged = false;
 
   if (item) {
