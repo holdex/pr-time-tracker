@@ -111,7 +111,7 @@ const createCheckRunIfNotExists = async (
     }));
 
   if (data.total_count === 0) {
-    await octokit.rest.checks
+    return octokit.rest.checks
       .create({
         owner: org.name,
         repo: repoName,
@@ -119,20 +119,20 @@ const createCheckRunIfNotExists = async (
         name: submissionCheckName(senderLogin)
       })
       .catch((err) => ({ error: err }));
+  } else {
+    return client.sendEvent({
+      name: `${org.name}_pr_submission.created`,
+      payload: {
+        organization: org.name,
+        repo: repoName,
+        prId: pull_request.id,
+        senderLogin: senderLogin,
+        senderId: senderId,
+        prNumber: pull_request.number,
+        checkRunId: data.check_runs[data.total_count - 1].id
+      }
+    });
   }
-
-  return client.sendEvent({
-    name: `${org.name}_pr_submission.created`,
-    payload: {
-      organization: org.name,
-      repo: repoName,
-      prId: pull_request.id,
-      senderLogin: senderLogin,
-      senderId: senderId,
-      prNumber: pull_request.number,
-      checkRunId: data.check_runs[data.total_count - 1].id
-    }
-  });
 };
 
 const reRequestCheckRun = async (
