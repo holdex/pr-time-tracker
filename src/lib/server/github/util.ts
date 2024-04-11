@@ -111,6 +111,7 @@ const createCheckRunIfNotExists = async (
     }));
 
   if (data.total_count === 0) {
+    // TODO: resolve queing issue
     return octokit.rest.checks
       .create({
         owner: org.name,
