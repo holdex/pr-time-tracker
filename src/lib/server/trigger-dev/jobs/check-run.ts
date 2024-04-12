@@ -159,13 +159,14 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
         status: 'COMPLETED',
         conclusion: submission ? 'SUCCESS' : 'FAILURE',
         completedAt: new Date().toISOString(),
+        detailsUrl: `https://pr-time-tracker.vercel.app/prs/${payload.organization}/${payload.repo}/${payload.prId}`,
         output: {
           title: submission
             ? `✅ cost submitted: ${submission.hours} hours.`
             : '❌ cost submission missing',
           summary: submission
             ? `Pull request cost submitted. No actions required.`
-            : `Submit cost by following the [link](https://pr-time-tracker.vercel.app).`
+            : `Submit cost by following the [link](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${payload.repo}/${payload.prId}).`
         }
       }).then((r) => r.updateCheckRun);
     },
@@ -200,7 +201,9 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
         body: bodyWithHeader(
           `Hi  @${payload.senderLogin}
           Your PR ${result.checkRun?.title?.slice(2) as string}
-          View submission [on](https://pr-time-tracker.vercel.app/contributors/${payload.senderId}).
+          View submission [on](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${
+            payload.repo
+          }/${payload.prId}).
         `,
           payload.senderId.toString()
         ),
