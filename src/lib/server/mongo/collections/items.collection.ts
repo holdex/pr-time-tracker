@@ -95,6 +95,30 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     return Array.from(new Set((item?.contributor_ids || []).concat(contributor?.id || [])));
   }
 
+  getOneWithSubmission = async (params: Filter<ItemSchema>, contributorId: number | undefined) => {
+    return this.context
+      .aggregate<WithId<ItemSchema>>([
+        { $match: params } as Document,
+        {
+          $lookup: {
+            from: CollectionNames.SUBMISSIONS,
+            localField: 'id',
+            foreignField: 'item_id',
+            pipeline: [
+              { $match: { owner_id: contributorId ? { $eq: contributorId } : { $ne: '' } } },
+              { $match: { item_id: params?.id } }
+            ],
+            as: 'submission'
+          }
+        },
+        {
+          $unwind: { path: '$submission', preserveNullAndEmptyArrays: true }
+        }
+      ])
+      .map((r) => ({ ...r, url: replaceUrl(r.url) }))
+      .toArray();
+  };
+
   makeFilter(searchParams?: URLSearchParams) {
     const filter: Partial<Filter<ItemSchema>> = super.makeFilter(searchParams);
     const contributorId = transform<number>(searchParams?.get('contributor_id'));
