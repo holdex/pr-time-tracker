@@ -32,6 +32,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         const match = check_run.name.match(/\((.*?)\)/);
         const contributor = await contributors.getOne({ login: (match as string[])[1] });
         if (contributor) {
+          await io.wait('wait for sync in case a similar run is available', 5);
           const prDetails = await io.github.runTask(
             'get-pr-info',
             async () => {
