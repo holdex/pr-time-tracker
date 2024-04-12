@@ -20,8 +20,6 @@ export const load: PageServerLoad = async ({ params, depends, parent }) => {
   if (!data || data.length === 0) {
     throw error(404, 'pr_not_found');
   }
-
-  console.log('data', data);
   return {
     pr: JSON.stringify(data[0])
   };
