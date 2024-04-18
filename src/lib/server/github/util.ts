@@ -38,6 +38,8 @@ const getPrInfo = async (
     if (pr?.closed_at && (pr as PullRequest).merged) prMerged = true;
     return {
       ...item,
+      repo: repository.name,
+      org: organization?.login as string,
       title: pr.title,
       number: item.number || pr.number,
       contributor_ids: contributorIds,
