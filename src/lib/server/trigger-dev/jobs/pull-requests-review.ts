@@ -32,14 +32,20 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         review.state === 'changes_requested' ||
         review.state === 'commented'
       ) {
+        const action =
+          review.state === 'approved'
+            ? EventType.PR_APPROVED
+            : review.state === 'changes_requested'
+            ? EventType.PR_REJECTED
+            : EventType.PR_REVIEW_COMMENT;
         await insertEvent({
-          action: review.state === 'approved' ? EventType.PR_APPROVED : EventType.PR_REJECTED,
+          action,
           id: pull_request.number,
           index: 1,
           organization: organization?.login || 'holdex',
           owner: pull_request.user.login,
           repository: repository.name,
-          sender: pull_request.user.login,
+          sender: review.user.login,
           title: pull_request.title,
           created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)

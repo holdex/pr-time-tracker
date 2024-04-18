@@ -131,6 +131,7 @@ export enum UserRole {
 export enum EventType {
   PR_OPENED = 'PR_OPENED',
   PR_MERGED = 'PR_MERGED',
+  PR_REVIEW_COMMENT = 'PR_REVIEW_COMMENT',
   PR_EDITED = 'PR_EDITED',
   PR_CLOSED = 'PR_CLOSED',
   PR_ASSIGNED = 'PR_ASSIGNED',

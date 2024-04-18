@@ -20,6 +20,7 @@
 
   /** props */
   export let prs: ItemSchema[];
+  export let onUpdate: any = undefined;
   export let context: 'contributor' | 'user' = 'user';
   export let query: Omit<PRsQuery, 'contributor_id'> | undefined = undefined;
   export let getQuery: (() => Omit<PRsQuery, 'contributor_id'>) | undefined = undefined;
@@ -55,6 +56,8 @@
         }" of efficiency.`,
         type: 'success'
       };
+
+      if (onUpdate) onUpdate();
 
       return response.data.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
