@@ -32,8 +32,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       if (action === 'opened' || action === 'closed') {
         contributorInfo = getContributorInfo(user);
 
-        // store these events in gcloud
-        await insertEvent({
+        const event = {
           action:
             action === 'opened'
               ? EventType.PR_OPENED
@@ -49,7 +48,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           title: pull_request.title,
           created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
-        });
+        };
+
+        // store these events in gcloud
+        await insertEvent(
+          event,
+          `${event.organization}/${event.repository}@${event.id}_${event.action}`
+        );
       } else {
         contributorInfo = getContributorInfo(sender);
       }

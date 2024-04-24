@@ -42,7 +42,7 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
     const pr = await items.getOne({ id: body?.item_id });
     if (pr) {
       // store these events in gcloud
-      await insertEvent({
+      const event = {
         action: EventType.PR_SUBMISSION_CREATED,
         id: pr.number as number,
         index: 1,
@@ -54,7 +54,11 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         payload: body?.hours,
         created_at: Math.round(new Date().getTime() / 1000).toFixed(0),
         updated_at: Math.round(new Date().getTime() / 1000).toFixed(0)
-      });
+      };
+      await insertEvent(
+        event,
+        `${body?.item_id}_${contributor.login!}_${event.created_at}_${event.action}`
+      );
 
       const installationInfo = await getInstallationId(pr.org);
 
@@ -120,7 +124,10 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         created_at: Math.round(new Date(body!.created_at as string).getTime() / 1000).toFixed(0),
         updated_at: Math.round(new Date(body!.updated_at as string).getTime() / 1000).toFixed(0)
       };
-      await insertEvent(gcEvent);
+      await insertEvent(
+        gcEvent,
+        `${body!.item_id}_${user!.login}_${gcEvent.created_at}_${gcEvent.action}`
+      );
 
       if (body!.approval === 'pending') {
         const installationInfo = await getInstallationId(pr.org);

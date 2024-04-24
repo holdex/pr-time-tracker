@@ -32,14 +32,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         review.state === 'changes_requested' ||
         review.state === 'commented'
       ) {
-        const action =
-          review.state === 'approved'
-            ? EventType.PR_APPROVED
-            : review.state === 'changes_requested'
-            ? EventType.PR_REJECTED
-            : EventType.PR_REVIEW_COMMENT;
-        await insertEvent({
-          action,
+        const event = {
+          action:
+            review.state === 'approved'
+              ? EventType.PR_APPROVED
+              : review.state === 'changes_requested'
+              ? EventType.PR_REJECTED
+              : EventType.PR_REVIEW_COMMENT,
           id: pull_request.number,
           index: 1,
           organization: organization?.login || 'holdex',
@@ -49,7 +48,12 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           title: pull_request.title,
           created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
-        });
+        };
+
+        await insertEvent(
+          event,
+          `${event.organization}/${event.repository}@${event.id}_${event.created_at}_${event.sender}_${event.action}`
+        );
 
         // check if the check run is already available, if not create one.
         const orgDetails = await io.github.runTask(
