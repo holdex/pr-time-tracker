@@ -50,6 +50,7 @@ export enum CollectionNames {
 
 export interface EventsSchema extends TimeStamps {
   id: number;
+  _id?: string;
   organization: string;
   repository: string;
   action: EventType;

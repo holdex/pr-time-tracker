@@ -16,15 +16,9 @@ export async function insertEvent(event: EventsSchema, id: string) {
   return bigquery
     .dataset(config.gcloud.dataset)
     .table(config.gcloud.table)
-    .insert(
-      {
-        insertId: id,
-        json: event
-      },
-      { createInsertId: true }
-    )
+    .insert({ ...event, _id: id })
     .catch((reason) => {
-      console.log('reason', reason);
+      console.error('reason', JSON.stringify(reason.errors));
     });
 }
 
