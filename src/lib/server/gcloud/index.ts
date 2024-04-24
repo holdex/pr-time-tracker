@@ -12,8 +12,14 @@ const bigquery = new BigQuery({
   }
 });
 
-export async function insertEvent(event: EventsSchema) {
-  return bigquery.dataset(config.gcloud.dataset).table(config.gcloud.table).insert(event);
+export async function insertEvent(event: EventsSchema, id: string = '') {
+  return bigquery.dataset(config.gcloud.dataset).table(config.gcloud.table).insert(
+    {
+      insertedId: id,
+      json: event
+    },
+    { createInsertId: true }
+  );
 }
 
 export async function getEvents() {
