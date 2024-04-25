@@ -29,6 +29,20 @@ config.integrationsList.forEach((org) => {
   });
 
   client.defineJob({
+    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
+    id: `pull-requests-review-streaming_${org.id}${isDev ? '_dev' : ''}`,
+    name: 'Streaming pull requests review for Github using app',
+    version: '0.0.1',
+    trigger: github.triggers.org({
+      event: events.onPullRequestReview,
+      org: org.name
+    }),
+    integrations: { github },
+    run: async (payload, io, ctx) =>
+      createPrReviewJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
+  });
+
+  client.defineJob({
     id: `custom-event-streaming_${org.id}${isDev ? '_dev' : ''}`,
     name: 'Streaming custom events for Github using app',
     version: '0.0.1',
@@ -47,20 +61,6 @@ config.integrationsList.forEach((org) => {
     integrations: { github },
     run: async (payload, io, ctx) =>
       createCheckEventJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
-  });
-
-  client.defineJob({
-    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `pull-requests-review-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    name: 'Streaming pull requests review for Github using app',
-    version: '0.0.1',
-    trigger: github.triggers.org({
-      event: events.onPullRequestReview,
-      org: org.name
-    }),
-    integrations: { github },
-    run: async (payload, io, ctx) =>
-      createPrReviewJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
   });
 
   client.defineJob({

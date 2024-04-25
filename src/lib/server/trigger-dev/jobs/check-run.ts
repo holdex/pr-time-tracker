@@ -172,51 +172,79 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     },
     { name: 'Update check run' }
   );
-  if (result.checkRun?.conclusion === 'SUCCESS') {
-    const previous = await io.github.runTask('get previous comment', async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
 
-      const previous = await getPreviousComment<typeof octokit>(
-        { owner: payload.organization, repo: repoDetails.data.name },
-        payload.prNumber,
-        payload.senderId.toString(),
-        octokit
-      );
-      return previous;
-    });
+  // if failure -> check comment -> create if not exists -> update the list
+  // if success -> check comment -> create if not exits -> update the list
 
-    if (previous) {
-      await io.github.runTask('delete previous comment', async () => {
-        const octokit = await app.getInstallationOctokit(orgDetails.id);
+  const previous = await io.github.runTask('get previous comment', async () => {
+    const octokit = await app.getInstallationOctokit(orgDetails.id);
 
-        // let's check if the comment is not already available
-        await octokit.rest.issues.deleteComment({
-          owner: payload.organization,
-          repo: repoDetails.data.name,
-          comment_id: previous?.databaseId as number
-        });
-      });
-    }
+    const previous = await getPreviousComment<typeof octokit>(
+      { owner: payload.organization, repo: repoDetails.data.name },
+      payload.prNumber,
+      payload.prId.toString(),
+      octokit
+    );
+    return previous;
+  });
 
+  const submissionCreated = result.checkRun?.conclusion === 'SUCCESS';
+  let members: string[] = [];
+
+  const commentBody = bodyWithHeader(
+    `<members>
+          ⚠️⚠️⚠️
+          You must [submit the time](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}) spent on this PR.
+          ⚠️⚠️⚠️
+        `,
+    payload.prId.toString()
+  );
+
+  if (!previous) {
+    members = bindMembers('', payload.senderLogin, submissionCreated);
     await io.github.runTask('add-submission-comment', async () => {
       const octokit = await app.getInstallationOctokit(orgDetails.id);
 
-      // let's check if the comment is not already available
       const comment = await octokit.rest.issues.createComment({
         owner: payload.organization,
         repo: repoDetails.data.name,
-        body: bodyWithHeader(
-          `Hi  @${payload.senderLogin}
-          Your PR ${result.checkRun?.title?.slice(2) as string}
-          View submission [on](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${
-            repoDetails.data.name
-          }/${payload.prId}).
-        `,
-          payload.senderId.toString()
-        ),
+        body: commentBody.replace('<members>', `${members.join(`\n`)}\n`),
         issue_number: payload.prNumber
       });
       return Promise.resolve(comment);
+    });
+  } else {
+    members = bindMembers(previous.body, payload.senderLogin, submissionCreated);
+
+    if (members.length > 0) {
+      await io.github.runTask('update-submission-comment', async () => {
+        const octokit = await app.getInstallationOctokit(orgDetails.id);
+
+        const comment = await octokit.rest.issues.updateComment({
+          owner: payload.organization,
+          repo: repoDetails.data.name,
+          comment_id: previous?.databaseId as number,
+          body: commentBody.replace(
+            '<members>',
+            commentBody.replace('<members>', `${members.join(`\n`)}\n`)
+          )
+        });
+        return Promise.resolve(comment);
+      });
+    }
+  }
+
+  // if no members remove the comment
+  if (members.length === 0) {
+    await io.github.runTask('delete previous comment', async () => {
+      const octokit = await app.getInstallationOctokit(orgDetails.id);
+
+      // let's check if the comment is not already available
+      await octokit.rest.issues.deleteComment({
+        owner: payload.organization,
+        repo: repoDetails.data.name,
+        comment_id: previous?.databaseId as number
+      });
     });
   }
 }
@@ -334,4 +362,24 @@ function headerComment(header: string): string {
 
 function bodyWithHeader(body: string, header: string): string {
   return `${body}\n${headerComment(header)}`;
+}
+
+const regex = new RegExp(/\B@([a-z0-9](?:-(?=[a-z0-9])|[a-z0-9]){0,38}(?<=[a-z0-9]))/, 'gmi');
+function bindMembers(previousCommentBody: string, member: string, submissionCreated: boolean) {
+  if (previousCommentBody.length === 0) {
+    if (submissionCreated) return [];
+    return [`@${member}`];
+  } else {
+    let list = previousCommentBody.match(regex) as Array<string>;
+
+    if (list && !list.includes(`@${member}`)) {
+      list.push(`@${member}`);
+    }
+
+    if (submissionCreated) {
+      list = list?.filter((f) => f !== `@${member}`);
+    }
+
+    return list;
+  }
 }
