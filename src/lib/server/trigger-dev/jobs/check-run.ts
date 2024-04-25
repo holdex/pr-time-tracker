@@ -187,32 +187,31 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     );
     return previous;
   });
+  let current: any = null;
 
   const submissionCreated = result.checkRun?.conclusion === 'SUCCESS';
   let members: string[] = [];
 
   const commentBody = bodyWithHeader(
-    `<members>
-          ⚠️⚠️⚠️
-          You must [submit the time](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}) spent on this PR.
-          ⚠️⚠️⚠️
-        `,
+    `<members>⚠️⚠️⚠️\nYou must [submit the time](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}) spent on this PR.\n⚠️⚠️⚠️`,
     payload.prId.toString()
   );
 
   if (!previous) {
     members = bindMembers('', payload.senderLogin, submissionCreated);
-    await io.github.runTask('add-submission-comment', async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+    if (members.length > 0) {
+      current = await io.github.runTask('add-submission-comment', async () => {
+        const octokit = await app.getInstallationOctokit(orgDetails.id);
 
-      const comment = await octokit.rest.issues.createComment({
-        owner: payload.organization,
-        repo: repoDetails.data.name,
-        body: commentBody.replace('<members>', `${members.join(`\n`)}\n`),
-        issue_number: payload.prNumber
+        const comment = await octokit.rest.issues.createComment({
+          owner: payload.organization,
+          repo: repoDetails.data.name,
+          body: commentBody.replace('<members>', `${members.join(`\n`)}\n`),
+          issue_number: payload.prNumber
+        });
+        return comment;
       });
-      return Promise.resolve(comment);
-    });
+    }
   } else {
     members = bindMembers(previous.body, payload.senderLogin, submissionCreated);
 
@@ -224,10 +223,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
           owner: payload.organization,
           repo: repoDetails.data.name,
           comment_id: previous?.databaseId as number,
-          body: commentBody.replace(
-            '<members>',
-            commentBody.replace('<members>', `${members.join(`\n`)}\n`)
-          )
+          body: commentBody.replace('<members>', `${members.join(`\n`)}\n`)
         });
         return Promise.resolve(comment);
       });
@@ -235,7 +231,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   }
 
   // if no members remove the comment
-  if (members.length === 0) {
+  if (members.length === 0 && (previous || current)) {
     await io.github.runTask('delete previous comment', async () => {
       const octokit = await app.getInstallationOctokit(orgDetails.id);
 
@@ -243,7 +239,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
       await octokit.rest.issues.deleteComment({
         owner: payload.organization,
         repo: repoDetails.data.name,
-        comment_id: previous?.databaseId as number
+        comment_id: previous ? (previous?.databaseId as number) : current?.data.id
       });
     });
   }
@@ -370,7 +366,7 @@ function bindMembers(previousCommentBody: string, member: string, submissionCrea
     if (submissionCreated) return [];
     return [`@${member}`];
   } else {
-    let list = previousCommentBody.match(regex) as Array<string>;
+    let list = (previousCommentBody.match(regex) || []) as Array<string>;
 
     if (list && !list.includes(`@${member}`)) {
       list.push(`@${member}`);
