@@ -11,12 +11,11 @@ import type {
   UpdateCheckRunPayload,
   UpdateCheckRunInput
 } from '@octokit/graphql-schema';
+import type { CheckRunEvent } from '@octokit/webhooks-types';
 
-import type { CheckRunEvent } from '$lib/server/github';
-import app from '$lib/server/github';
 import { contributors } from '$lib/server/mongo/collections';
 
-import { getInstallationId, getSubmissionStatus, submissionCheckPrefix } from '../../github/util';
+import { getInstallationId, getSubmissionStatus, submissionCheckPrefix, githubApp } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -37,7 +36,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             'get-pr-info',
             async () => {
               const { data } = await getInstallationId(organization?.login as string);
-              const octokit = await app.getInstallationOctokit(data.id);
+              const octokit = await githubApp.getInstallationOctokit(data.id);
 
               return getPrInfoByCheckRunNodeId(check_run.node_id as string, octokit);
             },
@@ -127,7 +126,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   const repoDetails = await io.github.runTask(
     'get-repo-id',
     async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       return octokit.rest.repos.get({ owner: payload.organization, repo: payload.repo });
     },
@@ -137,7 +136,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   const checkDetails = await io.github.runTask(
     'get-check-id',
     async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       return octokit.rest.checks.get({
         owner: payload.organization,
@@ -151,7 +150,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   const result = await io.github.runTask(
     'update-check-run',
     async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       return updateCheckRun(octokit, {
         repositoryId: repoDetails.data.node_id,
@@ -177,7 +176,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   // if success -> check comment -> create if not exits -> update the list
 
   const previous = await io.github.runTask('get previous comment', async () => {
-    const octokit = await app.getInstallationOctokit(orgDetails.id);
+    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
     const previous = await getPreviousComment<typeof octokit>(
       { owner: payload.organization, repo: repoDetails.data.name },
@@ -201,7 +200,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     members = bindMembers('', payload.senderLogin, submissionCreated);
     if (members.length > 0) {
       current = await io.github.runTask('add-submission-comment', async () => {
-        const octokit = await app.getInstallationOctokit(orgDetails.id);
+        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
         const comment = await octokit.rest.issues.createComment({
           owner: payload.organization,
@@ -217,7 +216,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
 
     if (members.length > 0) {
       await io.github.runTask('update-submission-comment', async () => {
-        const octokit = await app.getInstallationOctokit(orgDetails.id);
+        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
         const comment = await octokit.rest.issues.updateComment({
           owner: payload.organization,
@@ -233,7 +232,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   // if no members remove the comment
   if (members.length === 0 && (previous || current)) {
     await io.github.runTask('delete previous comment', async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       // let's check if the comment is not already available
       await octokit.rest.issues.deleteComment({

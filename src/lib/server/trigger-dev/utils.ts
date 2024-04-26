@@ -1,14 +1,27 @@
-import { Autoinvoicing, events } from '@holdex/autoinvoicing';
+import { App } from 'octokit';
 
+import type {
+  User,
+  PullRequest,
+  SimplePullRequest,
+  Organization,
+  Repository
+} from '@octokit/webhooks-types';
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
-import type { PullRequest, User, SimplePullRequest, Repository, Organization } from './';
 
 import config from '$lib/server/config';
 import { ItemType } from '$lib/constants';
 import { items, submissions } from '$lib/server/mongo/collections';
 
-import app from './';
-import { client } from '../trigger-dev';
+import { client } from './';
+
+const githubApp = new App({
+  appId: config.github.appId,
+  privateKey: config.github.privateKey,
+  webhooks: {
+    secret: config.webhookSecret
+  }
+});
 
 const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'> => ({
   id: user.id,
@@ -84,7 +97,7 @@ const getSubmissionStatus = async (
 };
 
 const getInstallationId = async (orgName: string) => {
-  return app.octokit.rest.apps.getOrgInstallation({
+  return githubApp.octokit.rest.apps.getOrgInstallation({
     org: orgName
   });
 };
@@ -96,7 +109,7 @@ const createCheckRunIfNotExists = async (
   senderId: number,
   pull_request: PullRequest | SimplePullRequest
 ) => {
-  const octokit = await app.getInstallationOctokit(org.installationId);
+  const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
   const { data } = await octokit.rest.checks
     .listForRef({
@@ -144,7 +157,7 @@ const reRequestCheckRun = async (
   senderLogin: string,
   prNumber: number
 ) => {
-  const octokit = await app.getInstallationOctokit(org.installationId);
+  const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
   const prInfo = await octokit.rest.pulls.get({
     owner: org.name,
@@ -183,20 +196,35 @@ const reRequestCheckRun = async (
   return Promise.resolve();
 };
 
-const github = new Autoinvoicing({
-  id: 'github',
-  token: config.github.token
-});
+const checkRunFromEvent = async (
+  org: string,
+  repoName: string,
+  senderId: number,
+  senderLogin: string,
+  prNumber: number
+) => {
+  const installation = await getInstallationId(org);
+  return reRequestCheckRun(
+    {
+      name: org,
+      installationId: installation.data.id
+    },
+    repoName,
+    senderId,
+    senderLogin,
+    prNumber
+  );
+};
 
 export {
-  getContributorInfo,
-  getPrInfo,
-  github,
-  events,
+  githubApp,
   reRequestCheckRun,
-  getSubmissionStatus,
-  submissionCheckPrefix,
-  submissionCheckName,
+  getInstallationId,
   createCheckRunIfNotExists,
-  getInstallationId
+  getContributorInfo,
+  checkRunFromEvent,
+  getPrInfo,
+  getSubmissionStatus,
+  submissionCheckName,
+  submissionCheckPrefix
 };

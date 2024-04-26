@@ -10,7 +10,7 @@ import { items, submissions } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 import { cookieNames } from '$lib/server/cookie';
 import { insertEvent } from '$lib/server/gcloud';
-import { getInstallationId, reRequestCheckRun } from '$lib/server/github/util';
+import { checkRunFromEvent } from '$lib/server/trigger-dev/utils';
 
 import { UserRole, type SubmissionSchema, type ContributorSchema, EventType } from '$lib/@types';
 
@@ -60,11 +60,9 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         `${body?.item_id}_${contributor.login!}_${event.created_at}_${event.action}`
       );
 
-      const installationInfo = await getInstallationId(pr.org);
-
       // get last commit
-      await reRequestCheckRun(
-        { name: pr.org, installationId: installationInfo.data.id },
+      await checkRunFromEvent(
+        pr.org,
         pr.repo,
         contributor.id!,
         contributor.login!,
@@ -130,15 +128,8 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
       );
 
       if (body!.approval === 'pending') {
-        const installationInfo = await getInstallationId(pr.org);
         // get last commit
-        await reRequestCheckRun(
-          { name: pr.org, installationId: installationInfo.data.id },
-          pr.repo,
-          body!.owner_id,
-          user!.login,
-          pr.number as number
-        );
+        await checkRunFromEvent(pr.org, pr.repo, body!.owner_id, user!.login, pr.number as number);
       }
     }
 

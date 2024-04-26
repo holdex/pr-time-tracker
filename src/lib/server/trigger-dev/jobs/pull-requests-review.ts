@@ -1,7 +1,7 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import type { PullRequestReviewEvent } from '@octokit/webhooks-types';
 
-import type { PullRequestReviewEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
 import { insertEvent } from '$lib/server/gcloud';
 
@@ -10,7 +10,7 @@ import {
   getContributorInfo,
   getInstallationId,
   getPrInfo
-} from '../../github/util';
+} from '../utils';
 
 import { EventType } from '$lib/@types';
 

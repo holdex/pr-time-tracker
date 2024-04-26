@@ -2,13 +2,10 @@
 import { type IOWithIntegrations, eventTrigger } from '@trigger.dev/sdk';
 import zod from 'zod';
 
-import type { Autoinvoicing } from '@holdex/autoinvoicing';
-
 import { isDev } from '$lib/config';
 import config from '$lib/server/config';
 
-import { github, events } from '../../github/util';
-import { client } from '../';
+import { client, github, events, type Autoinvoicing } from '../';
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
