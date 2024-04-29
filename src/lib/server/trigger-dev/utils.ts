@@ -13,7 +13,7 @@ import config from '$lib/server/config';
 import { ItemType } from '$lib/constants';
 import { items, submissions } from '$lib/server/mongo/collections';
 
-import { client } from './';
+import { client } from './client';
 
 const githubApp = new App({
   appId: config.github.appId,

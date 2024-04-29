@@ -5,7 +5,7 @@ import zod from 'zod';
 import { isDev } from '$lib/config';
 import config from '$lib/server/config';
 
-import { client, github, events, type Autoinvoicing } from '../';
+import { client, github, events, type Autoinvoicing } from '../client';
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
