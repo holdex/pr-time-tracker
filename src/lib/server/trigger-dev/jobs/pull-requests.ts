@@ -64,7 +64,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
       await items.update(prInfo, { onCreateIfNotExist: true });
 
-      if (action === 'synchronize' && pull_request.requested_reviewers.length > 0) {
+      if (
+        action === 'synchronize' &&
+        (pull_request.requested_reviewers.length > 0 || pull_request.requested_teams.length > 0)
+      ) {
         const orgDetails = await io.github.runTask(
           'get org installation',
           async () => {
@@ -100,6 +103,14 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         }
         return Promise.allSettled(taskChecks);
       }
+      break;
+    }
+    case 'reopened': {
+      const { user } = pull_request;
+      const contributor = await contributors.update(getContributorInfo(user));
+
+      const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
+      await items.update({ ...prInfo, closed_at: '' }, { onCreateIfNotExist: true });
       break;
     }
     case 'review_requested': {
