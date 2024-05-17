@@ -55,7 +55,11 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           `${event.organization}/${event.repository}@${event.id}_${event.created_at}_${event.sender}_${event.action}`
         );
 
-        // check if the check run is already available, if not create one.
+        const prInfo = await items.update(
+          await getPrInfo(pull_request, repository, organization, sender, contributor),
+          { onCreateIfNotExist: true }
+        );
+
         const orgDetails = await io.github.runTask(
           'get org installation',
           async () => {
@@ -65,25 +69,32 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           { name: 'Get Organization installation' }
         );
 
-        await io.github.runTask(
-          `create-check-run-if-not-exists-${sender.login}`,
-          async () => {
-            return createCheckRunIfNotExists(
-              { name: organization?.login as string, installationId: orgDetails.id },
-              repository.name,
-              sender.login,
-              sender.id,
-              pull_request
-            );
-          },
-          { name: `Create check run for reviewer (${sender.login}) if not exists` }
-        );
-      }
+        const contributorList = await contributors.getManyBy({
+          id: { $in: prInfo.contributor_ids }
+        });
 
-      await items.update(
-        await getPrInfo(pull_request, repository, organization, sender, contributor),
-        { onCreateIfNotExist: true }
-      );
+        const taskChecks = [];
+        for (const c of contributorList) {
+          taskChecks.push(
+            io.github.runTask(
+              `create-check-run-for-contributor_${c.login}`,
+              async () => {
+                const result = await createCheckRunIfNotExists(
+                  { name: organization?.login as string, installationId: orgDetails.id },
+                  repository.name,
+                  c.login,
+                  c.id,
+                  pull_request
+                );
+                await io.logger.info(`check result`, { result });
+                return Promise.resolve();
+              },
+              { name: `check run for ${c.login}` }
+            )
+          );
+        }
+        return Promise.allSettled(taskChecks);
+      }
       break;
     }
     default: {
