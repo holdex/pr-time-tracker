@@ -234,12 +234,16 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     await io.github.runTask('delete previous comment', async () => {
       const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
-      // let's check if the comment is not already available
-      await octokit.rest.issues.deleteComment({
-        owner: payload.organization,
-        repo: repoDetails.data.name,
-        comment_id: previous ? (previous?.databaseId as number) : current?.data.id
-      });
+      try {
+        // let's check if the comment is not already available
+        await octokit.rest.issues.deleteComment({
+          owner: payload.organization,
+          repo: repoDetails.data.name,
+          comment_id: previous ? (previous?.databaseId as number) : current?.data.id
+        });
+      } catch (error) {
+        await io.logger.info('delete previous comment', { error });
+      }
     });
   }
 }
@@ -308,16 +312,13 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: s
       query($nodeId: ID!) {
         node(id: $nodeId) {
           ...on CheckRun {
-            checkSuite {
-              commit {
-                associatedPullRequests(first: 1) {
-                  nodes {
-                    ...on PullRequest {
-                      number
-                      id
-                      fullDatabaseId
-                    }
-                  }
+            repository {
+              id
+              pullRequests(first: 1) {
+                nodes {
+                  number
+                  fullDatabaseId
+                  id
                 }
               }
             }
@@ -328,8 +329,8 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: s
     { nodeId: check_run_node_id }
   );
 
-  const { commit } = data.node.checkSuite;
-  return ((commit?.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
+  const { pullRequests } = data.node.repository;
+  return ((pullRequests as PullRequestConnection).nodes as PullRequest[])[0];
 }
 
 async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
