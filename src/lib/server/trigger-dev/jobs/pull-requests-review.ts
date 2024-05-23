@@ -35,9 +35,9 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         const event = {
           action:
             review.state === 'approved'
-              ? EventType.PR_APPROVED
+              ? EventType.PR_REVIEW_APPROVE
               : review.state === 'changes_requested'
-              ? EventType.PR_REJECTED
+              ? EventType.PR_REVIEW_REJECT
               : EventType.PR_REVIEW_COMMENT,
           id: pull_request.number,
           index: 1,
@@ -50,9 +50,25 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
         };
 
+        // insert event for reviewer
         await insertEvent(
           event,
           `${event.organization}/${event.repository}@${event.id}_${event.created_at}_${event.sender}_${event.action}`
+        );
+
+        // insert events for PR owner
+        const prOwnerEvent = Object.assign({}, event, {
+          sender: event.owner,
+          action:
+            review.state === 'approved'
+              ? EventType.PR_APPROVED
+              : review.state === 'changes_requested'
+              ? EventType.PR_REJECTED
+              : EventType.PR_COMMENTED
+        });
+        await insertEvent(
+          prOwnerEvent,
+          `${prOwnerEvent.organization}/${prOwnerEvent.repository}@${prOwnerEvent.id}_${prOwnerEvent.created_at}_${prOwnerEvent.sender}_${prOwnerEvent.action}`
         );
 
         const prInfo = await items.update(
