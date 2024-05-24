@@ -1,7 +1,7 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import type { PullRequestEvent } from '@octokit/webhooks-types';
 
-import type { PullRequestEvent } from '$lib/server/github';
 import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
@@ -10,7 +10,7 @@ import {
   getContributorInfo,
   getInstallationId,
   getPrInfo
-} from '../../github/util';
+} from '../utils';
 
 import { EventType } from '$lib/@types';
 
@@ -32,8 +32,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       if (action === 'opened' || action === 'closed') {
         contributorInfo = getContributorInfo(user);
 
-        // store these events in gcloud
-        await insertEvent({
+        const event = {
           action:
             action === 'opened'
               ? EventType.PR_OPENED
@@ -49,7 +48,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           title: pull_request.title,
           created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
-        });
+        };
+
+        // store these events in gcloud
+        await insertEvent(
+          event,
+          `${event.organization}/${event.repository}@${event.id}_${event.action}`
+        );
       } else {
         contributorInfo = getContributorInfo(sender);
       }
@@ -59,7 +64,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
       await items.update(prInfo, { onCreateIfNotExist: true });
 
-      if (action === 'synchronize' && pull_request.requested_reviewers.length > 0) {
+      if (
+        action === 'synchronize' &&
+        (pull_request.requested_reviewers.length > 0 || pull_request.requested_teams.length > 0)
+      ) {
         const orgDetails = await io.github.runTask(
           'get org installation',
           async () => {
@@ -95,6 +103,14 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         }
         return Promise.allSettled(taskChecks);
       }
+      break;
+    }
+    case 'reopened': {
+      const { user } = pull_request;
+      const contributor = await contributors.update(getContributorInfo(user));
+
+      const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
+      await items.update({ ...prInfo, closed_at: '' }, { onCreateIfNotExist: true });
       break;
     }
     case 'review_requested': {

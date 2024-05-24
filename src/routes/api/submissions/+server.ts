@@ -10,7 +10,7 @@ import { items, submissions } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 import { cookieNames } from '$lib/server/cookie';
 import { insertEvent } from '$lib/server/gcloud';
-import { getInstallationId, reRequestCheckRun } from '$lib/server/github/util';
+import { checkRunFromEvent } from '$lib/server/trigger-dev/utils';
 
 import { UserRole, type SubmissionSchema, type ContributorSchema, EventType } from '$lib/@types';
 
@@ -42,7 +42,7 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
     const pr = await items.getOne({ id: body?.item_id });
     if (pr) {
       // store these events in gcloud
-      await insertEvent({
+      const event = {
         action: EventType.PR_SUBMISSION_CREATED,
         id: pr.number as number,
         index: 1,
@@ -54,13 +54,15 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         payload: body?.hours,
         created_at: Math.round(new Date().getTime() / 1000).toFixed(0),
         updated_at: Math.round(new Date().getTime() / 1000).toFixed(0)
-      });
-
-      const installationInfo = await getInstallationId(pr.org);
+      };
+      await insertEvent(
+        event,
+        `${body?.item_id}_${contributor.login!}_${event.created_at}_${event.action}`
+      );
 
       // get last commit
-      await reRequestCheckRun(
-        { name: pr.org, installationId: installationInfo.data.id },
+      await checkRunFromEvent(
+        pr.org,
         pr.repo,
         contributor.id!,
         contributor.login!,
@@ -120,18 +122,14 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         created_at: Math.round(new Date(body!.created_at as string).getTime() / 1000).toFixed(0),
         updated_at: Math.round(new Date(body!.updated_at as string).getTime() / 1000).toFixed(0)
       };
-      await insertEvent(gcEvent);
+      await insertEvent(
+        gcEvent,
+        `${body!.item_id}_${user!.login}_${gcEvent.created_at}_${gcEvent.action}`
+      );
 
       if (body!.approval === 'pending') {
-        const installationInfo = await getInstallationId(pr.org);
         // get last commit
-        await reRequestCheckRun(
-          { name: pr.org, installationId: installationInfo.data.id },
-          pr.repo,
-          body!.owner_id,
-          user!.login,
-          pr.number as number
-        );
+        await checkRunFromEvent(pr.org, pr.repo, body!.owner_id, user!.login, pr.number as number);
       }
     }
 

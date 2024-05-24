@@ -11,12 +11,11 @@ import type {
   UpdateCheckRunPayload,
   UpdateCheckRunInput
 } from '@octokit/graphql-schema';
+import type { CheckRunEvent } from '@octokit/webhooks-types';
 
-import type { CheckRunEvent } from '$lib/server/github';
-import app from '$lib/server/github';
 import { contributors } from '$lib/server/mongo/collections';
 
-import { getInstallationId, getSubmissionStatus, submissionCheckPrefix } from '../../github/util';
+import { getInstallationId, getSubmissionStatus, submissionCheckPrefix, githubApp } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -32,14 +31,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         const match = check_run.name.match(/\((.*?)\)/);
         const contributor = await contributors.getOne({ login: (match as string[])[1] });
         if (contributor) {
-          await io.wait('wait for sync in case a similar run is available', 5);
           const prDetails = await io.github.runTask(
             'get-pr-info',
             async () => {
               const { data } = await getInstallationId(organization?.login as string);
-              const octokit = await app.getInstallationOctokit(data.id);
+              const octokit = await githubApp.getInstallationOctokit(data.id);
 
-              return getPrInfoByCheckRunNodeId(check_run.node_id as string, octokit);
+              return getPrInfoByCheckRunNodeId(payload, octokit);
             },
             { name: 'Get Pr info' }
           );
@@ -55,7 +53,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
               prNumber:
                 check_run.pull_requests && check_run.pull_requests.length > 0
                   ? check_run.pull_requests[0].number
-                  : prDetails.number,
+                  : (prDetails?.number as number),
               checkRunId: check_run.id,
               senderId: contributor.id,
               senderLogin: contributor.login
@@ -107,6 +105,8 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
   io: T
 ) {
+  await io.wait('wait for sync in case a similar run is available', 6);
+
   const orgDetails = await io.github.runTask(
     'get org installation',
     async () => {
@@ -127,7 +127,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   const repoDetails = await io.github.runTask(
     'get-repo-id',
     async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       return octokit.rest.repos.get({ owner: payload.organization, repo: payload.repo });
     },
@@ -137,11 +137,11 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   const checkDetails = await io.github.runTask(
     'get-check-id',
     async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       return octokit.rest.checks.get({
         owner: payload.organization,
-        repo: payload.repo,
+        repo: repoDetails.data.name,
         check_run_id: payload.checkRunId
       });
     },
@@ -151,7 +151,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   const result = await io.github.runTask(
     'update-check-run',
     async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       return updateCheckRun(octokit, {
         repositoryId: repoDetails.data.node_id,
@@ -159,56 +159,97 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
         status: 'COMPLETED',
         conclusion: submission ? 'SUCCESS' : 'FAILURE',
         completedAt: new Date().toISOString(),
-        detailsUrl: `https://pr-time-tracker.vercel.app/prs/${payload.organization}/${payload.repo}/${payload.prId}`,
+        detailsUrl: `https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}`,
         output: {
           title: submission
             ? `✅ cost submitted: ${submission.hours} hours.`
             : '❌ cost submission missing',
           summary: submission
             ? `Pull request cost submitted. No actions required.`
-            : `Submit cost by following the [link](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${payload.repo}/${payload.prId}).`
+            : `Submit cost by following the [link](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}).`
         }
       }).then((r) => r.updateCheckRun);
     },
     { name: 'Update check run' }
   );
-  if (result.checkRun?.conclusion === 'SUCCESS') {
-    await io.github.runTask('add-submission-comment', async () => {
-      const octokit = await app.getInstallationOctokit(orgDetails.id);
 
-      const previous = await getPreviousComment<typeof octokit>(
-        { owner: payload.organization, repo: payload.repo },
-        payload.prNumber,
-        payload.senderId.toString(),
-        octokit
-      );
+  // if failure -> check comment -> create if not exists -> update the list
+  // if success -> check comment -> create if not exits -> update the list
 
-      await io.logger.info('previous comment', { previous });
+  const previous = await io.github.runTask('get previous comment', async () => {
+    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
-      if (previous) {
+    const previous = await getPreviousComment<typeof octokit>(
+      { owner: payload.organization, repo: repoDetails.data.name },
+      payload.prNumber,
+      payload.prId.toString(),
+      octokit
+    );
+    return previous;
+  });
+  let current: any = null;
+
+  const submissionCreated = result.checkRun?.conclusion === 'SUCCESS';
+  let members: string[] = [];
+
+  const commentBody = bodyWithHeader(
+    `<members>⚠️⚠️⚠️\nYou must [submit the time](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}) spent on this PR.\n⚠️⚠️⚠️`,
+    payload.prId.toString()
+  );
+
+  if (!previous) {
+    members = bindMembers('', payload.senderLogin, submissionCreated);
+    if (members.length > 0) {
+      current = await io.github.runTask('add-submission-comment', async () => {
+        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+        const comment = await octokit.rest.issues.createComment({
+          owner: payload.organization,
+          repo: repoDetails.data.name,
+          body: commentBody.replace('<members>', `${members.join(`\n`)}\n`),
+          issue_number: payload.prNumber
+        });
+        return comment;
+      });
+    }
+  } else {
+    members = bindMembers(previous.body, payload.senderLogin, submissionCreated);
+
+    if (members.length > 0) {
+      await io.github.runTask('update-submission-comment', async () => {
+        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+        try {
+          // let's check if the comment is not already available
+          const comment = await octokit.rest.issues.updateComment({
+            owner: payload.organization,
+            repo: repoDetails.data.name,
+            comment_id: previous?.databaseId as number,
+            body: commentBody.replace('<members>', `${members.join(`\n`)}\n`)
+          });
+          return Promise.resolve(comment);
+        } catch (error) {
+          await io.logger.error('update comment', { error });
+          return Promise.resolve();
+        }
+      });
+    }
+  }
+
+  // if no members remove the comment
+  if (members.length === 0 && (previous || current)) {
+    await io.github.runTask('delete previous comment', async () => {
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+      try {
         // let's check if the comment is not already available
         await octokit.rest.issues.deleteComment({
           owner: payload.organization,
-          repo: payload.repo,
-          comment_id: previous?.databaseId as number
+          repo: repoDetails.data.name,
+          comment_id: previous ? (previous?.databaseId as number) : current?.data.id
         });
+      } catch (error) {
+        await io.logger.error('delete previous comment', { error });
       }
-
-      // let's check if the comment is not already available
-      return octokit.rest.issues.createComment({
-        owner: payload.organization,
-        repo: payload.repo,
-        body: bodyWithHeader(
-          `Hi  @${payload.senderLogin}
-          Your PR ${result.checkRun?.title?.slice(2) as string}
-          View submission [on](https://pr-time-tracker.vercel.app/prs/${payload.organization}/${
-            payload.repo
-          }/${payload.prId}).
-        `,
-          payload.senderId.toString()
-        ),
-        issue_number: payload.prNumber
-      });
     });
   }
 }
@@ -271,7 +312,10 @@ async function getPreviousComment<T extends Octokit>(
   return undefined;
 }
 
-async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: string, octokit: T) {
+async function getPrInfoByCheckRunNodeId<T extends Octokit>(
+  checkRunEvent: CheckRunEvent,
+  octokit: T
+) {
   const data = await octokit.graphql<{ node: CheckRun }>(
     `
       query($nodeId: ID!) {
@@ -279,13 +323,12 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: s
           ...on CheckRun {
             checkSuite {
               commit {
+                id
                 associatedPullRequests(first: 1) {
                   nodes {
-                    ...on PullRequest {
-                      number
-                      id
-                      fullDatabaseId
-                    }
+                    number
+                    fullDatabaseId
+                    id
                   }
                 }
               }
@@ -294,11 +337,30 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: s
         }
       }
       `,
-    { nodeId: check_run_node_id }
+    { nodeId: checkRunEvent.check_run.node_id as string }
   );
 
   const { commit } = data.node.checkSuite;
-  return ((commit?.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
+
+  if (!commit.associatedPullRequests) {
+    // we need diffent method
+    const params = {
+      owner: checkRunEvent.repository.owner.login as string,
+      repo: checkRunEvent.repository.name,
+      state: 'all' as any,
+      head: `${checkRunEvent.organization?.login as string}:${
+        checkRunEvent.check_run.check_suite.head_branch
+      }`
+    };
+    const info = await octokit.rest.pulls.list(params);
+    if (info && info.data) {
+      const found = info.data.find((p) => (p.head.label = params.head));
+      return { id: found?.node_id, number: found?.number, fullDatabaseId: found?.id };
+    } else {
+      throw new Error('failed to get pull request' + JSON.stringify(params));
+    }
+  }
+  return ((commit.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
 }
 
 async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
@@ -326,4 +388,24 @@ function headerComment(header: string): string {
 
 function bodyWithHeader(body: string, header: string): string {
   return `${body}\n${headerComment(header)}`;
+}
+
+const regex = new RegExp(/\B@([a-z0-9](?:-(?=[a-z0-9])|[a-z0-9]){0,38}(?<=[a-z0-9]))/, 'gmi');
+function bindMembers(previousCommentBody: string, member: string, submissionCreated: boolean) {
+  if (previousCommentBody.length === 0) {
+    if (submissionCreated) return [];
+    return [`@${member}`];
+  } else {
+    let list = (previousCommentBody.match(regex) || []) as Array<string>;
+
+    if (list && !list.includes(`@${member}`)) {
+      list.push(`@${member}`);
+    }
+
+    if (submissionCreated) {
+      list = list?.filter((f) => f !== `@${member}`);
+    }
+
+    return list;
+  }
 }

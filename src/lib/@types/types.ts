@@ -50,6 +50,7 @@ export enum CollectionNames {
 
 export interface EventsSchema extends TimeStamps {
   id: number;
+  _id?: string;
   organization: string;
   repository: string;
   action: EventType;
@@ -137,8 +138,14 @@ export enum EventType {
   PR_UNASSIGNED = 'PR_UNASSIGNED',
   PR_LABELED = 'PR_LABELED',
   PR_UNLABELED = 'PR_UNLABELED',
+
+  PR_REVIEW_COMMENT = 'PR_REVIEW_COMMENT',
+  PR_REVIEW_APPROVE = 'PR_REVIEW_APPROVE',
+  PR_REVIEW_REJECT = 'PR_REVIEW_REJECT',
+  PR_COMMENTED = 'PR_COMMENTED',
   PR_APPROVED = 'PR_APPROVED',
   PR_REJECTED = 'PR_REJECTED',
+
   PR_REVIEW_REQUESTED = 'PR_REVIEW_REQUESTED',
   PR_CONVERTED_TO_DRAFT = 'PR_CONVERTED_TO_DRAFT',
   PR_READY_TO_REVIEW = 'PR_READY_TO_REVIEW',

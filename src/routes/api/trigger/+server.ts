@@ -1,6 +1,6 @@
 import { createSvelteRoute } from '@trigger.dev/sveltekit';
 
-import { client } from '$lib/server/trigger-dev';
+import { client } from '$lib/server/trigger-dev/client';
 
 import '$lib/server/trigger-dev/jobs';
 

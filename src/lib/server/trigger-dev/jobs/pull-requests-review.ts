@@ -1,7 +1,7 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import type { PullRequestReviewEvent } from '@octokit/webhooks-types';
 
-import type { PullRequestReviewEvent } from '$lib/server/github';
 import { contributors, items } from '$lib/server/mongo/collections';
 import { insertEvent } from '$lib/server/gcloud';
 
@@ -10,7 +10,7 @@ import {
   getContributorInfo,
   getInstallationId,
   getPrInfo
-} from '../../github/util';
+} from '../utils';
 
 import { EventType } from '$lib/@types';
 
@@ -32,20 +32,50 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         review.state === 'changes_requested' ||
         review.state === 'commented'
       ) {
-        await insertEvent({
-          action: review.state === 'approved' ? EventType.PR_APPROVED : EventType.PR_REJECTED,
+        const event = {
+          action:
+            review.state === 'approved'
+              ? EventType.PR_REVIEW_APPROVE
+              : review.state === 'changes_requested'
+              ? EventType.PR_REVIEW_REJECT
+              : EventType.PR_REVIEW_COMMENT,
           id: pull_request.number,
           index: 1,
           organization: organization?.login || 'holdex',
           owner: pull_request.user.login,
           repository: repository.name,
-          sender: pull_request.user.login,
+          sender: review.user.login,
           title: pull_request.title,
           created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
           updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
-        });
+        };
 
-        // check if the check run is already available, if not create one.
+        // insert event for reviewer
+        await insertEvent(
+          event,
+          `${event.organization}/${event.repository}@${event.id}_${event.created_at}_${event.sender}_${event.action}`
+        );
+
+        // insert events for PR owner
+        const prOwnerEvent = Object.assign({}, event, {
+          sender: event.owner,
+          action:
+            review.state === 'approved'
+              ? EventType.PR_APPROVED
+              : review.state === 'changes_requested'
+              ? EventType.PR_REJECTED
+              : EventType.PR_COMMENTED
+        });
+        await insertEvent(
+          prOwnerEvent,
+          `${prOwnerEvent.organization}/${prOwnerEvent.repository}@${prOwnerEvent.id}_${prOwnerEvent.created_at}_${prOwnerEvent.sender}_${prOwnerEvent.action}`
+        );
+
+        const prInfo = await items.update(
+          await getPrInfo(pull_request, repository, organization, sender, contributor),
+          { onCreateIfNotExist: true }
+        );
+
         const orgDetails = await io.github.runTask(
           'get org installation',
           async () => {
@@ -55,25 +85,32 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           { name: 'Get Organization installation' }
         );
 
-        await io.github.runTask(
-          `create-check-run-if-not-exists-${sender.login}`,
-          async () => {
-            return createCheckRunIfNotExists(
-              { name: organization?.login as string, installationId: orgDetails.id },
-              repository.name,
-              sender.login,
-              sender.id,
-              pull_request
-            );
-          },
-          { name: `Create check run for reviewer (${sender.login}) if not exists` }
-        );
-      }
+        const contributorList = await contributors.getManyBy({
+          id: { $in: prInfo.contributor_ids }
+        });
 
-      await items.update(
-        await getPrInfo(pull_request, repository, organization, sender, contributor),
-        { onCreateIfNotExist: true }
-      );
+        const taskChecks = [];
+        for (const c of contributorList) {
+          taskChecks.push(
+            io.github.runTask(
+              `create-check-run-for-contributor_${c.login}`,
+              async () => {
+                const result = await createCheckRunIfNotExists(
+                  { name: organization?.login as string, installationId: orgDetails.id },
+                  repository.name,
+                  c.login,
+                  c.id,
+                  pull_request
+                );
+                await io.logger.info(`check result`, { result });
+                return Promise.resolve();
+              },
+              { name: `check run for ${c.login}` }
+            )
+          );
+        }
+        return Promise.allSettled(taskChecks);
+      }
       break;
     }
     default: {
