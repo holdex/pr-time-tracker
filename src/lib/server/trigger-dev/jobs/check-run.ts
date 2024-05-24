@@ -218,14 +218,19 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     if (members.length > 0) {
       await io.github.runTask('update-submission-comment', async () => {
         const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-
-        const comment = await octokit.rest.issues.updateComment({
-          owner: payload.organization,
-          repo: repoDetails.data.name,
-          comment_id: previous?.databaseId as number,
-          body: commentBody.replace('<members>', `${members.join(`\n`)}\n`)
-        });
-        return Promise.resolve(comment);
+        try {
+          // let's check if the comment is not already available
+          const comment = await octokit.rest.issues.updateComment({
+            owner: payload.organization,
+            repo: repoDetails.data.name,
+            comment_id: previous?.databaseId as number,
+            body: commentBody.replace('<members>', `${members.join(`\n`)}\n`)
+          });
+          return Promise.resolve(comment);
+        } catch (error) {
+          await io.logger.error('update comment', { error });
+          return Promise.resolve();
+        }
       });
     }
   }
@@ -243,7 +248,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
           comment_id: previous ? (previous?.databaseId as number) : current?.data.id
         });
       } catch (error) {
-        await io.logger.info('delete previous comment', { error });
+        await io.logger.error('delete previous comment', { error });
       }
     });
   }
