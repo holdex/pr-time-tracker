@@ -31,14 +31,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         const match = check_run.name.match(/\((.*?)\)/);
         const contributor = await contributors.getOne({ login: (match as string[])[1] });
         if (contributor) {
-          await io.wait('wait for sync in case a similar run is available', 5);
           const prDetails = await io.github.runTask(
             'get-pr-info',
             async () => {
               const { data } = await getInstallationId(organization?.login as string);
               const octokit = await githubApp.getInstallationOctokit(data.id);
 
-              return getPrInfoByCheckRunNodeId(check_run.node_id as string, octokit);
+              return getPrInfoByCheckRunNodeId(payload, octokit);
             },
             { name: 'Get Pr info' }
           );
@@ -54,7 +53,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
               prNumber:
                 check_run.pull_requests && check_run.pull_requests.length > 0
                   ? check_run.pull_requests[0].number
-                  : prDetails.number,
+                  : (prDetails?.number as number),
               checkRunId: check_run.id,
               senderId: contributor.id,
               senderLogin: contributor.login
@@ -106,6 +105,8 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
   io: T
 ) {
+  await io.wait('wait for sync in case a similar run is available', 6);
+
   const orgDetails = await io.github.runTask(
     'get org installation',
     async () => {
@@ -306,19 +307,25 @@ async function getPreviousComment<T extends Octokit>(
   return undefined;
 }
 
-async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: string, octokit: T) {
+async function getPrInfoByCheckRunNodeId<T extends Octokit>(
+  checkRunEvent: CheckRunEvent,
+  octokit: T
+) {
   const data = await octokit.graphql<{ node: CheckRun }>(
     `
       query($nodeId: ID!) {
         node(id: $nodeId) {
           ...on CheckRun {
-            repository {
-              id
-              pullRequests(first: 1) {
-                nodes {
-                  number
-                  fullDatabaseId
-                  id
+            checkSuite {
+              commit {
+                id
+                
+                associatedPullRequests {
+                  nodes {
+                    number
+                    fullDatabaseId
+                    id
+                  }
                 }
               }
             }
@@ -326,11 +333,30 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(check_run_node_id: s
         }
       }
       `,
-    { nodeId: check_run_node_id }
+    { nodeId: checkRunEvent.check_run.node_id as string }
   );
 
-  const { pullRequests } = data.node.repository;
-  return ((pullRequests as PullRequestConnection).nodes as PullRequest[])[0];
+  const { commit } = data.node.checkSuite;
+
+  if (!commit.associatedPullRequests) {
+    // we need diffent method
+    const params = {
+      owner: checkRunEvent.repository.owner.login as string,
+      repo: checkRunEvent.repository.name,
+      state: 'all' as any,
+      head: `${checkRunEvent.organization?.login as string}:${
+        checkRunEvent.check_run.check_suite.head_branch
+      }`
+    };
+    const info = await octokit.rest.pulls.list(params);
+    if (info && info.data) {
+      const found = info.data.find((p) => (p.head.label = params.head));
+      return { id: found?.node_id, number: found?.number, fullDatabaseId: found?.id };
+    } else {
+      throw new Error('failed to get pull request' + JSON.stringify(params));
+    }
+  }
+  return ((commit.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
 }
 
 async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
