@@ -14,7 +14,7 @@ config.integrationsList.forEach((org) => {
   const concurrencyLimit = client.defineConcurrencyLimit({
     id: `${org.id}${isDev ? '_dev' : ''}-shared`,
     limit: 4 // Limit all jobs in this group to 4 concurrent executions
-  });
+  }); // Update concurency here
 
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
