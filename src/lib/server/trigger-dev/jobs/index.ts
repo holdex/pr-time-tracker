@@ -65,7 +65,7 @@ config.integrationsList.forEach((org) => {
         senderLogin: zod.string()
       })
     }),
-    concurrencyLimit: checkRunLimit,
+    concurrencyLimit: customEventLimit,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createCheckEventJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
@@ -79,7 +79,7 @@ config.integrationsList.forEach((org) => {
       event: events.onCheckRun,
       org: org.name
     }),
-    concurrencyLimit: customEventLimit,
+    concurrencyLimit: checkRunLimit,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createCheckRunJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
