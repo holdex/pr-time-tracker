@@ -16,6 +16,8 @@
     "proxy": "npx ngrok config add-authtoken 2T98NpdbPildowmwFLNYeB1JHQi_3hNtGwx8YQC1R3jEkYsDd && ngrok http --domain=alert-seemingly-moccasin.ngrok-free.app 3000"
   },
   "dependencies": {
+    "@discordjs/core": "^1.2.0",
+    "@discordjs/rest": "^2.3.0",
     "@google-cloud/bigquery": "^7.3.0",
     "@holdex/autoinvoicing": "0.0.7",
     "@octokit/graphql-schema": "^15.5.0",

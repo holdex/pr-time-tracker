@@ -6,6 +6,8 @@ import {
   GITHUB_CLIENT_SECRET,
   GITHUB_TOKEN,
   TRIGGER_API_KEY,
+  DISCORD_BOT_TOKEN,
+  DISCORD_CHANNEL_ID,
   TRIGGER_API_URL,
   GCLOUD_PROJECT_ID,
   GCLOUD_CLIENT_EMAIL,
@@ -24,6 +26,10 @@ type Config = {
     clientSecret: string;
     privateKey: string;
     token: string;
+  };
+  discord: {
+    botToken: string;
+    channelId: string;
   };
   gcloud: {
     projectId: string;
@@ -48,6 +54,10 @@ const config: Config = {
     clientSecret: GITHUB_CLIENT_SECRET,
     privateKey: GITHUB_PRIVATE_KEY,
     token: GITHUB_TOKEN
+  },
+  discord: {
+    botToken: DISCORD_BOT_TOKEN,
+    channelId: DISCORD_CHANNEL_ID
   },
   gcloud: {
     projectId: GCLOUD_PROJECT_ID,

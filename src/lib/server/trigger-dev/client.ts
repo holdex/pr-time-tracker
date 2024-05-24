@@ -1,5 +1,7 @@
 import { TriggerClient } from '@trigger.dev/sdk';
 import { Autoinvoicing, events } from '@holdex/autoinvoicing';
+import { REST } from '@discordjs/rest';
+import { API } from '@discordjs/core';
 
 import config from '../config';
 
@@ -14,5 +16,8 @@ const github = new Autoinvoicing({
   token: config.github.token
 });
 
+const rest = new REST({ version: '10' }).setToken(config.discord.botToken);
+const discordApi = new API(rest);
+
 export type { Autoinvoicing };
-export { events, github, client };
+export { events, github, client, discordApi };

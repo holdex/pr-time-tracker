@@ -5,7 +5,7 @@ import zod from 'zod';
 import { isDev } from '$lib/config';
 import config from '$lib/server/config';
 
-import { client, github, events, type Autoinvoicing } from '../client';
+import { client, github, events, discordApi, type Autoinvoicing } from '../client';
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
@@ -83,5 +83,34 @@ config.integrationsList.forEach((org) => {
     integrations: { github },
     run: async (payload, io, ctx) =>
       createCheckRunJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
+  });
+});
+
+client.defineJob({
+  id: `discord-send-message${isDev ? '_dev' : ''}`,
+  name: 'Send Discord message',
+  version: '0.0.1',
+  trigger: eventTrigger({
+    name: 'discord-send-message',
+    schema: zod.object({
+      content: zod.string()
+    })
+  }),
+  run: async (payload, io) => {
+    const { content } = payload;
+
+    await io.runTask('Discord send message', async () => {
+      const channelsAPI = discordApi.channels;
+      await channelsAPI.createMessage(config.discord.channelId, { content });
+    });
+  }
+});
+
+client.on('runFailed', (notification) => {
+  client.sendEvent({
+    name: 'discord-send-message',
+    payload: {
+      content: `${notification.job.id} failed to run. More info on https://cloud.trigger.dev/orgs/${notification.organization.slug}/projects/${notification.project.slug}/jobs/${notification.job.id}/runs/${notification.id}/trigger`
+    }
   });
 });
