@@ -17,7 +17,7 @@ config.integrationsList.forEach((org) => {
   });
 
   const customEventLimit = client.defineConcurrencyLimit({
-    id: `${org.id}_checkRun_${isDev ? '_dev' : ''}-shared`,
+    id: `${org.id}_customEvent_${isDev ? '_dev' : ''}-shared`,
     limit: 1 // Limit all jobs in this group to 1 concurrent executions
   });
 
