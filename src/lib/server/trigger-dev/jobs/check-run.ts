@@ -321,6 +321,16 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(
       query($nodeId: ID!) {
         node(id: $nodeId) {
           ...on CheckRun {
+            detailsUrl
+            repository {
+              pullRequests(last: 50) {
+                nodes {
+                  number
+                  id
+                  fullDatabaseId
+                }
+              }
+            }
             checkSuite {
               commit {
                 id
@@ -342,22 +352,48 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(
 
   const { commit } = data.node.checkSuite;
 
-  if (!commit.associatedPullRequests) {
-    // we need diffent method
-    const params = {
-      owner: checkRunEvent.repository.owner.login as string,
-      repo: checkRunEvent.repository.name,
-      state: 'all' as any,
-      head: `${checkRunEvent.organization?.login as string}:${
-        checkRunEvent.check_run.check_suite.head_branch
-      }`
-    };
-    const info = await octokit.rest.pulls.list(params);
-    if (info && info.data) {
-      const found = info.data.find((p) => (p.head.label = params.head));
-      return { id: found?.node_id, number: found?.number, fullDatabaseId: found?.id };
+  if (
+    !commit.associatedPullRequests ||
+    (commit.associatedPullRequests &&
+      commit.associatedPullRequests.nodes &&
+      commit.associatedPullRequests.nodes.length === 0)
+  ) {
+    if (checkRunEvent.check_run.check_suite.head_branch !== null) {
+      // we need diffent method
+      const params = {
+        owner: checkRunEvent.repository.owner.login as string,
+        repo: checkRunEvent.repository.name,
+        state: 'all' as any,
+        head: `${checkRunEvent.organization?.login as string}:${
+          checkRunEvent.check_run.check_suite.head_branch
+        }`
+      };
+      const info = await octokit.rest.pulls.list(params);
+      if (info && info.data) {
+        const found = info.data.find((p) => (p.head.label = params.head));
+        return { id: found?.node_id, number: found?.number, fullDatabaseId: found?.id };
+      } else {
+        throw new Error('failed to get pull request' + JSON.stringify(params));
+      }
     } else {
-      throw new Error('failed to get pull request' + JSON.stringify(params));
+      const { repository, detailsUrl } = data.node;
+
+      const parsedDBId = parseDBId(detailsUrl);
+      if (
+        repository &&
+        repository.pullRequests &&
+        repository.pullRequests.nodes &&
+        repository.pullRequests.nodes.length > 0
+      ) {
+        const found = repository.pullRequests.nodes.find(
+          (p) => Number(p?.fullDatabaseId) === Number(parsedDBId)
+        );
+        if (found) {
+          return { id: found.id, number: found?.number, fullDatabaseId: found.fullDatabaseId };
+        }
+      } else {
+        throw new Error('failed to get pull request');
+      }
     }
   }
   return ((commit.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
@@ -408,4 +444,9 @@ function bindMembers(previousCommentBody: string, member: string, submissionCrea
 
     return [...new Set(list)];
   }
+}
+
+function parseDBId(url: string) {
+  const arr = url.split('/');
+  return arr[arr.length - 1];
 }

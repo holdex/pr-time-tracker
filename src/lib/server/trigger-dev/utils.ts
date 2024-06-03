@@ -23,6 +23,14 @@ const githubApp = new App({
   }
 });
 
+const excludedAccounts: string[] = [
+  'coderabbitai[bot]',
+  'coderabbitai',
+  'github-advanced-security[bot]',
+  'dependabot[bot]',
+  'pr-time-tracker'
+];
+
 const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'> => ({
   id: user.id,
   name: user.login,
@@ -218,6 +226,7 @@ const checkRunFromEvent = async (
 
 export {
   githubApp,
+  excludedAccounts,
   reRequestCheckRun,
   getInstallationId,
   createCheckRunIfNotExists,

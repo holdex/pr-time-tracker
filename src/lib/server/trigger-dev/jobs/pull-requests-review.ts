@@ -7,6 +7,7 @@ import { insertEvent } from '$lib/server/gcloud';
 
 import {
   createCheckRunIfNotExists,
+  excludedAccounts,
   getContributorInfo,
   getInstallationId,
   getPrInfo
@@ -91,6 +92,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
         const taskChecks = [];
         for (const c of contributorList) {
+          if (excludedAccounts.includes(c.login)) continue;
           taskChecks.push(
             io.github.runTask(
               `create-check-run-for-contributor_${c.login}`,
