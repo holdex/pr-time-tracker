@@ -4,7 +4,7 @@ import type {
   HTMLButtonAttributes,
   SVGAttributes
 } from 'svelte/elements';
-import type { ItemSchema, SubmissionSchema } from '$lib/@types';
+import type { ContributorSchema, ItemSchema, SubmissionSchema } from '$lib/@types';
 
 /** Button */
 export interface ButtonProps
@@ -82,7 +82,7 @@ export interface CardProps {
   isReadonly?: boolean;
   isAdmin?: boolean;
   loading?: boolean;
-  data: ItemSchema & { number?: number };
+  data: ItemSchema & { number?: number; contributor?: ContributorSchema };
   onSubmit?: (
     payload: Partial<SubmissionSchema>,
     number: number,
