@@ -27,8 +27,6 @@ export const GET: RequestHandler = async ({ url: { searchParams, pathname }, coo
   }
 };
 
-// todo: fix here
-
 export const POST: RequestHandler = async ({ url, request, cookies }) => {
   try {
     let body: SubmissionSchema = {} as SubmissionSchema;
@@ -92,11 +90,15 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
       }
 
       body = transform<SubmissionSchema>(await request.json(), {
-        pick: ['_id' as keyof SubmissionSchema].concat(
-          user.role === UserRole.MANAGER
-            ? ['hours', 'approval', 'item_id', 'owner_id', 'created_at', 'updated_at']
-            : ['hours', 'experience', 'owner_id', 'created_at', 'updated_at']
-        )
+        pick: ['_id' as keyof SubmissionSchema].concat([
+          'hours',
+          'approval',
+          'experience',
+          'item_id',
+          'owner_id',
+          'created_at',
+          'updated_at'
+        ])
       })!;
 
       if (user.role !== UserRole.MANAGER && body.owner_id !== user.id) return false;
@@ -112,7 +114,7 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         action:
           user!.role === UserRole.MANAGER
             ? EventType.PR_SUBMISSION_APPROVED
-            : EventType.PR_SUBMISSION_UPDATED,
+            : EventType.PR_SUBMISSION_CREATED,
         id: pr.number as number,
         index: 1,
         organization: pr.org,

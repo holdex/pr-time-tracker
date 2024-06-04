@@ -22,7 +22,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     const approvals = transform<Approval[]>(searchParams.get('approvals'));
     const withContributors = transform<boolean>(searchParams.get('contributors'));
     const withSubmissions = transform<boolean>(searchParams.get('submissions'));
-    const submitted = transform<boolean>(searchParams.get('submitted'));
+    const submitted = searchParams.get('submitted');
     const definesSubmitted = typeof submitted === 'boolean';
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
 
@@ -44,7 +44,15 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
             }
           },
           {
-            $unwind: { path: '$submission', preserveNullAndEmptyArrays: true }
+            $lookup: {
+              from: CollectionNames.CONTRIBUTORS,
+              localField: 'contributor_ids',
+              foreignField: 'id',
+              pipeline: [
+                { $match: { id: contributor_id ? { $eq: contributor_id } : { $ne: '' } } }
+              ],
+              as: 'contributor'
+            }
           },
           {
             $match: {
@@ -52,6 +60,12 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
               'submission.approval': approvals
                 ? { $in: approvals.concat(!submitted ? (null as any) : []) }
                 : { $ne: '' }
+            }
+          },
+          {
+            $set: {
+              submission: { $arrayElemAt: ['$submission', 0] },
+              contributor: { $arrayElemAt: ['$contributor', 0] }
             }
           }
         ]

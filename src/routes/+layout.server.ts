@@ -31,7 +31,6 @@ export const load: LayoutServerLoad = async ({ fetch, depends, url, cookies }) =
         avatarUrl: data.user.avatar_url
       }))! || {};
     user = { ...data.user, ...contributor, _id: contributor._id?.toString() };
-    if (dev) user.role = 'Manager' as any;
     data.user = user;
     cookies.set(cookieNames.contributorId, user.id.toString(), serializeCookie());
     cookies.set(cookieNames.contributorRole, user.role, serializeCookie());

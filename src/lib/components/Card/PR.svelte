@@ -35,7 +35,7 @@
   /** react-ibles */
   $: closedAndNotMerged = !!data.closed_at && !data.merged;
   $: submissionApproved = data.submission?.approval === Approval.APPROVED;
-  $: if (submissionApproved && !isAdmin) isReadonly = true;
+  $: if ((submissionApproved && !isAdmin) || (data.merged && !isAdmin)) isReadonly = true;
   $: data.number = Number(data.url?.split('/').slice(-1));
   $: closedAt = data.closed_at ? new Date(data.closed_at) : undefined;
 </script>
@@ -108,7 +108,7 @@
         });
       }
 
-      submissionPayload.owner_id = $page.data.user.id;
+      submissionPayload.owner_id = data.contributor?.id;
       submissionPayload.item_id = data.id;
       submissionPayload.experience =
         Experience[activeReactionButton === 'left' ? 'POSITIVE' : 'NEGATIVE'];
