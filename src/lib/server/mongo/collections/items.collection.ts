@@ -126,7 +126,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
           }
         },
         {
-          $unwind: { path: '$submission', preserveNullAndEmptyArrays: true }
+          $set: {
+            submission: { $arrayElemAt: ['$submission', 0] }
+          }
         }
       ])
       .map((r) => ({ ...r, url: replaceUrl(r.url) }))
