@@ -27,6 +27,8 @@ export const GET: RequestHandler = async ({ url: { searchParams, pathname }, coo
   }
 };
 
+// todo: fix here
+
 export const POST: RequestHandler = async ({ url, request, cookies }) => {
   try {
     let body: SubmissionSchema = {} as SubmissionSchema;
