@@ -126,8 +126,18 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
           }
         },
         {
+          $lookup: {
+            from: CollectionNames.CONTRIBUTORS,
+            localField: 'contributor_ids',
+            foreignField: 'id',
+            pipeline: [{ $match: { id: contributorId ? { $eq: contributorId } : { $ne: '' } } }],
+            as: 'contributor'
+          }
+        },
+        {
           $set: {
-            submission: { $arrayElemAt: ['$submission', 0] }
+            submission: { $arrayElemAt: ['$submission', 0] },
+            contributor: { $arrayElemAt: ['$contributor', 0] }
           }
         }
       ])
