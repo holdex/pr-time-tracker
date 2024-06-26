@@ -19,7 +19,7 @@
     "@discordjs/core": "^1.2.0",
     "@discordjs/rest": "^2.3.0",
     "@google-cloud/bigquery": "^7.3.0",
-    "@holdex/autoinvoicing": "0.0.7",
+    "@holdex/autoinvoicing": "0.0.8",
     "@octokit/graphql-schema": "^15.5.0",
     "@octokit/oauth-methods": "^4.1.0",
     "@octokit/webhooks-types": "^7.5.0",

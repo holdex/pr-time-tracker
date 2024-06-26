@@ -8,9 +8,24 @@ import config from '$lib/server/config';
 import { client, github, events, discordApi, type Autoinvoicing } from '../client';
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
+import { createJob as createIssueJob } from './issues';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
 
 config.integrationsList.forEach((org) => {
+  client.defineJob({
+    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
+    id: `issue-label-streaming_${org.id}${isDev ? '_dev' : ''}`,
+    name: 'Streaming issue labeling for Github using app',
+    version: '0.0.1',
+    trigger: github.triggers.org({
+      event: events.onIssueLabel,
+      org: org.name
+    }),
+    integrations: { github },
+    run: async (payload, io, ctx) =>
+      createIssueJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
+  });
+
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
     id: `pull-requests-streaming_${org.id}${isDev ? '_dev' : ''}`,
@@ -20,7 +35,6 @@ config.integrationsList.forEach((org) => {
       event: events.onPullRequest,
       org: org.name
     }),
-    concurrencyLimit: 5,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createPrJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
@@ -35,7 +49,6 @@ config.integrationsList.forEach((org) => {
       event: events.onPullRequestReview,
       org: org.name
     }),
-    concurrencyLimit: 5,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createPrReviewJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)

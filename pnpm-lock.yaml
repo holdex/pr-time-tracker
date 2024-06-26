@@ -15,8 +15,8 @@ dependencies:
     specifier: ^7.3.0
     version: 7.3.0
   '@holdex/autoinvoicing':
-    specifier: 0.0.7
-    version: 0.0.7
+    specifier: 0.0.8
+    version: 0.0.8
   '@octokit/graphql-schema':
     specifier: ^15.5.0
     version: 15.5.0
@@ -736,12 +736,12 @@ packages:
     engines: {node: '>=14'}
     dev: false
 
-  /@holdex/autoinvoicing@0.0.7:
-    resolution: {integrity: sha512-7c1hxyKQK76+RHsOsNb/RI+G1hQLbQZbGx3E4WTyhLUasKhfbpkbw7rlnu/4PDM2Vz0oim4EiYjAJa6vtfc+QA==, tarball: https://npm.pkg.github.com/download/@holdex/autoinvoicing/0.0.7/14fb206a824610231ead90a1f05e52c307b8fc00}
+  /@holdex/autoinvoicing@0.0.8:
+    resolution: {integrity: sha512-jCLCHr6vUcIuWRHtjAXKaM7IX8Hv6DeN0roY9rGd/R/OorA0KybnpRZw2DQRqMTjbqWjo6Vsrdd7G0ATl8QzUQ==, tarball: https://npm.pkg.github.com/download/@holdex/autoinvoicing/0.0.8/257459dbefe06c4c3d56138482a737c8a8ab1da5}
     engines: {node: '>=16.8.0'}
     dependencies:
-      '@octokit/request': 8.2.0
-      '@octokit/request-error': 5.0.1
+      '@octokit/request': 8.3.1
+      '@octokit/request-error': 5.1.0
       '@octokit/webhooks': 12.1.0
       '@trigger.dev/integration-kit': 2.3.18
       '@trigger.dev/sdk': 2.3.18
@@ -1046,16 +1046,6 @@ packages:
       '@octokit/types': 13.2.0
       deprecation: 2.3.1
       once: 1.4.0
-    dev: false
-
-  /@octokit/request@8.2.0:
-    resolution: {integrity: sha512-exPif6x5uwLqv1N1irkLG1zZNJkOtj8bZxuVHd71U5Ftuxf2wGNvAJyNBcPbPC+EBzwYEbBDdSFb8EPcjpYxPQ==}
-    engines: {node: '>= 18'}
-    dependencies:
-      '@octokit/endpoint': 9.0.5
-      '@octokit/request-error': 5.1.0
-      '@octokit/types': 12.4.0
-      universal-user-agent: 6.0.0
     dev: false
 
   /@octokit/request@8.3.1:
