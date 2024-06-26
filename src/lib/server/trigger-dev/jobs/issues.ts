@@ -1,6 +1,6 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
-import type { IssuesEvent, IssuesLabeledEvent } from '@octokit/webhooks-types';
+import type { IssuesEvent } from '@octokit/webhooks-types';
 import type {
   AddProjectV2ItemByIdInput,
   AddProjectV2ItemByIdPayload,
@@ -8,36 +8,22 @@ import type {
   UpdateProjectV2ItemFieldValuePayload
 } from '@octokit/graphql-schema';
 
-import { getInstallationId, githubApp } from '../utils';
-
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: IssuesEvent,
   io: T,
   ctx: TriggerContext,
   org: { nodeId: string; name: string }
 ) {
-  const { action, issue, organization } = payload;
+  const { action, issue } = payload;
 
   switch (action) {
     case 'labeled': {
       const { label } = payload;
 
       if (label && regexExp.test(label.name)) {
-        // add goal to the board
-        const orgDetails = await io.github.runTask(
-          'get org installation',
-          async () => {
-            const { data } = await getInstallationId(organization?.login as string);
-            return data;
-          },
-          { name: 'Get Organization installation' }
-        );
-
         const projectItem = await io.github.runTask(
           `add-issue-to-the-board-${issue.id}`,
-          async () => {
-            const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-
+          async (octokit) => {
             return octokit.graphql<{ addProjectV2ItemById: AddProjectV2ItemByIdPayload }>(
               `
               mutation($input: AddProjectV2ItemByIdInput!) {
@@ -62,9 +48,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
         const updateProjectItem = await io.github.runTask(
           `update-project-fields-${issue.id}`,
-          async () => {
-            const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-
+          async (octokit) => {
             return octokit.graphql<{
               updateProjectV2ItemFieldValue: UpdateProjectV2ItemFieldValuePayload;
             }>(
