@@ -13,7 +13,9 @@ import {
   RepositoryCreatedEvent,
   StarCreatedEvent,
   StarEvent,
-  CheckSuiteEvent
+  CheckSuiteEvent,
+  IssuesLabeledEvent,
+  IssuesUnlabeledEvent
 } from '@octokit/webhooks-types';
 import { truncate } from '@trigger.dev/integration-kit';
 import {
@@ -37,7 +39,9 @@ import {
   checkSuiteCompleted,
   issueAssigned,
   issueCommentCreated,
+  issueLabeled,
   issueOpened,
+  issueUnlabeled,
   newBranch,
   pullRequestOpened,
   pullRequestReviewSubmitted,
@@ -313,7 +317,41 @@ const onIssueComment: EventSpecification<IssueCommentEvent> = {
   ]
 };
 
-function issueProperties(payload: IssuesEvent | IssueCommentEvent) {
+const onIssueLabel: EventSpecification<IssuesLabeledEvent> = {
+  name: 'issue_labeled',
+  title: 'On issue label',
+  source: 'github.com',
+  icon: 'github',
+  examples: [issueLabeled],
+  parsePayload: (payload) => payload as IssuesLabeledEvent,
+  runProperties: (payload) => [
+    ...issueProperties(payload),
+    {
+      label: 'Issue label',
+      text: payload.label?.name as string,
+      url: payload.label?.url
+    }
+  ]
+};
+
+const onIssueUnlabel: EventSpecification<IssuesUnlabeledEvent> = {
+  name: 'issue_unlabeled',
+  title: 'On issue unlabel',
+  source: 'github.com',
+  icon: 'github',
+  examples: [issueUnlabeled],
+  parsePayload: (payload) => payload as IssuesUnlabeledEvent,
+  runProperties: (payload) => [
+    ...issueProperties(payload),
+    {
+      label: 'Issue label',
+      text: payload.label?.name as string,
+      url: payload.label?.url
+    }
+  ]
+};
+
+function issueProperties(payload: IssuesEvent | IssueCommentEvent | IssuesLabeledEvent) {
   return [
     {
       label: 'Issue',
@@ -611,6 +649,10 @@ export const events = {
   onIssueAssigned,
   /** When an issue is commented on  */
   onIssueComment,
+  /** When an issue is labeled on  */
+  onIssueLabel,
+  /** When an issue is unlabeled on  */
+  onIssueUnlabel,
   /** When a repo is starred or unstarred  */
   onStar,
   /** When a repo is starred  */
