@@ -42,7 +42,7 @@ type Config = {
     apiKey: string;
     apiUrl: string;
   };
-  integrationsList: Array<{ id: string; name: string }>;
+  integrationsList: Array<{ id: string; name: string; nodeId: string }>;
 };
 
 const config: Config = {

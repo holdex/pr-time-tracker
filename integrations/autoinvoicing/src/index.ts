@@ -262,7 +262,7 @@ const onIssue: EventSpecification<IssuesEvent> = {
   title: 'On issue',
   source: 'github.com',
   icon: 'github',
-  examples: [issueOpened, issueAssigned],
+  examples: [issueOpened, issueAssigned, issueLabeled, issueCommentCreated],
   parsePayload: (payload) => payload as IssuesEvent,
   runProperties: (payload) => issueProperties(payload)
 };
@@ -301,10 +301,13 @@ const onIssueAssigned: EventSpecification<IssuesAssignedEvent> = {
 };
 
 const onIssueComment: EventSpecification<IssueCommentEvent> = {
-  name: 'issue_comment',
+  name: 'issues',
   title: 'On issue comment',
   source: 'github.com',
   icon: 'github',
+  filter: {
+    action: ['commented']
+  },
   examples: [issueCommentCreated],
   parsePayload: (payload) => payload as IssueCommentEvent,
   runProperties: (payload) => [
@@ -318,10 +321,13 @@ const onIssueComment: EventSpecification<IssueCommentEvent> = {
 };
 
 const onIssueLabel: EventSpecification<IssuesLabeledEvent> = {
-  name: 'issue_labeled',
+  name: 'issues',
   title: 'On issue label',
   source: 'github.com',
   icon: 'github',
+  filter: {
+    action: ['labeled']
+  },
   examples: [issueLabeled],
   parsePayload: (payload) => payload as IssuesLabeledEvent,
   runProperties: (payload) => [
@@ -335,10 +341,13 @@ const onIssueLabel: EventSpecification<IssuesLabeledEvent> = {
 };
 
 const onIssueUnlabel: EventSpecification<IssuesUnlabeledEvent> = {
-  name: 'issue_unlabeled',
+  name: 'issues',
   title: 'On issue unlabel',
   source: 'github.com',
   icon: 'github',
+  filter: {
+    action: ['unlabeled']
+  },
   examples: [issueUnlabeled],
   parsePayload: (payload) => payload as IssuesUnlabeledEvent,
   runProperties: (payload) => [

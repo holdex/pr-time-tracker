@@ -18,12 +18,12 @@ config.integrationsList.forEach((org) => {
     name: 'Streaming issue labeling for Github using app',
     version: '0.0.1',
     trigger: github.triggers.org({
-      event: events.onIssueLabel,
+      event: events.onIssue,
       org: org.name
     }),
     integrations: { github },
     run: async (payload, io, ctx) =>
-      createIssueJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
+      createIssueJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx, org)
   });
 
   client.defineJob({
