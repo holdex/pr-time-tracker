@@ -37,7 +37,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         action === 'synchronize' &&
         (pull_request.requested_reviewers.length > 0 || pull_request.requested_teams.length > 0)
       ) {
-        const orgDetails = await io.github.runTask(
+        const orgDetails = await io.runTask(
           'get org installation',
           async () => {
             const { data } = await getInstallationId(organization?.login as string);
@@ -46,7 +46,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           { name: 'Get Organization installation' }
         );
 
-        const contributorList = await io.github.runTask(
+        const contributorList = await io.runTask<any>(
           'get contributors list',
           async () => {
             const data = await contributors.getManyBy({
@@ -61,7 +61,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         for (const c of contributorList) {
           if (excludedAccounts.includes(c.login)) continue;
           taskChecks.push(
-            io.github.runTask(
+            io.runTask(
               `create-check-run-for-contributor_${c.login}`,
               async () => {
                 const result = await createCheckRunIfNotExists(
@@ -87,7 +87,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       break;
     }
     case 'review_requested': {
-      const orgDetails = await io.github.runTask(
+      const orgDetails = await io.runTask(
         'get org installation',
         async () => {
           const { data } = await getInstallationId(organization?.login as string);
@@ -96,7 +96,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         { name: 'Get Organization installation' }
       );
 
-      const contributorList = await io.github.runTask(
+      const contributorList = await io.runTask<any>(
         'map contributors',
         async () => {
           const contributor = await contributors.update(getContributorInfo(sender));
@@ -116,7 +116,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       for (const c of contributorList) {
         if (excludedAccounts.includes(c.login)) continue;
         taskChecks.push(
-          io.github.runTask(
+          io.runTask(
             `create-check-run-for-contributor_${c.login}`,
             async () => {
               const result = await createCheckRunIfNotExists(

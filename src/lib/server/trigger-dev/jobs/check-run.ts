@@ -29,9 +29,17 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     case 'rerequested': {
       if (check_run.name.startsWith(submissionCheckPrefix)) {
         const match = check_run.name.match(/\((.*?)\)/);
-        const contributor = await contributors.getOne({ login: (match as string[])[1] });
+        const contributor = await io.runTask<any>(
+          'get-contributor-info',
+          async () => {
+            const data = await contributors.getOne({ login: (match as string[])[1] });
+            return data;
+          },
+          { name: 'Get Contributor info' }
+        );
+
         if (contributor) {
-          const prDetails = await io.github.runTask(
+          const prDetails = await io.runTask<any>(
             'get-pr-info',
             async () => {
               const { data } = await getInstallationId(organization?.login as string);
@@ -107,7 +115,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
 ) {
   await io.wait('wait for sync in case a similar run is available', 6);
 
-  const orgDetails = await io.github.runTask(
+  const orgDetails = await io.runTask(
     'get org installation',
     async () => {
       const { data } = await getInstallationId(payload.organization);
@@ -116,7 +124,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     { name: 'Get Organization installation' }
   );
 
-  const submission = await io.github.runTask(
+  const submission = await io.runTask(
     'get-submission',
     async () => {
       return getSubmissionStatus(payload.senderId, payload.prId);
@@ -124,7 +132,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     { name: 'Get Submission' }
   );
 
-  const repoDetails = await io.github.runTask(
+  const repoDetails = await io.runTask(
     'get-repo-id',
     async () => {
       const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
@@ -134,7 +142,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     { name: 'Get Repo Details' }
   );
 
-  const checkDetails = await io.github.runTask(
+  const checkDetails = await io.runTask(
     'get-check-id',
     async () => {
       const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
@@ -148,7 +156,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     { name: 'Get Check Details' }
   );
 
-  const result = await io.github.runTask(
+  const result = await io.runTask(
     'update-check-run',
     async () => {
       const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
@@ -176,7 +184,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   // if failure -> check comment -> create if not exists -> update the list
   // if success -> check comment -> create if not exits -> update the list
 
-  const previous = await io.github.runTask('get previous comment', async () => {
+  const previous = await io.runTask('get previous comment', async () => {
     const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
     const previous = await getPreviousComment<typeof octokit>(
@@ -200,7 +208,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   if (!previous) {
     members = bindMembers('', payload.senderLogin, submissionCreated);
     if (members.length > 0) {
-      current = await io.github.runTask('add-submission-comment', async () => {
+      current = await io.runTask('add-submission-comment', async () => {
         const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
         const comment = await octokit.rest.issues.createComment({
@@ -216,7 +224,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
     members = bindMembers(previous.body, payload.senderLogin, submissionCreated);
 
     if (members.length > 0) {
-      await io.github.runTask('update-submission-comment', async () => {
+      await io.runTask('update-submission-comment', async () => {
         const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
         try {
           // let's check if the comment is not already available
@@ -237,7 +245,7 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
 
   // if no members remove the comment
   if (members.length === 0 && (previous || current)) {
-    await io.github.runTask('delete previous comment', async () => {
+    await io.runTask('delete previous comment', async () => {
       const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
       try {

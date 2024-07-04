@@ -36,7 +36,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
         const prInfo = await updatePrInfo(payload, io, (s) => s);
 
-        const orgDetails = await io.github.runTask(
+        const orgDetails = await io.runTask(
           'get org installation',
           async () => {
             const { data } = await getInstallationId(organization?.login as string);
@@ -45,7 +45,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           { name: 'Get Organization installation' }
         );
 
-        const contributorList = await io.github.runTask(
+        const contributorList = await io.runTask<any>(
           'get contributors list',
           async () => {
             const data = await contributors.getManyBy({
@@ -60,7 +60,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         for (const c of contributorList) {
           if (excludedAccounts.includes(c.login)) continue;
           taskChecks.push(
-            io.github.runTask(
+            io.runTask(
               `create-check-run-for-contributor_${c.login}`,
               async () => {
                 const result = await createCheckRunIfNotExists(
