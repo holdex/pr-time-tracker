@@ -11,6 +11,8 @@ import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createIssueJob } from './issues';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
 
+// TODO: refactor and integrate bug reports
+
 config.integrationsList.forEach((org) => {
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
