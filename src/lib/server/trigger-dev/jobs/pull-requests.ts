@@ -13,7 +13,7 @@ import {
   getPrInfo
 } from '../utils';
 
-import { EventType } from '$lib/@types';
+import { EventType, type ItemSchema } from '$lib/@types';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: PullRequestEvent,
@@ -27,43 +27,11 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     case 'edited':
     case 'synchronize':
     case 'closed': {
-      const { user, merged } = pull_request;
-      let contributorInfo;
-
       if (action === 'opened' || action === 'closed') {
-        contributorInfo = getContributorInfo(user);
-
-        const event = {
-          action:
-            action === 'opened'
-              ? EventType.PR_OPENED
-              : merged
-              ? EventType.PR_MERGED
-              : EventType.PR_CLOSED,
-          id: pull_request.number,
-          index: 1,
-          organization: organization?.login || 'holdex',
-          owner: user.login,
-          repository: repository.name,
-          sender: user.login,
-          title: pull_request.title,
-          created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
-          updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
-        };
-
-        // store these events in gcloud
-        await insertEvent(
-          event,
-          `${event.organization}/${event.repository}@${event.id}_${event.action}`
-        );
-      } else {
-        contributorInfo = getContributorInfo(sender);
+        await insertPrEvent(payload, io);
       }
 
-      const contributor = await contributors.update(contributorInfo);
-      await io.wait('wait for first call', 5);
-      const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
-      await items.update(prInfo, { onCreateIfNotExist: true });
+      const prInfo = await updatePrInfo(payload, io, (s) => s);
 
       if (
         action === 'synchronize' &&
@@ -78,9 +46,16 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           { name: 'Get Organization installation' }
         );
 
-        const contributorList = await contributors.getManyBy({
-          id: { $in: prInfo.contributor_ids }
-        });
+        const contributorList = await io.github.runTask(
+          'get contributors list',
+          async () => {
+            const data = await contributors.getManyBy({
+              id: { $in: prInfo.contributor_ids }
+            });
+            return data;
+          },
+          { name: 'Get contributors list' }
+        );
 
         const taskChecks = [];
         for (const c of contributorList) {
@@ -108,11 +83,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       break;
     }
     case 'reopened': {
-      const { user } = pull_request;
-      const contributor = await contributors.update(getContributorInfo(user));
-
-      const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
-      await items.update({ ...prInfo, closed_at: '' }, { onCreateIfNotExist: true });
+      await updatePrInfo(payload, io, (s) => ({ ...s, closed_at: '' }));
       break;
     }
     case 'review_requested': {
@@ -168,4 +139,80 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       io.logger.log('current action for pull request is not in the parse candidate', payload);
     }
   }
+}
+
+async function insertPrEvent<
+  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
+  E extends PullRequestEvent = PullRequestEvent
+>(payload: E, io: T) {
+  const { action, pull_request, repository, organization } = payload;
+
+  const event = {
+    action:
+      action === 'opened'
+        ? EventType.PR_OPENED
+        : pull_request.merged
+        ? EventType.PR_MERGED
+        : EventType.PR_CLOSED,
+    id: pull_request.number,
+    index: 1,
+    organization: organization?.login || 'holdex',
+    owner: pull_request.user.login,
+    repository: repository.name,
+    sender: pull_request.user.login,
+    title: pull_request.title,
+    created_at: Math.round(new Date(pull_request.created_at).getTime() / 1000).toFixed(0),
+    updated_at: Math.round(new Date(pull_request.updated_at).getTime() / 1000).toFixed(0)
+  };
+
+  const eventId = `${event.organization}/${event.repository}@${event.id}_${event.action}`;
+  await io.runTask(
+    `insert event: ${eventId}`,
+    async () => {
+      const data = await insertEvent(event, eventId);
+      return data;
+    },
+    { name: 'Insert Bigquery event' }
+  );
+}
+
+async function updatePrInfo<
+  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
+  E extends PullRequestEvent = PullRequestEvent
+>(payload: E, io: T, prepareInfo: (s: ItemSchema) => ItemSchema) {
+  const { action, pull_request, repository, organization, sender } = payload;
+  let contributorInfo = getContributorInfo(sender);
+
+  if (action === 'opened' || action === 'closed') {
+    contributorInfo = getContributorInfo(pull_request.user);
+  }
+
+  const contributor = await io.runTask<any>(
+    `update contributor: ${contributorInfo._id}`,
+    async () => {
+      const data = await contributors.update(contributorInfo);
+      return data;
+    },
+    { name: 'Update Contributor schema' }
+  );
+
+  await io.wait('wait for first call', 5);
+
+  const prInfo = await io.runTask<any>(
+    `get pr info: ${pull_request.node_id}`,
+    async () => {
+      const data = await getPrInfo(pull_request, repository, organization, sender, contributor);
+      return data;
+    },
+    { name: 'Get Item schema' }
+  );
+
+  return io.runTask<any>(
+    `update pr info: ${pull_request.node_id}`,
+    async () => {
+      const data = await items.update(prepareInfo(prInfo), { onCreateIfNotExist: true });
+      return data;
+    },
+    { name: 'Update Item schema' }
+  );
 }
