@@ -11,6 +11,7 @@ import {
   getContributorInfo,
   getInstallationId,
   getPrInfo,
+  runPrFixCheckRun,
   submissionCheckName
 } from '../utils';
 
@@ -82,9 +83,9 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             )
           );
         }
-        return Promise.allSettled(taskChecks);
+        await Promise.allSettled(taskChecks);
       }
-      break;
+      return runPrFixCheckRun(payload, io);
     }
     default: {
       io.logger.log('current action for pull request is not in the parse candidate', payload);

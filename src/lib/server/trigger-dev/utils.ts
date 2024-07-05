@@ -5,15 +5,18 @@ import type {
   PullRequest,
   SimplePullRequest,
   Organization,
-  Repository
+  Repository,
+  PullRequestEvent,
+  PullRequestReviewEvent
 } from '@octokit/webhooks-types';
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
+import type { IOWithIntegrations } from '@trigger.dev/sdk';
 
 import config from '$lib/server/config';
 import { ItemType } from '$lib/constants';
 import { items, submissions } from '$lib/server/mongo/collections';
 
-import { client } from './client';
+import { client, type Autoinvoicing } from './client';
 
 const githubApp = new App({
   appId: config.github.appId,
@@ -229,8 +232,50 @@ const checkRunFromEvent = async (
   );
 };
 
+async function runPrFixCheckRun<
+  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
+  E extends PullRequestEvent | PullRequestReviewEvent = PullRequestEvent | PullRequestReviewEvent
+>(payload: E, io: T) {
+  const { pull_request, repository, organization } = payload;
+
+  const { title, user } = pull_request;
+  if (/^fix:/.test(title)) {
+    return io.logger.log('identified pull request');
+
+    const orgDetails = await io.runTask(
+      'get org installation',
+      async () => {
+        const { data } = await getInstallationId(organization?.login as string);
+        return data;
+      },
+      { name: 'Get Organization installation' }
+    );
+
+    await io.runTask(
+      `create-check-run-for-fix-pr`,
+      async () => {
+        const result = await createCheckRunIfNotExists(
+          {
+            name: organization?.login as string,
+            installationId: orgDetails.id,
+            repo: repository.name
+          },
+          user,
+          pull_request,
+          (b) => bugCheckName(b),
+          'bug_report'
+        );
+        await io.logger.info(`check result`, { result });
+        return Promise.resolve();
+      },
+      { name: `check run for fix PR` }
+    );
+  }
+}
+
 export {
   githubApp,
+  runPrFixCheckRun,
   excludedAccounts,
   reRequestCheckRun,
   getInstallationId,

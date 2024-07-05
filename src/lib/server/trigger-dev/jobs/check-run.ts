@@ -258,7 +258,7 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
     const previous = await getPreviousComment<typeof octokit>(
       { owner: payload.organization, repo: repoDetails.data.name },
       payload.prNumber,
-      payload.prId.toString(),
+      submissionHeaderComment(payload.prId.toString()),
       octokit
     );
     return previous;
@@ -335,17 +335,91 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   io: T
 ) {
   await io.logger.info('prInfo', { number: payload.prNumber });
+
+  await io.wait('wait for sync in case a similar run is available', 3);
+
+  const orgDetails = await io.runTask(
+    'get org installation',
+    async () => {
+      const { data } = await getInstallationId(payload.organization);
+      return data;
+    },
+    { name: 'Get Organization installation' }
+  );
+
+  const repoDetails = await io.runTask(
+    'get-repo-id',
+    async () => {
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+      return octokit.rest.repos.get({ owner: payload.organization, repo: payload.repo });
+    },
+    { name: 'Get Repo Details' }
+  );
+
+  const checkDetails = await io.runTask(
+    'get-check-id',
+    async () => {
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+      return octokit.rest.checks.get({
+        owner: payload.organization,
+        repo: repoDetails.data.name,
+        check_run_id: payload.checkRunId
+      });
+    },
+    { name: 'Get Check Details' }
+  );
+
+  const bugReportComment = await io.runTask('get report comment', async () => {
+    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+    const previous = await getPreviousComment<typeof octokit>(
+      { owner: payload.organization, repo: repoDetails.data.name },
+      payload.prNumber,
+      `@pr-time-tracker bug commit`,
+      octokit
+    );
+    return previous;
+  });
+
+  await io.runTask(
+    'update-report-check-run',
+    async () => {
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+      return updateCheckRun(octokit, {
+        repositoryId: repoDetails.data.node_id,
+        checkRunId: checkDetails.data.node_id,
+        status: 'COMPLETED',
+        conclusion: bugReportComment ? 'SUCCESS' : 'FAILURE',
+        completedAt: new Date().toISOString(),
+        detailsUrl: `https://pr-time-tracker.vercel.app/prs/${payload.organization}/${repoDetails.data.name}/${payload.prId}`,
+        output: {
+          title: bugReportComment ? `✅ bug info submitted` : '❌ bug info comment missing',
+          summary: ''
+        }
+      }).then((r) => r.updateCheckRun);
+    },
+    { name: 'Update check run' }
+  );
+
+  // let current: any = null;
+  // if (bugReportComment) {
+  //   // find out if the comment exists
+  // } else {
+  //   // add message
+  // }
 }
 
 async function getPreviousComment<T extends Octokit>(
   repo: { owner: string; repo: string },
   prNumber: number,
-  header: string,
+  h: string,
   octokit: T
 ) {
   let after = null;
   let hasNextPage = true;
-  const h = headerComment(header);
 
   while (hasNextPage) {
     /* eslint-disable no-await-in-loop */
@@ -501,12 +575,12 @@ async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckR
   );
 }
 
-function headerComment(header: string): string {
+function submissionHeaderComment(header: string): string {
   return `<!-- Sticky Pull Request Comment${header} -->`;
 }
 
 function bodyWithHeader(body: string, header: string): string {
-  return `${body}\n${headerComment(header)}`;
+  return `${body}\n${submissionHeaderComment(header)}`;
 }
 
 const regex = new RegExp(/\B@([a-z0-9](?:-(?=[a-z0-9])|[a-z0-9]){0,38}(?<=[a-z0-9]))/, 'gmi');

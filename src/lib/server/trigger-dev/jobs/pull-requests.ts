@@ -12,6 +12,7 @@ import {
   getContributorInfo,
   getInstallationId,
   getPrInfo,
+  runPrFixCheckRun,
   submissionCheckName
 } from '../utils';
 
@@ -228,43 +229,4 @@ async function updatePrInfo<
     },
     { name: 'Update Item schema' }
   );
-}
-
-async function runPrFixCheckRun<
-  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
-  E extends PullRequestEvent = PullRequestEvent
->(payload: E, io: T) {
-  const { pull_request, repository, organization } = payload;
-
-  const { title, user } = pull_request;
-  if (/^fix:/.test(title)) {
-    const orgDetails = await io.runTask(
-      'get org installation',
-      async () => {
-        const { data } = await getInstallationId(organization?.login as string);
-        return data;
-      },
-      { name: 'Get Organization installation' }
-    );
-
-    await io.runTask(
-      `create-check-run-for-fix-pr`,
-      async () => {
-        const result = await createCheckRunIfNotExists(
-          {
-            name: organization?.login as string,
-            installationId: orgDetails.id,
-            repo: repository.name
-          },
-          user,
-          pull_request,
-          (b) => bugCheckName(b),
-          'bug_report'
-        );
-        await io.logger.info(`check result`, { result });
-        return Promise.resolve();
-      },
-      { name: `check run for fix PR` }
-    );
-  }
 }
