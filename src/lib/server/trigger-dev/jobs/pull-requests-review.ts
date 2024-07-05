@@ -10,7 +10,8 @@ import {
   excludedAccounts,
   getContributorInfo,
   getInstallationId,
-  getPrInfo
+  getPrInfo,
+  submissionCheckName
 } from '../utils';
 
 import { EventType, type ItemSchema } from '$lib/@types';
@@ -64,11 +65,15 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
               `create-check-run-for-contributor_${c.login}`,
               async () => {
                 const result = await createCheckRunIfNotExists(
-                  { name: organization?.login as string, installationId: orgDetails.id },
-                  repository.name,
-                  c.login,
-                  c.id,
-                  pull_request
+                  {
+                    name: organization?.login as string,
+                    installationId: orgDetails.id,
+                    repo: repository.name
+                  },
+                  c,
+                  pull_request,
+                  (_c) => submissionCheckName(_c),
+                  'submission'
                 );
                 await io.logger.info(`check result`, { result });
                 return Promise.resolve();

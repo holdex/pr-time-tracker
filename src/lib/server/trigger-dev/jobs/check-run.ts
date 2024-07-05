@@ -15,7 +15,13 @@ import type { CheckRunEvent } from '@octokit/webhooks-types';
 
 import { contributors } from '$lib/server/mongo/collections';
 
-import { getInstallationId, getSubmissionStatus, submissionCheckPrefix, githubApp } from '../utils';
+import {
+  getInstallationId,
+  getSubmissionStatus,
+  submissionCheckPrefix,
+  githubApp,
+  bugCheckPrefix
+} from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -50,9 +56,53 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             { name: 'Get Pr info' }
           );
 
-          await runJob<T>(
+          await runSubmissionJob<T>(
             {
               organization: organization?.login as string,
+              type: 'submission',
+              repo: repository.name,
+              prId:
+                check_run.pull_requests && check_run.pull_requests.length > 0
+                  ? check_run.pull_requests[0].id
+                  : Number(prDetails.fullDatabaseId),
+              prNumber:
+                check_run.pull_requests && check_run.pull_requests.length > 0
+                  ? check_run.pull_requests[0].number
+                  : (prDetails?.number as number),
+              checkRunId: check_run.id,
+              senderId: contributor.id,
+              senderLogin: contributor.login
+            },
+            io
+          );
+        }
+      } else if (check_run.name.startsWith(bugCheckPrefix)) {
+        const match = check_run.name.match(/\((.*?)\)/);
+        const contributor = await io.runTask<any>(
+          'get-contributor-info',
+          async () => {
+            const data = await contributors.getOne({ login: (match as string[])[1] });
+            return data;
+          },
+          { name: 'Get Contributor info' }
+        );
+
+        if (contributor) {
+          const prDetails = await io.runTask(
+            'get-pr-info',
+            async () => {
+              const { data } = await getInstallationId(organization?.login as string);
+              const octokit = await githubApp.getInstallationOctokit(data.id);
+
+              return getPrInfoByCheckRunNodeId(payload, octokit);
+            },
+            { name: 'Get Pr info' }
+          );
+
+          await runBugReportJob<T>(
+            {
+              organization: organization?.login as string,
+              type: 'bug_report',
               repo: repository.name,
               prId:
                 check_run.pull_requests && check_run.pull_requests.length > 0
@@ -79,6 +129,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 }
 
 export type EventSchema = {
+  type: string;
   organization: string;
   senderId: number;
   senderLogin: string;
@@ -93,23 +144,40 @@ export async function createEventJob<T extends IOWithIntegrations<{ github: Auto
   io: T,
   ctx: TriggerContext
 ) {
-  const { organization, repo, senderId, checkRunId, prId, prNumber, senderLogin } = payload;
+  const { organization, repo, senderId, checkRunId, prId, prNumber, senderLogin, type } = payload;
 
-  await runJob<T>(
-    {
-      organization: organization,
-      repo,
-      prId,
-      prNumber,
-      checkRunId,
-      senderId,
-      senderLogin
-    },
-    io
-  );
+  if (type === 'submission') {
+    await runSubmissionJob<T>(
+      {
+        type,
+        organization: organization,
+        repo,
+        prId,
+        prNumber,
+        checkRunId,
+        senderId,
+        senderLogin
+      },
+      io
+    );
+  } else if (type === 'bug_report') {
+    await runBugReportJob<T>(
+      {
+        type,
+        organization: organization,
+        repo,
+        prId,
+        prNumber,
+        checkRunId,
+        senderId,
+        senderLogin
+      },
+      io
+    );
+  }
 }
 
-async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
+async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
   io: T
 ) {
@@ -260,6 +328,13 @@ async function runJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
       }
     });
   }
+}
+
+async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
+  payload: EventSchema,
+  io: T
+) {
+  await io.logger.info('prInfo', { number: payload.prNumber });
 }
 
 async function getPreviousComment<T extends Octokit>(

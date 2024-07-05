@@ -40,7 +40,9 @@ const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'
 });
 
 const submissionCheckPrefix = 'Cost Submission';
+const bugCheckPrefix = 'Bug Report Info';
 const submissionCheckName = (login: string) => `${submissionCheckPrefix} (${login})`;
+const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
 
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
@@ -111,20 +113,20 @@ const getInstallationId = async (orgName: string) => {
 };
 
 const createCheckRunIfNotExists = async (
-  org: { name: string; installationId: number },
-  repoName: string,
-  senderLogin: string,
-  senderId: number,
-  pull_request: PullRequest | SimplePullRequest
+  org: { name: string; installationId: number; repo: string },
+  sender: { login: string; id: number },
+  pull_request: PullRequest | SimplePullRequest,
+  checkName: (s: string) => string,
+  runType: string
 ) => {
   const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
   const { data } = await octokit.rest.checks
     .listForRef({
       owner: org.name,
-      repo: repoName,
+      repo: org.repo,
       ref: pull_request.head.sha,
-      check_name: submissionCheckName(senderLogin)
+      check_name: checkName(sender.login)
     })
     .catch(() => ({
       data: {
@@ -137,21 +139,22 @@ const createCheckRunIfNotExists = async (
     return octokit.rest.checks
       .create({
         owner: org.name,
-        repo: repoName,
+        repo: org.repo,
         head_sha: pull_request.head.sha,
-        name: submissionCheckName(senderLogin),
-        details_url: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoName}/${pull_request.id}`
+        name: checkName(sender.login),
+        details_url: `https://pr-time-tracker.vercel.app/prs/${org.name}/${org.repo}/${pull_request.id}`
       })
       .catch((err) => ({ error: err }));
   } else {
     return client.sendEvent({
-      name: `${org.name}_pr_submission.created`,
+      name: `${org.name}_custom_event`,
       payload: {
+        type: runType,
         organization: org.name,
-        repo: repoName,
+        repo: org.repo,
         prId: pull_request.id,
-        senderLogin: senderLogin,
-        senderId: senderId,
+        senderLogin: sender.login,
+        senderId: sender.id,
         prNumber: pull_request.number,
         checkRunId: data.check_runs[data.total_count - 1].id
       }
@@ -190,8 +193,9 @@ const reRequestCheckRun = async (
 
   if (data.total_count > 0) {
     return client.sendEvent({
-      name: `${org.name}_pr_submission.created`,
+      name: `${org.name}_custom_event`,
       payload: {
+        type: 'submission',
         organization: org.name,
         repo: repoName,
         prId: prInfo.data.id,
@@ -235,6 +239,8 @@ export {
   checkRunFromEvent,
   getPrInfo,
   getSubmissionStatus,
+  bugCheckName,
   submissionCheckName,
+  bugCheckPrefix,
   submissionCheckPrefix
 };

@@ -6,11 +6,13 @@ import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
 import {
+  bugCheckName,
   createCheckRunIfNotExists,
   excludedAccounts,
   getContributorInfo,
   getInstallationId,
-  getPrInfo
+  getPrInfo,
+  submissionCheckName
 } from '../utils';
 
 import { EventType, type ItemSchema } from '$lib/@types';
@@ -65,11 +67,15 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
               `create-check-run-for-contributor_${c.login}`,
               async () => {
                 const result = await createCheckRunIfNotExists(
-                  { name: organization?.login as string, installationId: orgDetails.id },
-                  repository.name,
-                  c.login,
-                  c.id,
-                  pull_request
+                  {
+                    name: organization?.login as string,
+                    installationId: orgDetails.id,
+                    repo: repository.name
+                  },
+                  c,
+                  pull_request,
+                  (_c) => submissionCheckName(_c),
+                  'submission'
                 );
                 await io.logger.info(`check result`, { result });
                 return Promise.resolve();
@@ -78,8 +84,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             )
           );
         }
-        return Promise.allSettled(taskChecks);
+        await Promise.allSettled(taskChecks);
       }
+
+      await runPrFixCheckRun(payload, io);
       break;
     }
     case 'reopened': {
@@ -120,11 +128,15 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             `create-check-run-for-contributor_${c.login}`,
             async () => {
               const result = await createCheckRunIfNotExists(
-                { name: organization?.login as string, installationId: orgDetails.id },
-                repository.name,
-                c.login,
-                c.id,
-                pull_request
+                {
+                  name: organization?.login as string,
+                  installationId: orgDetails.id,
+                  repo: repository.name
+                },
+                c,
+                pull_request,
+                (s) => submissionCheckName(s),
+                'submission'
               );
               await io.logger.info(`check result`, { result });
               return Promise.resolve();
@@ -133,7 +145,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           )
         );
       }
-      return Promise.allSettled(taskChecks);
+      await Promise.allSettled(taskChecks);
+      return runPrFixCheckRun(payload, io);
     }
     default: {
       io.logger.log('current action for pull request is not in the parse candidate', payload);
@@ -215,4 +228,43 @@ async function updatePrInfo<
     },
     { name: 'Update Item schema' }
   );
+}
+
+async function runPrFixCheckRun<
+  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
+  E extends PullRequestEvent = PullRequestEvent
+>(payload: E, io: T) {
+  const { pull_request, repository, organization } = payload;
+
+  const { title, user } = pull_request;
+  if (/^fix:/.test(title)) {
+    const orgDetails = await io.runTask(
+      'get org installation',
+      async () => {
+        const { data } = await getInstallationId(organization?.login as string);
+        return data;
+      },
+      { name: 'Get Organization installation' }
+    );
+
+    await io.runTask(
+      `create-check-run-for-fix-pr`,
+      async () => {
+        const result = await createCheckRunIfNotExists(
+          {
+            name: organization?.login as string,
+            installationId: orgDetails.id,
+            repo: repository.name
+          },
+          user,
+          pull_request,
+          (b) => bugCheckName(b),
+          'bug_report'
+        );
+        await io.logger.info(`check result`, { result });
+        return Promise.resolve();
+      },
+      { name: `check run for fix PR` }
+    );
+  }
 }

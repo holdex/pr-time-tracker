@@ -11,8 +11,6 @@ import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createIssueJob } from './issues';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
 
-// TODO: refactor and integrate bug reports
-
 config.integrationsList.forEach((org) => {
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
@@ -61,8 +59,9 @@ config.integrationsList.forEach((org) => {
     name: 'Streaming custom events for Github using app',
     version: '0.0.1',
     trigger: eventTrigger({
-      name: `${org.name}_pr_submission.created`,
+      name: `${org.name}_custom_event`,
       schema: zod.object({
+        type: zod.string(),
         organization: zod.string(),
         repo: zod.string(),
         prId: zod.number(),
