@@ -4,6 +4,9 @@
 
   import type { CardProps, ToggleProps } from '../types';
 
+  import { submissionDuration } from '$lib/config';
+  import { millisecondsToStr } from '$lib/utils';
+  import { SECOND_IN_MILISECOND } from '$lib/constants';
   import Button from '$lib/components/Button/index.svelte';
   import Toggle from '$lib/components/Toggle/index.svelte';
   import Input from '$lib/components/Input/index.svelte';
@@ -31,6 +34,9 @@
     : 'left';
   let closedAndNotMerged = false;
   let closedAt: Date | undefined;
+  let mergedWithoutSubmission = false;
+  let elapsedTime = 0;
+  let humanReadableElapsedTime = '1 day';
 
   /** react-ibles */
   $: closedAndNotMerged = !!data.closed_at && !data.merged;
@@ -38,6 +44,12 @@
   $: if ((submissionApproved && !isAdmin) || (data.merged && !isAdmin)) isReadonly = true;
   $: data.number = Number(data.url?.split('/').slice(-1));
   $: closedAt = data.closed_at ? new Date(data.closed_at) : undefined;
+  $: mergedWithoutSubmission = data.merged === true && data.submission === undefined;
+  $: elapsedTime =
+    new Date().getTime() - new Date(data.updated_at ?? data.created_at ?? 0).getTime();
+  $: canSubmitAfterMerge =
+    mergedWithoutSubmission && elapsedTime / SECOND_IN_MILISECOND <= Number(submissionDuration);
+  $: humanReadableElapsedTime = millisecondsToStr(elapsedTime);
 </script>
 
 <li
@@ -47,25 +59,27 @@
   } max-w-full relative border border-solid border-l4 bg-l1 shadow-input rounded-xl text-t1 transition-all list-none animate-fadeIn  ${
     (submissionApproved && !isAdmin) || closedAndNotMerged ? 'opacity-60' : ''
   } dark:bg-l2 xs:w-full`}>
-  <div class="p-4 flex gap-4 items-start">
-    <span
-      title={data.merged
-        ? 'Closed and merged'
-        : closedAndNotMerged
-        ? 'Closed but not merged'
-        : 'Open'}>
-      <Icon
-        name="pr-{data.merged ? 'closed' : 'open'}"
-        class="w-5 h-5 min-w-fit {closedAndNotMerged
-          ? 'text-neg'
-          : !data.merged
-          ? 'text-accent2-default'
-          : ''}" />
-    </span>
+  <div class="p-4 flex gap-4 items-start items-center justify-between">
+    <div class="flex gap-4 items-start items-center">
+      <span
+        title={data.merged
+          ? 'Closed and merged'
+          : closedAndNotMerged
+          ? 'Closed but not merged'
+          : 'Open'}>
+        <Icon
+          name="pr-{data.merged ? 'closed' : 'open'}"
+          class="w-5 h-5 min-w-fit {closedAndNotMerged
+            ? 'text-neg'
+            : !data.merged
+            ? 'text-accent2-default'
+            : ''}" />
+      </span>
 
-    <a {href} target="_blank" class="link">
-      <h2 class="text-t3">{data.org} / {data.repo} / #{data.number}</h2>
-    </a>
+      <a {href} target="_blank" class="link">
+        <h2 class="text-t3">{data.org} / {data.repo} / #{data.number}</h2>
+      </a>
+    </div>
 
     {#if closedAt}
       <span class="flex gap-1.5 text-sm ml-auto flex-wrap max-w-content">
@@ -73,6 +87,13 @@
         <span class="text-footnote">
           {closedAt.toDateString().replace(/\w{3,3}\s/, '') || '...'}
         </span>
+      </span>
+    {/if}
+
+    {#if canSubmitAfterMerge}
+      <span class="flex gap-1.5 items-center justify-end">
+        <Icon name="bell-alert" class="w-5 h-5 min-w-fit text-accent1-active" />
+        <span class="my-auto text-t3 text-footnote">Required in {humanReadableElapsedTime}</span>
       </span>
     {/if}
   </div>
@@ -137,7 +158,7 @@
     {#if !isAdmin}
       <span class="flex gap-1.5 items-center max-w-content">
         <span>Hours:</span>
-        {#if isReadonly}
+        {#if isReadonly && !canSubmitAfterMerge}
           <span class="text-t1">{data.submission?.hours || '...'}</span>
         {:else}
           <Input
@@ -148,9 +169,12 @@
         {/if}
       </span>
 
-      <span class="flex gap-1.5 items-center sm:ml-3 {isReadonly ? 'sm:mr-auto' : ''}">
+      <span
+        class="flex gap-1.5 items-center sm:ml-3 {isReadonly && !canSubmitAfterMerge
+          ? 'sm:mr-auto'
+          : ''}">
         <span>Experience:</span>
-        {#if isReadonly}
+        {#if isReadonly && !canSubmitAfterMerge}
           <span
             class="capitalize {data.submission?.experience === 'negative'
               ? 'text-neg'
@@ -161,7 +185,6 @@
           <Toggle isReactionToggle bind:activeButton={activeReactionButton} />
         {/if}
       </span>
-
       {#if data.submission}
         <div class="flex gap-1.5">
           <span>Approval:</span>
@@ -170,7 +193,7 @@
       {/if}
     {/if}
 
-    {#if !isReadonly || isAdmin}
+    {#if !isReadonly || canSubmitAfterMerge || isAdmin}
       <Button
         isSubmitBtn
         size="small"

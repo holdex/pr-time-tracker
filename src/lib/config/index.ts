@@ -1,4 +1,4 @@
-import { PUB_GITHUB_CLIENT_ID } from '$env/static/public';
+import { PUB_GITHUB_CLIENT_ID, PUB_SUBMISSION_DURATION } from '$env/static/public';
 import { dev } from '$app/environment';
 
 type Config = {
@@ -54,4 +54,7 @@ export const responseHeadersInit = {
 };
 
 export const isDev = dev;
+
+export const submissionDuration = PUB_SUBMISSION_DURATION;
+
 export default config;

@@ -1,6 +1,7 @@
 /* eslint-disable no-shadow */
 export const ONE_MONTH = 1;
 export const HOUR_IN_MILISECOND = 3600000;
+export const SECOND_IN_MILISECOND = 1000;
 export const FIXED_DECIMAL_HOUR = 2;
 export const MAX_DATA_CHUNK = 200; //10;
 export const DESCENDING = -1;

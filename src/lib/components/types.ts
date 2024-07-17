@@ -63,6 +63,7 @@ export type IconName =
   | 'exclamation-triangle'
   | 'hand-thumb-up'
   | 'hand-thumb-down'
+  | 'bell-alert'
   | 'arrow-right-on-rectangle'
   | '';
 

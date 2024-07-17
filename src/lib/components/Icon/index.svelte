@@ -4,6 +4,7 @@
   import {
     ArrowPath,
     ArrowRightOnRectangle,
+    BellAlert,
     CheckCircle,
     ChevronUp,
     ExclamationTriangle,
@@ -48,6 +49,9 @@
         break;
       case 'x-circle':
         src = XCircle;
+        break;
+      case 'bell-alert':
+        src = BellAlert;
         break;
       case 'arrow-path':
         src = ArrowPath;
