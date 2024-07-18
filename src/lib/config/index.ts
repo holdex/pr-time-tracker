@@ -8,6 +8,7 @@ type Config = {
     clientId: string;
     authorizeRedirectUrl: string;
   };
+  submissionDuration: string;
 };
 
 const config: Config = {
@@ -18,7 +19,8 @@ const config: Config = {
     authorizeRedirectUrl: dev
       ? `https://alert-seemingly-moccasin.ngrok-free.app/api/github/auth/authorize`
       : ''
-  }
+  },
+  submissionDuration: PUB_SUBMISSION_DURATION
 };
 
 export const invalidations = {
@@ -54,7 +56,5 @@ export const responseHeadersInit = {
 };
 
 export const isDev = dev;
-
-export const submissionDuration = PUB_SUBMISSION_DURATION;
 
 export default config;

@@ -4,7 +4,7 @@
 
   import type { CardProps, ToggleProps } from '../types';
 
-  import { submissionDuration } from '$lib/config';
+  import config from '$lib/config';
   import { millisecondsToStr } from '$lib/utils';
   import { SECOND_IN_MILISECOND } from '$lib/constants';
   import Button from '$lib/components/Button/index.svelte';
@@ -45,10 +45,10 @@
   $: data.number = Number(data.url?.split('/').slice(-1));
   $: closedAt = data.closed_at ? new Date(data.closed_at) : undefined;
   $: mergedWithoutSubmission = data.merged === true && data.submission === undefined;
-  $: elapsedTime =
-    new Date().getTime() - new Date(data.updated_at ?? data.created_at ?? 0).getTime();
+  $: elapsedTime = new Date().getTime() - new Date(data.closed_at ?? 0).getTime();
   $: canSubmitAfterMerge =
-    mergedWithoutSubmission && elapsedTime / SECOND_IN_MILISECOND <= Number(submissionDuration);
+    mergedWithoutSubmission &&
+    elapsedTime / SECOND_IN_MILISECOND <= Number(config.submissionDuration);
   $: humanReadableElapsedTime = millisecondsToStr(elapsedTime);
 </script>
 
@@ -87,13 +87,6 @@
         <span class="text-footnote">
           {closedAt.toDateString().replace(/\w{3,3}\s/, '') || '...'}
         </span>
-      </span>
-    {/if}
-
-    {#if canSubmitAfterMerge}
-      <span class="flex gap-1.5 items-center justify-end">
-        <Icon name="bell-alert" class="w-5 h-5 min-w-fit text-accent1-active" />
-        <span class="my-auto text-t3 text-footnote">Required in {humanReadableElapsedTime}</span>
       </span>
     {/if}
   </div>
