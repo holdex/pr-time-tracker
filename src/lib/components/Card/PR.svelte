@@ -5,7 +5,6 @@
   import type { CardProps, ToggleProps } from '../types';
 
   import config from '$lib/config';
-  import { millisecondsToStr } from '$lib/utils';
   import { SECOND_IN_MILISECOND } from '$lib/constants';
   import Button from '$lib/components/Button/index.svelte';
   import Toggle from '$lib/components/Toggle/index.svelte';
@@ -36,7 +35,6 @@
   let closedAt: Date | undefined;
   let mergedWithoutSubmission = false;
   let elapsedTime = 0;
-  let humanReadableElapsedTime = '1 day';
 
   /** react-ibles */
   $: closedAndNotMerged = !!data.closed_at && !data.merged;
@@ -49,7 +47,6 @@
   $: canSubmitAfterMerge =
     mergedWithoutSubmission &&
     elapsedTime / SECOND_IN_MILISECOND <= Number(config.submissionDuration);
-  $: humanReadableElapsedTime = millisecondsToStr(elapsedTime);
 </script>
 
 <li
