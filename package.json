@@ -9,7 +9,7 @@
     "dev-only": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
-    "trigger-dev:proxy": "~/telebit http 3030 alert-seemingly-moccasin.telebit.io",
+    "trigger-dev:proxy": "~/telebit http 3030",
     "format": "npx prettier . --write --ignore-path .gitignore --plugin prettier-plugin-svelte --plugin @prettier/plugin-pug",
     "lint": "npx eslint --ext js,ts,cjs,svelte --ignore-path .eslintignore > eslint-debug.log --fix .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
