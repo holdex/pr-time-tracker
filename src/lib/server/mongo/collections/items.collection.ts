@@ -23,7 +23,6 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
     const withContributors = transform<boolean>(searchParams.get('contributors'));
     const withSubmissions = transform<boolean>(searchParams.get('submissions'));
     const submitted = searchParams.get('submitted');
-    const definesSubmitted = typeof submitted === 'boolean';
     const { count, skip, sort_by, sort_order } = ItemsCollection.makeQuery(params);
 
     if (filter.merged === undefined) delete filter.merged;
@@ -56,7 +55,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
           },
           {
             $match: {
-              submission: definesSubmitted ? { $exists: submitted } : { $ne: '' },
+              submission: submitted ? { $exists: true } : { $size: 0 },
               'submission.approval': approvals
                 ? { $in: approvals.concat(!submitted ? (null as any) : []) }
                 : { $ne: '' }
