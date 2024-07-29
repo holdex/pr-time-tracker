@@ -108,7 +108,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       const contributorList = await io.runTask<any>(
         'map contributors',
         async () => {
-          const contributor = await contributors.update(getContributorInfo(sender));
+          const contributor = await contributors.update(getContributorInfo(pull_request.user));
           const prInfo = await getPrInfo(
             pull_request,
             repository,
