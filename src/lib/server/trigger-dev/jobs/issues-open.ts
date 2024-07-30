@@ -43,7 +43,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           const comment = await octokit.rest.issues.createComment({
             owner: orgName,
             repo: repository.name,
-            body: commentBody.replace('<username>', payload.sender.login),
+            body: commentBody.replace('<username>', '@' + payload.sender.login),
             issue_number: issue.number
           });
 
