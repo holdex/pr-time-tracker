@@ -23,32 +23,37 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   switch (action) {
     case 'opened': {
       if (issue.title.length > 65) {
-        const orgName = organization?.login as string;
-        const orgDetails = await io.runTask(
-          'get org installation',
-          async () => {
-            const { data } = await getInstallationId(orgName);
-            return data;
-          },
-          { name: 'Get Organization installation' }
-        );
-
-        await io.runTask('add-issue-comment', async () => {
-          const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-          const commentBody = bodyWithHeader(
-            `<username> please change the title of this issue to make sure the length doesn't exceed 65 characters.`,
-            payload.issue.id.toString()
+        try {
+          const orgName = organization?.login || 'holdex';
+          const orgDetails = await io.runTask(
+            'get org installation',
+            async () => {
+              const { data } = await getInstallationId(orgName);
+              return data;
+            },
+            { name: 'Get Organization installation' }
           );
 
-          const comment = await octokit.rest.issues.createComment({
-            owner: orgName,
-            repo: repository.name,
-            body: commentBody.replace('<username>', '@' + payload.sender.login),
-            issue_number: issue.number
-          });
+          await io.runTask('add-issue-comment', async () => {
+            const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+            const commentBody = bodyWithHeader(
+              `<username> please change the title of this issue to make sure the length doesn't exceed 65 characters.`,
+              payload.issue.id.toString()
+            );
 
-          return comment;
-        });
+            const comment = await octokit.rest.issues.createComment({
+              owner: orgName,
+              repo: repository.name,
+              body: commentBody.replace('<username>', '@' + payload.sender.login),
+              issue_number: issue.number
+            });
+
+            return Promise.resolve(comment);
+          });
+        } catch (error) {
+          await io.logger.error('add issue comment', { error });
+          return Promise.resolve();
+        }
       }
     }
     default: {
