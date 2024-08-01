@@ -3,7 +3,6 @@ import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { IssuesEvent } from '@octokit/webhooks-types';
 
 import {
-  githubApp,
   getPreviousComment,
   deleteComment,
   bodyWithHeader,
