@@ -23,7 +23,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
   const orgName = organization?.login || 'holdex';
   const orgDetails = await io.runTask(
-    'get org installation',
+    'get-org-installation',
     async () => {
       const { data } = await getInstallationId(orgName);
       return data;
@@ -52,44 +52,74 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
         if (!previousComment) {
-          try {
-            await io.runTask('add-issue-title-comment', async () => {
-              const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-              const commentBody = bodyWithHeader(
-                `<username> please change the title of this issue to make sure the length doesn't exceed ` +
-                  MAX_TITLE_LENGTH +
-                  ` characters.`,
-                payload.issue.id.toString()
-              );
+          await deleteIssueTitleComment(
+            githubApp,
+            orgDetails,
+            orgName,
+            repository,
+            previousComment,
+            io
+          );
+        }
 
-              await octokit.rest.issues.createComment({
-                owner: orgName,
-                repo: repository.name,
-                body: commentBody.replace('<username>', '@' + payload.sender.login),
-                issue_number: issue.number
-              });
+        await io.runTask('add-issue-title-comment', async () => {
+          const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+          const commentBody = bodyWithHeader(
+            `<username> please change the title of this issue to make sure the length doesn't exceed ` +
+              MAX_TITLE_LENGTH +
+              ` characters.`,
+            payload.issue.id.toString()
+          );
+
+          try {
+            await octokit.rest.issues.createComment({
+              owner: orgName,
+              repo: repository.name,
+              body: commentBody.replace('<username>', '@' + payload.sender.login),
+              issue_number: issue.number
             });
           } catch (error) {
             await io.logger.error('add issue comment', { error });
           }
-        }
+        });
       } else if (previousComment) {
-        try {
-          await io.runTask('delete-issue-title-comment', async () => {
-            const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-            await octokit.rest.issues.deleteComment({
-              owner: orgName,
-              repo: repository.name,
-              comment_id: previousComment?.databaseId as number
-            });
-          });
-        } catch (error) {
-          await io.logger.error('delete issue title comment', { error });
-        }
+        await deleteIssueTitleComment(
+          githubApp,
+          orgDetails,
+          orgName,
+          repository,
+          previousComment,
+          io
+        );
       }
+      break;
     }
     default: {
       io.logger.log('current action for issue is not in the parse candidate', payload);
+    }
+  }
+
+  async function deleteIssueTitleComment(
+    githubApp: any,
+    orgDetails: { id: number },
+    orgName: string,
+    repository: { name: string },
+    previousComment: any,
+    io: any
+  ): Promise<void> {
+    try {
+      await io.runTask('delete-issue-title-comment', async () => {
+        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+        if (previousComment?.databaseId) {
+          await octokit.rest.issues.deleteComment({
+            owner: orgName,
+            repo: repository.name,
+            comment_id: previousComment.databaseId
+          });
+        }
+      });
+    } catch (error) {
+      await io.logger.error('delete issue title comment', { error });
     }
   }
 }
