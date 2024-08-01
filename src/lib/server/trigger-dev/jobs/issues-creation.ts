@@ -50,18 +50,18 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         }
       });
 
-      if (issue.title.length > MAX_TITLE_LENGTH) {
-        if (previousComment) {
-          await deleteIssueTitleComment(
-            githubApp,
-            orgDetails,
-            orgName,
-            repository,
-            previousComment,
-            io
-          );
-        }
+      if (previousComment) {
+        await deleteIssueTitleComment(
+          githubApp,
+          orgDetails,
+          orgName,
+          repository,
+          previousComment,
+          io
+        );
+      }
 
+      if (issue.title.length > MAX_TITLE_LENGTH) {
         await io.runTask('add-issue-title-comment', async () => {
           const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
           const commentBody = bodyWithHeader(
@@ -82,15 +82,6 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             await io.logger.error('add issue comment', { error });
           }
         });
-      } else if (previousComment) {
-        await deleteIssueTitleComment(
-          githubApp,
-          orgDetails,
-          orgName,
-          repository,
-          previousComment,
-          io
-        );
       }
       break;
     }
