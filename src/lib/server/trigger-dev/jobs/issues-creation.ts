@@ -4,11 +4,11 @@ import type { IssuesEvent } from '@octokit/webhooks-types';
 
 import {
   githubApp,
-  getInstallationId,
   getPreviousComment,
   deleteComment,
   bodyWithHeader,
-  submissionHeaderComment
+  submissionHeaderComment,
+  getOrgID
 } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
@@ -20,20 +20,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   const { action, organization, repository, issue } = payload;
   const MAX_TITLE_LENGTH = 65;
   const orgName = organization?.login || 'holdex';
-  const orgDetails = await io.runTask(
-    'get-org-installation',
-    async () => {
-      const { data } = await getInstallationId(orgName);
-      return data;
-    },
-    { name: 'Get Organization installation' }
-  );
+  const orgID = (await getOrgID(orgName, io)) || -1;
 
   switch (action) {
     case 'opened':
     case 'edited': {
       const previousComment = await getPreviousComment(
-        orgDetails.id,
+        orgID,
         orgName,
         repository.name,
         submissionHeaderComment(payload.issue.id.toString()),
@@ -42,12 +35,12 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       );
 
       if (previousComment) {
-        await deleteComment(orgDetails, orgName, repository, previousComment, io);
+        await deleteComment(orgID, orgName, repository, previousComment, io);
       }
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
         await io.runTask('add-issue-title-comment', async () => {
-          const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+          const octokit = await githubApp.getInstallationOctokit(orgID);
           const commentBody = bodyWithHeader(
             `<username> please change the title of this issue to make sure the length doesn't exceed ` +
               MAX_TITLE_LENGTH +

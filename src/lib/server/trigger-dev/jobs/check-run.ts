@@ -1,5 +1,6 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import type { Octokit } from 'octokit';
 import type {
   User,
   Repository,
@@ -11,7 +12,6 @@ import type {
   UpdateCheckRunInput
 } from '@octokit/graphql-schema';
 import type { CheckRunEvent } from '@octokit/webhooks-types';
-import type { Octokit } from 'octokit';
 
 import { contributors } from '$lib/server/mongo/collections';
 
@@ -20,8 +20,7 @@ import {
   getSubmissionStatus,
   submissionCheckPrefix,
   githubApp,
-  bugCheckPrefix,
-  getPreviousComment
+  bugCheckPrefix
 } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
@@ -253,16 +252,17 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   // if failure -> check comment -> create if not exists -> update the list
   // if success -> check comment -> create if not exits -> update the list
 
-  const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-  const previous = await getPreviousComment(
-    orgDetails.id,
-    payload.organization,
-    repoDetails.data.name,
-    submissionHeaderComment(payload.prId.toString()),
-    payload.prNumber,
-    octokit
-  );
+  const previous = await io.runTask('get previous comment', async () => {
+    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
 
+    const previous = await getPreviousComment<typeof octokit>(
+      { owner: payload.organization, repo: repoDetails.data.name },
+      payload.prNumber,
+      submissionHeaderComment(payload.prId.toString()),
+      octokit
+    );
+    return previous;
+  });
   let current: any = null;
 
   const submissionCreated = result.checkRun?.conclusion === 'SUCCESS';
@@ -371,15 +371,17 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
     { name: 'Get Check Details' }
   );
 
-  const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-  const bugReportComment = await getPreviousComment(
-    orgDetails.id,
-    payload.organization,
-    repoDetails.data.name,
-    `@pr-time-tracker bug commit`,
-    payload.prNumber,
-    octokit
-  );
+  const bugReportComment = await io.runTask('get report comment', async () => {
+    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+
+    const previous = await getPreviousComment<typeof octokit>(
+      { owner: payload.organization, repo: repoDetails.data.name },
+      payload.prNumber,
+      `@pr-time-tracker bug commit`,
+      octokit
+    );
+    return previous;
+  });
 
   await io.runTask(
     'update-report-check-run',
@@ -408,6 +410,63 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   // } else {
   //   // add message
   // }
+}
+
+async function getPreviousComment<T extends Octokit>(
+  repo: { owner: string; repo: string },
+  prNumber: number,
+  h: string,
+  octokit: T
+) {
+  let after = null;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    /* eslint-disable no-await-in-loop */
+    const data = await octokit.graphql<{ repository: Repository; viewer: User }>(
+      `
+      query($repo: String! $owner: String! $number: Int! $after: String) {
+        viewer { login }
+        repository(name: $repo owner: $owner) {
+          pullRequest(number: $number) {
+            comments(first: 100 after: $after) {
+              nodes {
+                id
+                databaseId
+                author {
+                  login
+                }
+                isMinimized
+                body
+              }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
+            }
+          }
+        }
+      }
+      `,
+      { ...repo, after, number: prNumber }
+    );
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const viewer = data.viewer as User;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const repository = data.repository as Repository;
+    const target = repository.pullRequest?.comments?.nodes?.find(
+      (node: IssueComment | null | undefined) =>
+        node?.author?.login === viewer.login.replace('[bot]', '') &&
+        !node?.isMinimized &&
+        node?.body?.includes(h)
+    );
+    if (target) {
+      return target;
+    }
+    after = repository.pullRequest?.comments?.pageInfo?.endCursor;
+    hasNextPage = repository.pullRequest?.comments?.pageInfo?.hasNextPage ?? false;
+  }
+  return undefined;
 }
 
 async function getPrInfoByCheckRunNodeId<T extends Octokit>(

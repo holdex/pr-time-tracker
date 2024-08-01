@@ -275,7 +275,7 @@ async function runPrFixCheckRun<
 }
 
 async function deleteComment(
-  orgDetails: { id: number },
+  orgID: number,
   orgName: string,
   repository: { name: string },
   previousComment: any,
@@ -283,7 +283,7 @@ async function deleteComment(
 ): Promise<void> {
   try {
     await io.runTask('delete-comment', async () => {
-      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+      const octokit = await githubApp.getInstallationOctokit(orgID);
       if (previousComment?.databaseId) {
         await octokit.rest.issues.deleteComment({
           owner: orgName,
@@ -389,6 +389,22 @@ async function getPreviousComment(
   return previousComment;
 }
 
+async function getOrgID(orgName: string, io: any): Promise<number | undefined> {
+  try {
+    await io.runTask(
+      'get-org-installation',
+      async () => {
+        const { data } = await getInstallationId(orgName);
+        return data.id;
+      },
+      { name: 'Get Organization installation' }
+    );
+  } catch (error) {
+    await io.logger.error('get org installation', { error });
+    return undefined;
+  }
+}
+
 export {
   githubApp,
   runPrFixCheckRun,
@@ -407,5 +423,6 @@ export {
   getPreviousComment,
   deleteComment,
   bodyWithHeader,
-  submissionHeaderComment
+  submissionHeaderComment,
+  getOrgID
 };
