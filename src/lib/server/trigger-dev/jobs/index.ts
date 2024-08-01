@@ -9,22 +9,22 @@ import { client, github, events, discordApi, type Autoinvoicing } from '../clien
 import { createJob as createPrJob } from './pull-requests';
 import { createJob as createPrReviewJob } from './pull-requests-review';
 import { createJob as createIssueJob } from './issues';
-import { createJob as createIssueOpenJob } from './issues-open';
+import { createJob as createIssueCreationJob } from './issues-creation';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
 
 config.integrationsList.forEach((org) => {
   client.defineJob({
     // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `issue-open-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    name: 'Streaming issue opening for Github using app',
+    id: `issue-creation-streaming_${org.id}${isDev ? '_dev' : ''}`,
+    name: 'Streaming issue creation for Github using app',
     version: '0.0.1',
     trigger: github.triggers.org({
-      event: events.onIssueOpened,
+      event: events.onIssue,
       org: org.name
     }),
     integrations: { github },
     run: async (payload, io, ctx) =>
-      createIssueOpenJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx, org)
+      createIssueCreationJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx, org)
   });
 
   client.defineJob({

@@ -1,4 +1,4 @@
-import { App } from 'octokit';
+import { App, Octokit } from 'octokit';
 
 import type {
   User,
@@ -9,6 +9,7 @@ import type {
   PullRequestEvent,
   PullRequestReviewEvent
 } from '@octokit/webhooks-types';
+import type { User as UserGQL, Repository as RepoGQL, IssueComment } from '@octokit/graphql-schema';
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
 import type { IOWithIntegrations } from '@trigger.dev/sdk';
 
@@ -273,6 +274,63 @@ async function runPrFixCheckRun<
   }
 }
 
+const getPreviousComment = async <T extends Octokit>(
+  repo: { owner: string; repo: string },
+  prNumber: number,
+  h: string,
+  octokit: T
+) => {
+  let after = null;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    /* eslint-disable no-await-in-loop */
+    const data = await octokit.graphql<{ repository: RepoGQL; viewer: UserGQL }>(
+      `
+      query($repo: String! $owner: String! $number: Int! $after: String) {
+        viewer { login }
+        repository(name: $repo owner: $owner) {
+          pullRequest(number: $number) {
+            comments(first: 100 after: $after) {
+              nodes {
+                id
+                databaseId
+                author {
+                  login
+                }
+                isMinimized
+                body
+              }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
+            }
+          }
+        }
+      }
+      `,
+      { ...repo, after, number: prNumber }
+    );
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const viewer = data.viewer as UserGQL;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const repository = data.repository as RepoGQL;
+    const target = repository.pullRequest?.comments?.nodes?.find(
+      (node: IssueComment | null | undefined) =>
+        node?.author?.login === viewer.login.replace('[bot]', '') &&
+        !node?.isMinimized &&
+        node?.body?.includes(h)
+    );
+    if (target) {
+      return target;
+    }
+    after = repository.pullRequest?.comments?.pageInfo?.endCursor;
+    hasNextPage = repository.pullRequest?.comments?.pageInfo?.hasNextPage ?? false;
+  }
+  return undefined;
+};
+
 export {
   githubApp,
   runPrFixCheckRun,
@@ -287,5 +345,6 @@ export {
   bugCheckName,
   submissionCheckName,
   bugCheckPrefix,
-  submissionCheckPrefix
+  submissionCheckPrefix,
+  getPreviousComment
 };
