@@ -389,19 +389,23 @@ async function getPreviousComment(
   return previousComment;
 }
 
-async function getOrgID(orgName: string, io: any): Promise<number | undefined> {
+async function createComment(
+  orgName: string,
+  repositoryName: string,
+  comment: string,
+  issueNumber: number,
+  octokit: any,
+  io: any
+): Promise<void> {
   try {
-    await io.runTask(
-      'get-org-installation',
-      async () => {
-        const { data } = await getInstallationId(orgName);
-        return data.id;
-      },
-      { name: 'Get Organization installation' }
-    );
+    await octokit.rest.issues.createComment({
+      owner: orgName,
+      repo: repositoryName,
+      body: comment,
+      issue_number: issueNumber
+    });
   } catch (error) {
-    await io.logger.error('get org installation', { error });
-    return undefined;
+    await io.logger.error('add issue comment', { error });
   }
 }
 
@@ -422,7 +426,7 @@ export {
   submissionCheckPrefix,
   getPreviousComment,
   deleteComment,
+  createComment,
   bodyWithHeader,
-  submissionHeaderComment,
-  getOrgID
+  submissionHeaderComment
 };
