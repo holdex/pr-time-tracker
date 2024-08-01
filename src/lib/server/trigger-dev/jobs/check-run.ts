@@ -20,7 +20,8 @@ import {
   getSubmissionStatus,
   submissionCheckPrefix,
   githubApp,
-  bugCheckPrefix
+  bugCheckPrefix,
+  getPreviousComment
 } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
@@ -410,63 +411,6 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   // } else {
   //   // add message
   // }
-}
-
-async function getPreviousComment<T extends Octokit>(
-  repo: { owner: string; repo: string },
-  prNumber: number,
-  h: string,
-  octokit: T
-) {
-  let after = null;
-  let hasNextPage = true;
-
-  while (hasNextPage) {
-    /* eslint-disable no-await-in-loop */
-    const data = await octokit.graphql<{ repository: Repository; viewer: User }>(
-      `
-      query($repo: String! $owner: String! $number: Int! $after: String) {
-        viewer { login }
-        repository(name: $repo owner: $owner) {
-          pullRequest(number: $number) {
-            comments(first: 100 after: $after) {
-              nodes {
-                id
-                databaseId
-                author {
-                  login
-                }
-                isMinimized
-                body
-              }
-              pageInfo {
-                endCursor
-                hasNextPage
-              }
-            }
-          }
-        }
-      }
-      `,
-      { ...repo, after, number: prNumber }
-    );
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const viewer = data.viewer as User;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const repository = data.repository as Repository;
-    const target = repository.pullRequest?.comments?.nodes?.find(
-      (node: IssueComment | null | undefined) =>
-        node?.author?.login === viewer.login.replace('[bot]', '') &&
-        !node?.isMinimized &&
-        node?.body?.includes(h)
-    );
-    if (target) {
-      return target;
-    }
-    after = repository.pullRequest?.comments?.pageInfo?.endCursor;
-    hasNextPage = repository.pullRequest?.comments?.pageInfo?.hasNextPage ?? false;
-  }
-  return undefined;
 }
 
 async function getPrInfoByCheckRunNodeId<T extends Octokit>(

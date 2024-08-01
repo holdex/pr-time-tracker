@@ -331,6 +331,30 @@ const getPreviousComment = async <T extends Octokit>(
   return undefined;
 };
 
+async function deleteComment(
+  githubApp: any,
+  orgDetails: { id: number },
+  orgName: string,
+  repository: { name: string },
+  previousComment: any,
+  io: any
+): Promise<void> {
+  try {
+    await io.runTask('delete-comment', async () => {
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+      if (previousComment?.databaseId) {
+        await octokit.rest.issues.deleteComment({
+          owner: orgName,
+          repo: repository.name,
+          comment_id: previousComment.databaseId
+        });
+      }
+    });
+  } catch (error) {
+    await io.logger.error('delete comment', { error });
+  }
+}
+
 export {
   githubApp,
   runPrFixCheckRun,
@@ -346,5 +370,6 @@ export {
   submissionCheckName,
   bugCheckPrefix,
   submissionCheckPrefix,
-  getPreviousComment
+  getPreviousComment,
+  deleteComment
 };

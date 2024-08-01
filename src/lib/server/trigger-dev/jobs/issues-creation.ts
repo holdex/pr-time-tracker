@@ -2,7 +2,7 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { IssuesEvent } from '@octokit/webhooks-types';
 
-import { githubApp, getInstallationId, getPreviousComment } from '../utils';
+import { githubApp, getInstallationId, getPreviousComment, deleteComment } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: IssuesEvent,
@@ -51,14 +51,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       });
 
       if (previousComment) {
-        await deleteIssueTitleComment(
-          githubApp,
-          orgDetails,
-          orgName,
-          repository,
-          previousComment,
-          io
-        );
+        await deleteComment(githubApp, orgDetails, orgName, repository, previousComment, io);
       }
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
@@ -87,30 +80,6 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     }
     default: {
       io.logger.log('current action for issue is not in the parse candidate', payload);
-    }
-  }
-
-  async function deleteIssueTitleComment(
-    githubApp: any,
-    orgDetails: { id: number },
-    orgName: string,
-    repository: { name: string },
-    previousComment: any,
-    io: any
-  ): Promise<void> {
-    try {
-      await io.runTask('delete-issue-title-comment', async () => {
-        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-        if (previousComment?.databaseId) {
-          await octokit.rest.issues.deleteComment({
-            owner: orgName,
-            repo: repository.name,
-            comment_id: previousComment.databaseId
-          });
-        }
-      });
-    } catch (error) {
-      await io.logger.error('delete issue title comment', { error });
     }
   }
 }
