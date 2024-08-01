@@ -43,12 +43,11 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       );
 
       if (previousComment) {
-        await deleteComment(orgDetails.id, orgName, repository, previousComment, io);
+        await deleteComment(orgDetails.id, orgName, repository.name, previousComment, io);
       }
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
         await io.runTask('add-issue-title-comment', async () => {
-          const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
           const commentBody = bodyWithHeader(
             `@` +
               payload.sender.login +
@@ -58,7 +57,14 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             payload.issue.id.toString()
           );
 
-          await createComment(orgName, repository.name, commentBody, issue.number, octokit, io);
+          await createComment(
+            orgDetails.id,
+            orgName,
+            repository.name,
+            commentBody,
+            issue.number,
+            io
+          );
         });
       }
       break;

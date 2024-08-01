@@ -277,7 +277,7 @@ async function runPrFixCheckRun<
 async function deleteComment(
   orgID: number,
   orgName: string,
-  repository: { name: string },
+  repositoryName: string,
   previousComment: any,
   io: any
 ): Promise<void> {
@@ -287,7 +287,7 @@ async function deleteComment(
       if (previousComment?.databaseId) {
         await octokit.rest.issues.deleteComment({
           owner: orgName,
-          repo: repository.name,
+          repo: repositoryName,
           comment_id: previousComment.databaseId
         });
       }
@@ -390,14 +390,15 @@ async function getPreviousComment(
 }
 
 async function createComment(
+  orgID: number,
   orgName: string,
   repositoryName: string,
   comment: string,
   issueNumber: number,
-  octokit: any,
   io: any
 ): Promise<void> {
   try {
+    const octokit = await githubApp.getInstallationOctokit(orgID);
     await octokit.rest.issues.createComment({
       owner: orgName,
       repo: repositoryName,
