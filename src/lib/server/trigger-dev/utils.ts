@@ -321,7 +321,7 @@ const queryPreviousComment = async <T extends Octokit>(
       query($repo: String! $owner: String! $number: Int! $after: String) {
         viewer { login }
         repository(name: $repo owner: $owner) {
-          issues(number: $number) {
+          issue(number: $number) {
             comments(first: 100 after: $after) {
               nodes {
                 id
