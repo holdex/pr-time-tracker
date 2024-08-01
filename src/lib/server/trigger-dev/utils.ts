@@ -274,7 +274,38 @@ async function runPrFixCheckRun<
   }
 }
 
-const getPreviousComment = async <T extends Octokit>(
+async function deleteComment(
+  orgDetails: { id: number },
+  orgName: string,
+  repository: { name: string },
+  previousComment: any,
+  io: any
+): Promise<void> {
+  try {
+    await io.runTask('delete-comment', async () => {
+      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+      if (previousComment?.databaseId) {
+        await octokit.rest.issues.deleteComment({
+          owner: orgName,
+          repo: repository.name,
+          comment_id: previousComment.databaseId
+        });
+      }
+    });
+  } catch (error) {
+    await io.logger.error('delete comment', { error });
+  }
+}
+
+function submissionHeaderComment(header: string): string {
+  return `<!-- Sticky Issue Comment${header} -->`;
+}
+
+function bodyWithHeader(body: string, header: string): string {
+  return `${body}\n${submissionHeaderComment(header)}`;
+}
+
+const queryPreviousComment = async <T extends Octokit>(
   repo: { owner: string; repo: string },
   prNumber: number,
   h: string,
@@ -331,28 +362,31 @@ const getPreviousComment = async <T extends Octokit>(
   return undefined;
 };
 
-async function deleteComment(
-  githubApp: any,
-  orgDetails: { id: number },
+async function getPreviousComment(
+  orgID: number,
   orgName: string,
-  repository: { name: string },
-  previousComment: any,
+  repositoryName: string,
+  header: string,
+  issueNumber: number,
   io: any
-): Promise<void> {
-  try {
-    await io.runTask('delete-comment', async () => {
-      const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-      if (previousComment?.databaseId) {
-        await octokit.rest.issues.deleteComment({
-          owner: orgName,
-          repo: repository.name,
-          comment_id: previousComment.databaseId
-        });
-      }
-    });
-  } catch (error) {
-    await io.logger.error('delete comment', { error });
-  }
+): Promise<IssueComment | undefined> {
+  const previousComment = await io.runTask('get-previous-comment', async () => {
+    try {
+      const octokit = await githubApp.getInstallationOctokit(orgID);
+      const previous = await queryPreviousComment<typeof octokit>(
+        { owner: orgName, repo: repositoryName },
+        issueNumber,
+        header,
+        octokit
+      );
+      return previous;
+    } catch (error) {
+      await io.logger.error('get previous comment', { error });
+      return undefined;
+    }
+  });
+
+  return previousComment;
 }
 
 export {
@@ -371,5 +405,7 @@ export {
   bugCheckPrefix,
   submissionCheckPrefix,
   getPreviousComment,
-  deleteComment
+  deleteComment,
+  bodyWithHeader,
+  submissionHeaderComment
 };

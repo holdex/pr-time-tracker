@@ -2,7 +2,14 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { IssuesEvent } from '@octokit/webhooks-types';
 
-import { githubApp, getInstallationId, getPreviousComment, deleteComment } from '../utils';
+import {
+  githubApp,
+  getInstallationId,
+  getPreviousComment,
+  deleteComment,
+  bodyWithHeader,
+  submissionHeaderComment
+} from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: IssuesEvent,
@@ -12,15 +19,6 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 ) {
   const { action, organization, repository, issue } = payload;
   const MAX_TITLE_LENGTH = 65;
-
-  function submissionHeaderComment(header: string): string {
-    return `<!-- Sticky Issue Comment${header} -->`;
-  }
-
-  function bodyWithHeader(body: string, header: string): string {
-    return `${body}\n${submissionHeaderComment(header)}`;
-  }
-
   const orgName = organization?.login || 'holdex';
   const orgDetails = await io.runTask(
     'get-org-installation',
@@ -34,24 +32,17 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   switch (action) {
     case 'opened':
     case 'edited': {
-      const previousComment = await io.runTask('get-previous-comment', async () => {
-        try {
-          const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-          const previous = await getPreviousComment<typeof octokit>(
-            { owner: orgName, repo: repository.name },
-            issue.number,
-            submissionHeaderComment(payload.issue.id.toString()),
-            octokit
-          );
-          return previous;
-        } catch (error) {
-          await io.logger.error('get previous comment', { error });
-          return null;
-        }
-      });
+      const previousComment = await getPreviousComment(
+        orgDetails.id,
+        orgName,
+        repository.name,
+        submissionHeaderComment(payload.issue.id.toString()),
+        issue.number,
+        io
+      );
 
       if (previousComment) {
-        await deleteComment(githubApp, orgDetails, orgName, repository, previousComment, io);
+        await deleteComment(orgDetails, orgName, repository, previousComment, io);
       }
 
       if (issue.title.length > MAX_TITLE_LENGTH) {

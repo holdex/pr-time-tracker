@@ -1,6 +1,5 @@
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
-import type { Octokit } from 'octokit';
 import type {
   User,
   Repository,
@@ -12,6 +11,7 @@ import type {
   UpdateCheckRunInput
 } from '@octokit/graphql-schema';
 import type { CheckRunEvent } from '@octokit/webhooks-types';
+import type { Octokit } from 'octokit';
 
 import { contributors } from '$lib/server/mongo/collections';
 
@@ -253,17 +253,16 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   // if failure -> check comment -> create if not exists -> update the list
   // if success -> check comment -> create if not exits -> update the list
 
-  const previous = await io.runTask('get previous comment', async () => {
-    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+  const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+  const previous = await getPreviousComment(
+    orgDetails.id,
+    payload.organization,
+    repoDetails.data.name,
+    submissionHeaderComment(payload.prId.toString()),
+    payload.prNumber,
+    octokit
+  );
 
-    const previous = await getPreviousComment<typeof octokit>(
-      { owner: payload.organization, repo: repoDetails.data.name },
-      payload.prNumber,
-      submissionHeaderComment(payload.prId.toString()),
-      octokit
-    );
-    return previous;
-  });
   let current: any = null;
 
   const submissionCreated = result.checkRun?.conclusion === 'SUCCESS';
@@ -372,17 +371,15 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
     { name: 'Get Check Details' }
   );
 
-  const bugReportComment = await io.runTask('get report comment', async () => {
-    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-
-    const previous = await getPreviousComment<typeof octokit>(
-      { owner: payload.organization, repo: repoDetails.data.name },
-      payload.prNumber,
-      `@pr-time-tracker bug commit`,
-      octokit
-    );
-    return previous;
-  });
+  const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+  const bugReportComment = await getPreviousComment(
+    orgDetails.id,
+    payload.organization,
+    repoDetails.data.name,
+    `@pr-time-tracker bug commit`,
+    payload.prNumber,
+    octokit
+  );
 
   await io.runTask(
     'update-report-check-run',
