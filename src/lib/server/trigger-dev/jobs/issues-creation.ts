@@ -56,7 +56,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             await io.runTask('add-issue-title-comment', async () => {
               const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
               const commentBody = bodyWithHeader(
-                `<username> please change the title of this issue to make sure the length doesn't exceed` +
+                `<username> please change the title of this issue to make sure the length doesn't exceed ` +
                   MAX_TITLE_LENGTH +
                   ` characters.`,
                 payload.issue.id.toString()
