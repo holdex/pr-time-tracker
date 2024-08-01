@@ -51,7 +51,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       });
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
-        if (!previousComment) {
+        if (previousComment) {
           await deleteIssueTitleComment(
             githubApp,
             orgDetails,
