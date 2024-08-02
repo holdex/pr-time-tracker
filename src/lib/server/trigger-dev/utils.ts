@@ -347,7 +347,7 @@ const queryPreviousComment = async <T extends Octokit>(
     const viewer = data.viewer as UserGQL;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const repository = data.repository as RepoGQL;
-    const target = repository.pullRequest?.comments?.nodes?.find(
+    const target = repository.issue?.comments?.nodes?.find(
       (node: IssueComment | null | undefined) =>
         node?.author?.login === viewer.login.replace('[bot]', '') &&
         !node?.isMinimized &&
@@ -379,6 +379,7 @@ async function getPreviousComment(
         header,
         octokit
       );
+      console.log(previous);
       return previous;
     } catch (error) {
       await io.logger.error('get previous comment', { error });

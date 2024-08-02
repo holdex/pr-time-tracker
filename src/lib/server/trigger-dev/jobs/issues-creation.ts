@@ -32,18 +32,20 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   switch (action) {
     case 'opened':
     case 'edited': {
-      const previousComment = await getPreviousComment(
-        orgDetails.id,
-        orgName,
-        repository.name,
-        submissionHeaderComment(payload.issue.id.toString()),
-        issue.number,
-        io
-      );
+      await io.runTask('delete-previous-comment', async () => {
+        const previousComment = await getPreviousComment(
+          orgDetails.id,
+          orgName,
+          repository.name,
+          submissionHeaderComment(payload.issue.id.toString()),
+          issue.number,
+          io
+        );
 
-      if (previousComment) {
-        await deleteComment(orgDetails.id, orgName, repository.name, previousComment, io);
-      }
+        if (previousComment) {
+          await deleteComment(orgDetails.id, orgName, repository.name, previousComment, io);
+        }
+      });
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
         await io.runTask('add-issue-title-comment', async () => {
