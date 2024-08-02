@@ -349,7 +349,8 @@ const queryPreviousComment = async <T extends Octokit>(
     const viewer = data.viewer as UserGQL;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const repository = data.repository as RepoGQL;
-    const target = repository.issue?.comments?.nodes?.find(
+    const categoryObj = category === 'issue' ? repository.issue : repository.pullRequest;
+    const target = categoryObj?.comments?.nodes?.find(
       (node: IssueComment | null | undefined) =>
         node?.author?.login === viewer.login.replace('[bot]', '') &&
         !node?.isMinimized &&
@@ -358,9 +359,10 @@ const queryPreviousComment = async <T extends Octokit>(
     if (target) {
       return target;
     }
-    after = repository.pullRequest?.comments?.pageInfo?.endCursor;
-    hasNextPage = repository.pullRequest?.comments?.pageInfo?.hasNextPage ?? false;
+    after = categoryObj?.comments?.pageInfo?.endCursor;
+    hasNextPage = categoryObj?.comments?.pageInfo?.hasNextPage ?? false;
   }
+
   return undefined;
 };
 
