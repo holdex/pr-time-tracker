@@ -9,6 +9,22 @@ PR Time Tracker automates invoice generation processes and tracks core developer
 3. Invite the @pr-time-tracker into your organization and make him an owner
 4. To customize the included repositories go to "Settings" -> "GitHub Apps"
 
+## Connect the installed organization with the Tracker flow
+
+1. Add a record of your organization info in the Vercel env `APP_INTEGRATIONS_LIST`
+
+```javascript
+  { "id": "org_id", "name": "org_slug", "nodeId": "oracle_project_id"}
+```
+
+Where:
+
+- `id` is the identifier used for defining jobs (can be any string)
+- `name` - the GitHub organization slug
+- `nodeId` - Holdex Oracle project ID, if no project is defined use explicit value `337c06eb` for HX project column
+
+2. Re-deploy the current production build so changes can take effect.
+
 ## Scripts
 
 - postinstall: Sets up Husky for Git hooks.
