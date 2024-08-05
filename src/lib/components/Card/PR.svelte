@@ -35,6 +35,8 @@
   let closedAt: Date | undefined;
   let mergedWithoutSubmission = false;
   let elapsedTime = 0;
+  let workHours = 0;
+  let workMinutes = 0;
 
   /** react-ibles */
   $: closedAndNotMerged = !!data.closed_at && !data.merged;
@@ -105,16 +107,35 @@
     on:submit|preventDefault={async (e) => {
       if (!onSubmit) return;
 
-      if (!activeReactionButton) {
+      if ((workHours || 0) < 0) {
         return ($snackbar = {
-          text: `Please, rate your experience with #${data.number}.`,
+          text: `Hours should be greater than or equal to 0.`,
           type: 'info'
         });
       }
 
-      if ((submissionPayload.hours || 0) < 0) {
+      if ((workMinutes || 0) < 0) {
         return ($snackbar = {
-          text: `Hours should be greater than or equal to 0.`,
+          text: `Minutes should be greater than or equal to 0.`,
+          type: 'info'
+        });
+      }
+
+      workHours = Number(workHours);
+      workMinutes = Number(workMinutes);
+      const totalHours = parseFloat((workHours + workMinutes / 60).toFixed(2));
+      if (totalHours < 0.01) {
+        return ($snackbar = {
+          text: `Total work hours should be at least 1 minute.`,
+          type: 'info'
+        });
+      }
+
+      submissionPayload.hours = totalHours;
+
+      if (!activeReactionButton) {
+        return ($snackbar = {
+          text: `Please, rate your experience with #${data.number}.`,
           type: 'info'
         });
       }
@@ -153,11 +174,22 @@
         {:else}
           <Input
             required
-            min="0.5"
-            bind:value={submissionPayload.hours}
+            type="number"
+            bind:value={workHours}
             disabled={loading || isAdmin || closedAndNotMerged} />
         {/if}
       </span>
+
+      {#if !isReadonly || canSubmitAfterMerge}
+        <span class="flex gap-1.5 items-center max-w-content">
+          <span>Minutes:</span>
+          <Input
+            required
+            type="number"
+            bind:value={workMinutes}
+            disabled={loading || isAdmin || closedAndNotMerged} />
+        </span>
+      {/if}
 
       <span
         class="flex gap-1.5 items-center sm:ml-3 {isReadonly && !canSubmitAfterMerge
