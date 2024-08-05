@@ -10,10 +10,10 @@
   import Toggle from '$lib/components/Toggle/index.svelte';
   import Input from '$lib/components/Input/index.svelte';
   import Icon from '$lib/components/Icon/index.svelte';
-import { isValidExactNumber } from '$lib/utils';
-  
+  import { isValidExactNumber } from '$lib/utils';
+
   import { snackbar } from '../Snackbar';
-  
+
   import { Approval, Experience, type SubmissionSchema } from '$lib/@types';
 
   /** props */
