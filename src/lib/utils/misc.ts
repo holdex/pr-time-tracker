@@ -19,3 +19,10 @@ export const computeCycleTime = (
     floatPart && floatPart < 99 ? `:${minutes < 10 ? 0 : ''}${minutes}` : ''
   }`;
 };
+
+export const isValidExactNumber = (value: any): boolean => {
+  const regex = /^[0-9]+$/;
+  const stringValue = value.toString();
+
+  return regex.test(stringValue);
+};

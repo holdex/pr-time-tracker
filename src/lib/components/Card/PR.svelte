@@ -10,9 +10,10 @@
   import Toggle from '$lib/components/Toggle/index.svelte';
   import Input from '$lib/components/Input/index.svelte';
   import Icon from '$lib/components/Icon/index.svelte';
-
+import { isValidExactNumber } from '$lib/utils';
+  
   import { snackbar } from '../Snackbar';
-
+  
   import { Approval, Experience, type SubmissionSchema } from '$lib/@types';
 
   /** props */
@@ -35,8 +36,10 @@
   let closedAt: Date | undefined;
   let mergedWithoutSubmission = false;
   let elapsedTime = 0;
-  let workHours = 0;
-  let workMinutes = 0;
+  let workHours = submissionPayload.hours ? Math.floor(submissionPayload.hours) : 0;
+  let workMinutes = submissionPayload.hours
+    ? Math.round((submissionPayload.hours - workHours) * 60)
+    : 0;
 
   /** react-ibles */
   $: closedAndNotMerged = !!data.closed_at && !data.merged;
@@ -121,6 +124,13 @@
         });
       }
 
+      if (!isValidExactNumber(workHours) || !isValidExactNumber(workMinutes)) {
+        return ($snackbar = {
+          text: `Hours and Minutes should be exact number (no decimal)`,
+          type: 'info'
+        });
+      }
+
       workHours = Number(workHours);
       workMinutes = Number(workMinutes);
       const totalHours = parseFloat((workHours + workMinutes / 60).toFixed(2));
@@ -159,6 +169,8 @@
       )(e);
 
       if (result) {
+        workHours = Math.floor(result.hours);
+        workMinutes = Math.round((result.hours - workHours) * 60);
         submissionPayload = result;
         data.submission = result;
       }
@@ -174,7 +186,6 @@
         {:else}
           <Input
             required
-            type="number"
             bind:value={workHours}
             disabled={loading || isAdmin || closedAndNotMerged} />
         {/if}
@@ -185,7 +196,6 @@
           <span>Minutes:</span>
           <Input
             required
-            type="number"
             bind:value={workMinutes}
             disabled={loading || isAdmin || closedAndNotMerged} />
         </span>
