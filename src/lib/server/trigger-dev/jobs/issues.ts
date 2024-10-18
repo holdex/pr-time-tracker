@@ -84,6 +84,6 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
   }
 }
 
-const regexExp = new RegExp(/.*\bgoal\b/, 'i');
+const regexExp = new RegExp(/.*\b(goal|bug)\b/, 'i');
 const teamOracleNodeId = 'PVT_kwDOAiJL_s4Ahvnc';
 const teamOracleProjectNodeId = 'PVTSSF_lADOAiJL_s4AhvnczgabK1s';
