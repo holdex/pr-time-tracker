@@ -124,7 +124,10 @@ async function insertPrEvent<
       const data = await insertEvent(event, eventId);
       return data;
     },
-    { name: 'Insert Bigquery event' }
+    { name: 'Insert Bigquery event' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 
   const prOwnerEvent = Object.assign({}, event, {
@@ -144,7 +147,10 @@ async function insertPrEvent<
       const data = await insertEvent(prOwnerEvent, prOwnerEventId);
       return data;
     },
-    { name: 'Insert Bigquery owner event' }
+    { name: 'Insert Bigquery owner event' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 }
 
@@ -161,7 +167,10 @@ async function updatePrInfo<
       const data = await contributors.update(contributorInfo);
       return data;
     },
-    { name: 'Update Contributor schema' }
+    { name: 'Update Contributor schema' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 
   const prInfo = await io.runTask<any>(
@@ -170,7 +179,10 @@ async function updatePrInfo<
       const data = await getPrInfo(pull_request, repository, organization, sender, contributor);
       return data;
     },
-    { name: 'Get Item schema' }
+    { name: 'Get Item schema' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 
   return io.runTask<any>(
@@ -179,6 +191,9 @@ async function updatePrInfo<
       const data = await items.update(prepareInfo(prInfo), { onCreateIfNotExist: true });
       return data;
     },
-    { name: 'Update Item schema' }
+    { name: 'Update Item schema' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 }

@@ -93,11 +93,11 @@ export const submissions = new SubmissionsCollection(CollectionNames.SUBMISSIONS
       description: 'must be provided.'
     },
     item_id: {
-      bsonType: 'int',
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     owner_id: {
-      bsonType: 'int',
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     rate: {

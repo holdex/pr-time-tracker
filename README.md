@@ -6,6 +6,10 @@ PR Time Tracker automates invoice generation processes and tracks core developer
 
 If you want to contribute, please follow Holdex [Developer Guidelines](https://github.com/holdex/developers).
 
+## Possible issues docs
+
+1. Cannot submit time: [see docs](docs/cannot-submit-time/not-found.md)
+
 ## Installing application
 
 1. Access the App [public page](https://github.com/apps/pr-time-tracker)

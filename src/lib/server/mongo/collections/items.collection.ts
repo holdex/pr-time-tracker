@@ -185,7 +185,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
   properties: {
     contributor_ids: { bsonType: 'array', description: 'must be an array.' },
     id: {
-      bsonType: 'int',
+      bsonType: ['int', 'double'],
       description: 'must be a number'
     },
     merged: {
@@ -197,7 +197,7 @@ export const items = new ItemsCollection(CollectionNames.ITEMS, {
       description: 'must be provided.'
     },
     number: {
-      bsonType: ['int'],
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     total_cost: {

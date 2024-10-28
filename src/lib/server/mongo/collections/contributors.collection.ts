@@ -31,7 +31,7 @@ export const contributors = new ContributorsCollection(CollectionNames.CONTRIBUT
   ],
   properties: {
     id: {
-      bsonType: 'int',
+      bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     avatarUrl: {

@@ -46,7 +46,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             const { data } = await getInstallationId(organization?.login as string);
             return data;
           },
-          { name: 'Get Organization installation' }
+          { name: 'Get Organization installation' },
+          (err: any, _, _io) => {
+            _io.logger.error(err);
+          }
         );
 
         const contributorList = await io.runTask<any>(
@@ -57,7 +60,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             });
             return data;
           },
-          { name: 'Get contributors list' }
+          { name: 'Get contributors list' },
+          (err: any, _, _io) => {
+            _io.logger.error(err);
+          }
         );
 
         const taskChecks = [];
@@ -81,7 +87,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
                 await io.logger.info(`check result`, { result });
                 return Promise.resolve();
               },
-              { name: `check run for ${c.login}` }
+              { name: `check run for ${c.login}` },
+              (err: any, _, _io) => {
+                _io.logger.error(err);
+              }
             )
           );
         }
@@ -102,7 +111,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           const { data } = await getInstallationId(organization?.login as string);
           return data;
         },
-        { name: 'Get Organization installation' }
+        { name: 'Get Organization installation' },
+        (err: any, _, _io) => {
+          _io.logger.error(err);
+        }
       );
 
       const contributorList = await io.runTask<any>(
@@ -118,7 +130,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           );
           return contributors.getManyBy({ id: { $in: prInfo.contributor_ids || [] } });
         },
-        { name: 'Map contributors list' }
+        { name: 'Map contributors list' },
+        (err: any, _, _io) => {
+          _io.logger.error(err);
+        }
       );
 
       const taskChecks = [];
@@ -142,7 +157,10 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
               await io.logger.info(`check result`, { result });
               return Promise.resolve();
             },
-            { name: `check run for ${c.login}` }
+            { name: `check run for ${c.login}` },
+            (err: any, _, _io) => {
+              _io.logger.error(err);
+            }
           )
         );
       }
@@ -186,7 +204,10 @@ async function insertPrEvent<
       const data = await insertEvent(event, eventId);
       return data;
     },
-    { name: 'Insert Bigquery event' }
+    { name: 'Insert Bigquery event' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 }
 
@@ -207,7 +228,10 @@ async function updatePrInfo<
       const data = await contributors.update(contributorInfo);
       return data;
     },
-    { name: 'Update Contributor schema' }
+    { name: 'Update Contributor schema' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 
   await io.wait('wait for first call', 5);
@@ -218,7 +242,10 @@ async function updatePrInfo<
       const data = await getPrInfo(pull_request, repository, organization, sender, contributor);
       return data;
     },
-    { name: 'Get Item schema' }
+    { name: 'Get Item schema' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 
   return io.runTask<any>(
@@ -227,6 +254,9 @@ async function updatePrInfo<
       const data = await items.update(prepareInfo(prInfo), { onCreateIfNotExist: true });
       return data;
     },
-    { name: 'Update Item schema' }
+    { name: 'Update Item schema' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
   );
 }
