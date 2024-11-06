@@ -15,8 +15,8 @@ dependencies:
     specifier: ^7.3.0
     version: 7.3.0
   '@holdex/autoinvoicing':
-    specifier: 0.0.9
-    version: 0.0.9
+    specifier: 0.0.10
+    version: 0.0.10
   '@octokit/graphql-schema':
     specifier: ^15.5.0
     version: 15.5.0
@@ -736,8 +736,8 @@ packages:
     engines: {node: '>=14'}
     dev: false
 
-  /@holdex/autoinvoicing@0.0.9:
-    resolution: {integrity: sha512-DU0EgXMoG4pCpk3f28AhywG2S53tyufGHEDgksqmlbJ+ocPkPEY40zu3VPtyISpF5ATsMUxE3yJ6MVGpWjlM7w==, tarball: https://npm.pkg.github.com/download/@holdex/autoinvoicing/0.0.9/2d6c51871c26aaf0fdc64e32f304f8eac63fed3c}
+  /@holdex/autoinvoicing@0.0.10:
+    resolution: {integrity: sha512-BnEnIQPO70gQEJALtUXew+ZtVBJKq8/L24StO1UkkwwNpV25VC6iw5OEGMVNxa+yu4gWXB0DatpFimnyyVtFAg==, tarball: https://npm.pkg.github.com/download/@holdex/autoinvoicing/0.0.10/ffb0c0c371d5d7c337abb30adfa0f876c084b858}
     engines: {node: '>=16.8.0'}
     dependencies:
       '@octokit/request': 8.3.1
