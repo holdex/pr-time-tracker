@@ -51,7 +51,7 @@ Where:
 
 ### Requirements
 
-- Docker
+- Docker (<https://docs.docker.com/>)
 - telebit
 
 ### Pre-requirements [link](https://trigger.dev/docs/documentation/guides/self-hosting/supabase#self-host-trigger-dev-with-docker-compose)
