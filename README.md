@@ -62,7 +62,7 @@ Where:
           Github access token with `read:packages` access permission
         </summary>
 
-          ![GitHub Access Token Setup](docs/images/local-development-setup/github-access-token.png)
+          ![GitHub Access Token Setup](./docs/images/local-development-setup/github-access-token.png)
       </details>
 
 
@@ -86,10 +86,6 @@ Where:
 1. **Download Environment Variables**: Run the following command to download the required environment variables:
    npm run pre-dev
 
-### Development Steps
-
-1. **Configure `.npmrc`**:
-   - Ensure your `.npmrc` file is linked to your `NPM_TOKEN`. You can use the `.env` `NPM_RC` variable or copy `.npmrc.example` to `.npmrc` and replace the token as needed.
 
 1. **Install Dependencies**: Run the following command to install all project dependencies:
    pnpm install
