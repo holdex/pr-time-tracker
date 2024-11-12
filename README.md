@@ -47,34 +47,69 @@ Where:
 - check:watch: Watches for changes and syncs Svelte kit while checking TypeScript.
 - proxy: Sets up ngrok to proxy requests to the development server with a specific domain.
 
-## Local development
+## Local Development Setup
 
-### Requirements
+1. Clone this repository
 
-- Docker (<https://docs.docker.com/>)
-- telebit
+1. Setup `docker` and `docker compose` for your installation **Docker** ([Docker documentation](https://docs.docker.com/))
 
-### Pre-requirements [link](https://trigger.dev/docs/documentation/guides/self-hosting/supabase#self-host-trigger-dev-with-docker-compose)
+1. Make GitHub Access Token for installing some of the hosted dependencies:
 
-- Start the proxy server for `npm run trigger-dev:proxy`
-- Use the forwarding URL that telebit gave you for the `LOGIN_ORIGIN` and `API_ORIGIN` environment variables for the docker container.
-- `cd container` and run `docker compose up`, then wait for the container to run the configuration
-- Download the environment variables via `npm run pre-dev` script
+    - Create a **GitHub Classic Access Token** with the necessary permissions <https://github.com/settings/tokens>.
 
-### Dev Steps
+      <details>
+        <summary>
+          Github access token with `read:packages` access permission
+        </summary>
 
-- Use the `.env` `NPM_RC` variable to bind your `.npmrc` file or copy the `.nrpc.example` and replace with the related token
-- Install all dependencies via `pnpm`
-- Define a development endpoint in Trigger dev UI with the address `https://alert-seemingly-moccasin.ngrok-free.app/api/trigger`
-- Add your Trigger dev env variables from the self-hosted UI into the `.env file`
+          ![GitHub Access Token Setup](docs/images/local-development-setup/github-access-token.png)
+      </details>
 
-```
-TRIGGER_API_KEY="api_key"
-TRIGGER_API_URL="same as LOGIN_ORIGIN"
-TRIGGER_PROJECT_ID="project_id"
-```
 
-- Update the project_id also in the `package.json` file
-- Start the development server on port 3000 via `pnpm|npm|yarn run dev-only`
-- Start the proxy connection via `npm run proxy`
-- To connect to the DB via `MongoDB Compass` use the env variable `MONGOGB_URI`
+1. Copy `.npmrc.example` to `.npmrc` in the root folder and replace NPM_TOKEN with your generated GitHub access token.
+
+1. Setup **Telebit** ([Telebit Cloud](https://telebit.cloud/))
+
+1. Setup **Self Hosted Trigger.dev v2 with Supabase** following this guide: https://trigger.dev/docs/documentation/guides/self-hosting/supabase#self-host-trigger-dev-with-docker-compose
+
+1. **Start the Proxy Server**: Run the following command:
+   npm run trigger-dev:proxy
+
+1. **Set Telebit URL**: Use the forwarding URL provided by Telebit for `LOGIN_ORIGIN` and `API_ORIGIN` in your Docker container environment variables.
+
+1. **Set Up Docker**:
+   - Change to the `container` directory:
+     cd container
+   - Run Docker Compose and wait for the configuration to complete:
+     docker compose up
+
+1. **Download Environment Variables**: Run the following command to download the required environment variables:
+   npm run pre-dev
+
+### Development Steps
+
+1. **Configure `.npmrc`**:
+   - Ensure your `.npmrc` file is linked to your `NPM_TOKEN`. You can use the `.env` `NPM_RC` variable or copy `.npmrc.example` to `.npmrc` and replace the token as needed.
+
+1. **Install Dependencies**: Run the following command to install all project dependencies:
+   pnpm install
+
+1. **Define Development Endpoint**:
+   - In the Trigger dev UI, set a development endpoint with the following URL:
+     https://alert-seemingly-moccasin.ngrok-free.app/api/trigger
+
+1. **Set Up Trigger Environment Variables**:
+   - Add the following lines to your `.env` file:
+     TRIGGER_API_KEY="api_key"
+     TRIGGER_API_URL="same as LOGIN_ORIGIN"
+     TRIGGER_PROJECT_ID="project_id"
+   - Update `project_id` in the `package.json` file to match the `TRIGGER_PROJECT_ID` value.
+
+1. **Start the Development Server**: Run the following command to start the development server on port 3000:
+   pnpm run dev-only
+
+1. **Establish Proxy Connection**: Run the following command to start the proxy connection:
+   npm run proxy
+
+1. **Database Connection**:
+   - Use `MongoDB Compass` to connect to the database using the `MONGODB_URI` environment variable.
