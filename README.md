@@ -62,7 +62,7 @@ Where:
           Github access token with `read:packages` access permission
         </summary>
 
-          ![GitHub Access Token Setup](./docs/images/local-development-setup/github-access-token.png)
+        ![GitHub Access Token Setup](./docs/images/local-development-setup/github-access-token.png)
       </details>
 
 
