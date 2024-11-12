@@ -307,19 +307,22 @@ async function deleteComment(
   }
 }
 
-function submissionHeaderComment(type: 'Issue' | 'Pull Request', header: string): string {
+type SubmissionHeaderType = 'Issue' | 'Pull Request' | 'Bug Report';
+function submissionHeaderComment(type: SubmissionHeaderType, header: string): string {
   return `<!-- Sticky ${type} Comment${header} -->`;
 }
-
-function bodyWithHeader(type: 'Issue' | 'Pull Request', body: string, header: string): string {
+function bodyWithHeader(type: SubmissionHeaderType, body: string, header: string): string {
   return `${body}\n${submissionHeaderComment(type, header)}`;
 }
 
+type PreviousCommentCategory = 'pullRequest' | 'issue';
+type PreviousCommentSenderFilter = 'bot' | 'others';
 const queryPreviousComment = async <T extends Octokit>(
   repo: { owner: string; repo: string },
   idNumber: number,
-  category: string,
+  category: PreviousCommentCategory,
   h: string,
+  senderFilter: PreviousCommentSenderFilter,
   octokit: T
 ) => {
   let after = null;
@@ -360,12 +363,14 @@ const queryPreviousComment = async <T extends Octokit>(
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const repository = data.repository as RepoGQL;
     const categoryObj = category === 'issue' ? repository.issue : repository.pullRequest;
-    const target = categoryObj?.comments?.nodes?.find(
-      (node: IssueComment | null | undefined) =>
-        node?.author?.login === viewer.login.replace('[bot]', '') &&
+    const target = categoryObj?.comments?.nodes?.find((node: IssueComment | null | undefined) => {
+      const isSentByBot = node?.author?.login === viewer.login.replace('[bot]', '');
+      return (
+        ((senderFilter === 'bot' && isSentByBot) || (senderFilter === 'others' && !isSentByBot)) &&
         !node?.isMinimized &&
         node?.body?.includes(h)
-    );
+      );
+    });
     if (target) {
       return target;
     }
@@ -382,7 +387,8 @@ async function getPreviousComment(
   repositoryName: string,
   header: string,
   issueNumber: number,
-  category: string,
+  category: PreviousCommentCategory,
+  senderFilter: PreviousCommentSenderFilter,
   io: any
 ): Promise<IssueComment | undefined> {
   const previousComment = await io.runTask('get-previous-comment', async () => {
@@ -393,6 +399,7 @@ async function getPreviousComment(
         issueNumber,
         category,
         header,
+        senderFilter,
         octokit
       );
       return previous;
@@ -467,6 +474,7 @@ async function reinsertComment<T extends IOWithIntegrations<{ github: Autoinvoic
       header,
       prOrIssueNumber,
       'pullRequest',
+      'bot',
       io
     );
 
