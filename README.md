@@ -185,51 +185,51 @@ Where:
 
       </details>
 
-  - Go to the root path and download the environment variables using `pnpm pre-dev` and you will see a new file `.env` on root
+    - Go to the root path and download the environment variables using `pnpm pre-dev` and you will see a new file `.env` on root
 
-  - Take note of the Trigger.dev API Keys in Trigger dev UI (Environment & API Keys) and change the `TRIGGER_API_KEY` and `TRIGGER_API_URL` in the `.env` file
+    - Take note of the Trigger.dev API Keys in Trigger dev UI (Environment & API Keys) and change the `TRIGGER_API_KEY` and `TRIGGER_API_URL` in the `.env` file
 
-    ```shell
+      ```shell
 
-      # API Key from triggerdotdev UI
-      TRIGGER_API_KEY="tr_dev_YIHNyqRKaKYt7lJ7hwF2"
+        # API Key from triggerdotdev UI
+        TRIGGER_API_KEY="tr_dev_YIHNyqRKaKYt7lJ7hwF2"
 
-      # URL from telebit forwarding proxy for accessing local triggerdotdev
-      TRIGGER_API_URL="https://shaggy-termite-71.telebit.io"
-    ```
+        # URL from telebit forwarding proxy for accessing local triggerdotdev
+        TRIGGER_API_URL="https://shaggy-termite-71.telebit.io"
+      ```
 
-    <details>
+      <details>
 
-      ![Local Triggerdotdev 7](./docs/images/local-development-setup/local-triggerdotdev-7.png)
+        ![Local Triggerdotdev 7](./docs/images/local-development-setup/local-triggerdotdev-7.png)
 
-    <details>
+      </details>
 
-  - Run local dev of the project `pnpm dev-only`
+    - Run local dev of the project `pnpm dev-only`
 
-  - Run ngrok proxy for the local dev project using `pnpm proxy`
+    - Run ngrok proxy for the local dev project using `pnpm proxy`
 
-    <details>
+      <details>
 
-      ![Local Triggerdotdev 8](./docs/images/local-development-setup/local-triggerdotdev-8.png)
+        ![Local Triggerdotdev 8](./docs/images/local-development-setup/local-triggerdotdev-8.png)
 
-    </details>
+      </details>
 
-  - In the Trigger dev UI (Environment & API Keys), set a development endpoint with the following URL:
-     `https://alert-seemingly-moccasin.ngrok-free.app/api/trigger`
+    - In the Trigger dev UI (Environment & API Keys), set a development endpoint with the following URL:
+      `https://alert-seemingly-moccasin.ngrok-free.app/api/trigger`
 
-     <details>
-
-
-      ![Local Triggerdotdev 5](./docs/images/local-development-setup/local-triggerdotdev-5.png)
+      <details>
 
 
-      ![Local Triggerdotdev 6](./docs/images/local-development-setup/local-triggerdotdev-6.png)
+        ![Local Triggerdotdev 5](./docs/images/local-development-setup/local-triggerdotdev-5.png)
 
 
-      ![Local Triggerdotdev 9](./docs/images/local-development-setup/local-triggerdotdev-9.png)
+        ![Local Triggerdotdev 6](./docs/images/local-development-setup/local-triggerdotdev-6.png)
 
 
-     </details>
+        ![Local Triggerdotdev 9](./docs/images/local-development-setup/local-triggerdotdev-9.png)
+
+
+      </details>
 
 
 1. **Database Connection**:
