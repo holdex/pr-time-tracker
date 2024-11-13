@@ -363,11 +363,15 @@ async function runPrFixCheckRun<
     !fixPrRegex.test(title);
   const isFixPr = fixPrRegex.test(title);
 
-  if (!isFixPr && !isTitleChangedFromFixPr) {
+  // TODO: remove this after the feature is all ready
+  const dummy = true;
+  if (dummy) {
     return;
   }
 
-  // return io.logger.log('identified pull request');
+  if (!isFixPr && !isTitleChangedFromFixPr) {
+    return;
+  }
 
   let pullRequest: SimplePullRequest | PullRequest;
   if ('pull_request' in payload) {
