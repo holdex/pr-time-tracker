@@ -26,7 +26,8 @@ import {
   reinsertComment,
   deleteComment,
   getPreviousComment,
-  createComment
+  createComment,
+  updateCheckRun
 } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
@@ -564,25 +565,6 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(
     }
   }
   return ((commit.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
-}
-
-async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
-  return octokit.graphql<{ updateCheckRun: UpdateCheckRunPayload }>(
-    `
-      mutation($input: UpdateCheckRunInput!) {
-        updateCheckRun(input: $input) {
-          checkRun {
-            id
-            conclusion
-            title
-            summary
-          }
-          clientMutationId
-        }
-      }
-      `,
-    { input }
-  );
 }
 
 const regex = new RegExp(/\B@([a-z0-9](?:-(?=[a-z0-9])|[a-z0-9]){0,38}(?<=[a-z0-9]))/, 'gmi');
