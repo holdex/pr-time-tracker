@@ -382,7 +382,7 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   );
 
   const bugReportComment = await io.runTask('get-report-comment', async () => {
-    const comment = await getPreviousComment(
+    return await getPreviousComment(
       orgDetails.id,
       payload.organization,
       payload.repo,
@@ -392,11 +392,10 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
       'others',
       io
     );
-    return comment;
   });
 
   const previousBugReportWarning = await io.runTask('get-previous-bug-report-warning', async () => {
-    const comment = await getPreviousComment(
+    return await getPreviousComment(
       orgDetails.id,
       payload.organization,
       payload.repo,
@@ -406,7 +405,6 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
       'bot',
       io
     );
-    return comment;
   });
 
   if (!bugReportComment) {
