@@ -410,32 +410,7 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   });
 
   if (!bugReportComment) {
-    await io.runTask('add-bug-report-warning', async () => {
-      if (previousBugReportWarning) {
-        return await reinsertComment(
-          orgDetails.id,
-          payload.organization,
-          payload.repo,
-          submissionHeaderComment('Bug Report', payload.prNumber.toString()),
-          payload.prNumber,
-          io
-        );
-      } else {
-        const comment = await createComment(
-          orgDetails.id,
-          payload.organization,
-          payload.repo,
-          bodyWithHeader(
-            'Bug Report',
-            `@${payload.senderLogin} please use git blame and specify the link to the commit link that has introduced this bug. Send the following message in this PR: \`${bugReportPrefix} [link] && bug author @name\``,
-            payload.prNumber.toString()
-          ),
-          payload.prNumber,
-          io
-        );
-        return comment;
-      }
-    });
+    await addBugReportWarning(previousBugReportWarning, orgDetails, payload, io);
   } else {
     if (previousBugReportWarning) {
       await io.runTask('delete-bug-report-warning', async () => {
@@ -477,6 +452,39 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   // } else {
   //   // add message
   // }
+}
+
+async function addBugReportWarning(
+  previousBugReportWarning: IssueComment | undefined,
+  orgDetails: { id: number },
+  payload: EventSchema,
+  io: any
+) {
+  return await io.runTask('add-bug-report-warning', async () => {
+    if (previousBugReportWarning) {
+      return await reinsertComment(
+        orgDetails.id,
+        payload.organization,
+        payload.repo,
+        submissionHeaderComment('Bug Report', payload.prNumber.toString()),
+        payload.prNumber,
+        io
+      );
+    } else {
+      return await createComment(
+        orgDetails.id,
+        payload.organization,
+        payload.repo,
+        bodyWithHeader(
+          'Bug Report',
+          `@${payload.senderLogin} please use git blame and specify the link to the commit link that has introduced this bug. Send the following message in this PR: \`${bugReportPrefix} [link] && bug author @name\``,
+          payload.prNumber.toString()
+        ),
+        payload.prNumber,
+        io
+      );
+    }
+  });
 }
 
 async function getPrInfoByCheckRunNodeId<T extends Octokit>(
