@@ -202,7 +202,7 @@ const deleteCheckRun = async (
   io: any
 ) => {
   return await io.runTask('delete-check-run', async () => {
-    const checkRunId = await io.runTask('get-check-id', async () => {
+    const checkRunId = await io.runTask('get-check-run-id', async () => {
       const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
       const { data } = await octokit.rest.checks
@@ -389,17 +389,17 @@ async function runPrFixCheckRun<
     pullRequest = pr;
   }
 
+  const orgDetails = await io.runTask(
+    'get org installation',
+    async () => {
+      const { data } = await getInstallationId(organization?.login as string);
+      return data;
+    },
+    { name: 'Get Organization installation' }
+  );
+
   if (isFixPr) {
     const { user } = pullRequest;
-
-    const orgDetails = await io.runTask(
-      'get org installation',
-      async () => {
-        const { data } = await getInstallationId(organization?.login as string);
-        return data;
-      },
-      { name: 'Get Organization installation' }
-    );
 
     await io.runTask(
       `create-check-run-for-fix-pr`,
@@ -425,8 +425,8 @@ async function runPrFixCheckRun<
       return io.logger.log('organization not found');
     }
 
-    await deleteFixPrReportAndCheckRun(
-      payload.organization.id,
+    await deleteFixPrReportAndResolveCheckRun(
+      orgDetails.id,
       payload.organization.login,
       repository.name,
       pullRequest,
@@ -436,7 +436,7 @@ async function runPrFixCheckRun<
   }
 }
 
-async function deleteFixPrReportAndCheckRun(
+async function deleteFixPrReportAndResolveCheckRun(
   orgID: number,
   orgName: string,
   repositoryName: string,
@@ -445,55 +445,31 @@ async function deleteFixPrReportAndCheckRun(
   io: any
 ) {
   await io.runTask(
-    `delete-fix-pr-warning-and-check-run`,
+    `delete-fix-pr-warning-and-resolve-check-run`,
     async () => {
-      await io.runTask(
-        `delete-bug-report-warning`,
-        async () => {
-          const previousBugReportWarning = await io.runTask(
-            'get-previous-bug-report-warning',
-            async () => {
-              const comment = await getPreviousComment(
-                orgID,
-                orgName,
-                repositoryName,
-                submissionHeaderComment('Bug Report', pullRequest.number.toString()),
-                pullRequest.number,
-                'pullRequest',
-                'bot',
-                io
-              );
-              return comment;
-            }
-          );
-          if (previousBugReportWarning) {
-            await io.runTask('delete-bug-report-warning', async () => {
-              await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning, io);
-            });
-          }
-        },
-        {
-          name: 'delete fix PR warning'
-        }
+      const previousBugReportWarning = await getPreviousComment(
+        orgID,
+        orgName,
+        repositoryName,
+        submissionHeaderComment('Bug Report', pullRequest.number.toString()),
+        pullRequest.number,
+        'pullRequest',
+        'bot',
+        io
       );
+      if (previousBugReportWarning) {
+        await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning, io);
+      }
 
-      await io.runTask(
-        `delete-check-run`,
-        async () => {
-          await deleteCheckRun(
-            { name: orgName, installationId: orgID, repo: repositoryName },
-            sender,
-            pullRequest,
-            (s) => bugCheckName(s),
-            io
-          );
-        },
-        {
-          name: 'delete fix PR check run'
-        }
+      await deleteCheckRun(
+        { name: orgName, installationId: orgID, repo: repositoryName },
+        sender,
+        pullRequest,
+        (s) => bugCheckName(s),
+        io
       );
     },
-    { name: `delete fix pr warning and check run` }
+    { name: `delete fix pr warning and resolve check run` }
   );
 }
 
