@@ -258,9 +258,13 @@ const deleteCheckRun = async (
             repositoryId: repoDetails.data.node_id,
             checkRunId: checkDetails.data.node_id,
             status: 'COMPLETED',
-            conclusion: 'CANCELLED',
+            conclusion: 'NEUTRAL',
             completedAt: new Date().toISOString(),
-            detailsUrl: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoDetails.data.name}/${pull_request.id}`
+            detailsUrl: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoDetails.data.name}/${pull_request.id}`,
+            output: {
+              title: '⚪ bug info check cancelled',
+              summary: 'Pull request title no longer includes `fix:`. No further actions required'
+            }
           }).then((r) => r.updateCheckRun);
         },
         { name: 'Update check run' }
