@@ -241,6 +241,7 @@ const checkRunFromEvent = async (
   );
 };
 
+const fixPrRegex = /^fix:/;
 async function runPrFixCheckRun<
   T extends IOWithIntegrations<{ github: Autoinvoicing }>,
   E extends PullRequestEvent | PullRequestReviewEvent | IssueCommentEvent =
@@ -256,8 +257,13 @@ async function runPrFixCheckRun<
     title = payload.issue.title;
   }
 
-  if (/^fix:/.test(title)) {
-    console.log('IN FIX PR CHECKER');
+  const isTitleChangedFromFixPr =
+    payload.action === 'edited' &&
+    'title' in payload.changes &&
+    fixPrRegex.test(payload.changes.title?.from ?? '') &&
+    !fixPrRegex.test(title);
+
+  if (fixPrRegex.test(title)) {
     // return io.logger.log('identified pull request');
 
     let pull_request: SimplePullRequest | PullRequest;
@@ -310,7 +316,79 @@ async function runPrFixCheckRun<
       },
       { name: `check run for fix PR` }
     );
+  } else if (isTitleChangedFromFixPr) {
+    if (!payload.organization) {
+      return io.logger.log('organization not found');
+    }
+    let prNumber: number;
+    if ('pull_request' in payload) {
+      prNumber = payload.pull_request.number;
+    } else {
+      prNumber = payload.issue.number;
+    }
+
+    await deleteFixPrReportAndCheckRun(
+      payload.organization.id,
+      payload.organization.login,
+      repository.name,
+      prNumber,
+      io
+    );
   }
+}
+
+async function deleteFixPrReportAndCheckRun(
+  orgID: number,
+  orgName: string,
+  repositoryName: string,
+  prNumber: number,
+  io: any
+) {
+  await io.runTask(
+    `delete-fix-pr-warning-and-check-run`,
+    async () => {
+      await io.runTask(
+        `delete-bug-report-warning`,
+        async () => {
+          const previousBugReportWarning = await io.runTask(
+            'get-previous-bug-report-warning',
+            async () => {
+              const comment = await getPreviousComment(
+                orgID,
+                orgName,
+                repositoryName,
+                submissionHeaderComment('Bug Report', prNumber.toString()),
+                prNumber,
+                'pullRequest',
+                'bot',
+                io
+              );
+              return comment;
+            }
+          );
+          if (previousBugReportWarning) {
+            await io.runTask('delete-bug-report-warning', async () => {
+              await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning, io);
+            });
+          }
+        },
+        {
+          name: 'delete fix PR warning'
+        }
+      );
+
+      await io.runTask(
+        `delete-check-run`,
+        async () => {
+          // TODO: add delete check run
+        },
+        {
+          name: 'delete fix PR check run'
+        }
+      );
+    },
+    { name: `delete fix pr warning and check run` }
+  );
 }
 
 async function deleteComment(
