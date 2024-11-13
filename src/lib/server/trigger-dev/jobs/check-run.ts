@@ -259,7 +259,7 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   // if success -> check comment -> create if not exits -> update the list
 
   const previous = await io.runTask('get previous comment', async () => {
-    const previous = await getPreviousComment(
+    return await getPreviousComment(
       orgDetails.id,
       payload.organization,
       payload.repo,
@@ -269,7 +269,6 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
       'bot',
       io
     );
-    return previous;
   });
   let current: any = null;
 
