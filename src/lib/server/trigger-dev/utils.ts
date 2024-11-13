@@ -256,8 +256,12 @@ async function runPrFixCheckRun<
     title = payload.issue.title;
   }
 
+  // TODO: remove this when the feature is ready
+  const dummy = true;
   if (/^fix:/.test(title)) {
-    // return io.logger.log('identified pull request');
+    if (dummy) {
+      return io.logger.log('identified pull request');
+    }
 
     let pull_request: SimplePullRequest | PullRequest;
     if ('pull_request' in payload) {
