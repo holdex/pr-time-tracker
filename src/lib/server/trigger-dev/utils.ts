@@ -359,7 +359,7 @@ async function runPrFixCheckRun<
     !fixPrRegex.test(title);
   const isFixPr = fixPrRegex.test(title);
 
-  if (!isFixPr || !isTitleChangedFromFixPr) {
+  if (!isFixPr && !isTitleChangedFromFixPr) {
     return;
   }
 
