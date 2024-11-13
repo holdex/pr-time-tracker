@@ -257,7 +257,6 @@ async function runPrFixCheckRun<
   }
 
   if (/^fix:/.test(title)) {
-    console.log('IN FIX PR CHECKER');
     // return io.logger.log('identified pull request');
 
     let pull_request: SimplePullRequest | PullRequest;
