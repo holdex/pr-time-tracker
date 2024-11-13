@@ -8,7 +8,8 @@ import type {
   Repository,
   PullRequestEvent,
   PullRequestReviewEvent,
-  Issue
+  Issue,
+  IssueCommentEvent
 } from '@octokit/webhooks-types';
 import type {
   User as UserGQL,
@@ -242,13 +243,44 @@ const checkRunFromEvent = async (
 
 async function runPrFixCheckRun<
   T extends IOWithIntegrations<{ github: Autoinvoicing }>,
-  E extends PullRequestEvent | PullRequestReviewEvent = PullRequestEvent | PullRequestReviewEvent
+  E extends PullRequestEvent | PullRequestReviewEvent | IssueCommentEvent =
+    | PullRequestEvent
+    | PullRequestReviewEvent
+    | IssueCommentEvent
 >(payload: E, io: T) {
-  const { pull_request, repository, organization } = payload;
+  const { repository, organization } = payload;
+  let title;
+  if ('pull_request' in payload) {
+    title = payload.pull_request.title;
+  } else {
+    title = payload.issue.title;
+  }
 
-  const { title, user } = pull_request;
   if (/^fix:/.test(title)) {
-    return io.logger.log('identified pull request');
+    console.log('IN FIX PR CHECKER');
+    // return io.logger.log('identified pull request');
+
+    let pull_request: SimplePullRequest | PullRequest;
+    if ('pull_request' in payload) {
+      pull_request = payload.pull_request;
+    } else {
+      if (!payload.organization) {
+        return io.logger.log('organization not found');
+      }
+      const pr = await getPullRequestByIssue(
+        payload.issue,
+        payload.organization?.id,
+        payload.organization?.login,
+        payload.repository.name,
+        io
+      );
+      if (!pr) {
+        return io.logger.log('pull request from issue not found');
+      }
+      pull_request = pr;
+    }
+
+    const { user } = pull_request;
 
     const orgDetails = await io.runTask(
       'get org installation',
@@ -439,7 +471,7 @@ async function getPullRequestByIssue(
   orgName: string,
   repositoryName: string,
   io: any
-): Promise<PullRequestGQL | undefined> {
+): Promise<PullRequest | undefined> {
   const previousComment = await io.runTask('get-pull-request-by-issue', async () => {
     try {
       const octokit = await githubApp.getInstallationOctokit(orgID);

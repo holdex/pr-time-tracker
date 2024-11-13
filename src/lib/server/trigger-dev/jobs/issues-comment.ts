@@ -7,7 +7,8 @@ import {
   submissionHeaderComment,
   getPullRequestByIssue,
   excludedAccounts,
-  reinsertComment
+  reinsertComment,
+  runPrFixCheckRun
 } from '../utils';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
@@ -53,13 +54,15 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             orgDetails.id,
             org.name,
             repository.name,
-            submissionHeaderComment('Pull Request', pr.id),
+            submissionHeaderComment('Pull Request', pr.id.toString()),
             issue.number,
             io
           );
         },
         { name: 'Reinsert sticky comment' }
       );
+
+      await runPrFixCheckRun({ ...payload, pull_request: pr }, io);
 
       break;
     }
