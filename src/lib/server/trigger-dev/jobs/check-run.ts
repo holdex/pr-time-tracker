@@ -2,14 +2,10 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { Octokit } from 'octokit';
 import type {
-  User,
-  Repository,
   IssueComment,
   CheckRun,
   PullRequestConnection,
-  PullRequest,
-  UpdateCheckRunPayload,
-  UpdateCheckRunInput
+  PullRequest
 } from '@octokit/graphql-schema';
 import type { CheckRunEvent } from '@octokit/webhooks-types';
 
