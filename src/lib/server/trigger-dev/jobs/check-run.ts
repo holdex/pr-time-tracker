@@ -2,14 +2,10 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { Octokit } from 'octokit';
 import type {
-  User,
-  Repository,
   IssueComment,
   CheckRun,
   PullRequestConnection,
-  PullRequest,
-  UpdateCheckRunPayload,
-  UpdateCheckRunInput
+  PullRequest
 } from '@octokit/graphql-schema';
 import type { CheckRunEvent } from '@octokit/webhooks-types';
 
@@ -20,7 +16,6 @@ import {
   getSubmissionStatus,
   submissionCheckPrefix,
   githubApp,
-  bugCheckPrefix,
   submissionHeaderComment,
   bodyWithHeader,
   reinsertComment,
@@ -29,6 +24,7 @@ import {
   createComment,
   updateCheckRun
 } from '../utils';
+import { bugCheckPrefix, bugReportRegex, getBugReportWarningTemplate } from '../fix-pr';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -340,7 +336,6 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   }
 }
 
-const bugReportPrefix = '@pr-time-tracker bug commit';
 async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
   io: T
@@ -387,7 +382,7 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
       orgDetails.id,
       payload.organization,
       payload.repo,
-      bugReportPrefix,
+      bugReportRegex,
       payload.prNumber,
       'pullRequest',
       'others',
@@ -478,7 +473,7 @@ async function addBugReportWarning(
         payload.repo,
         bodyWithHeader(
           'Bug Report',
-          `@${payload.senderLogin} please use git blame and specify the link to the commit link that has introduced this bug. Send the following message in this PR: \`${bugReportPrefix} [link] && bug author @name\``,
+          getBugReportWarningTemplate(payload.senderLogin),
           payload.prNumber.toString()
         ),
         payload.prNumber,

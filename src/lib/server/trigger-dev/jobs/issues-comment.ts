@@ -7,9 +7,9 @@ import {
   submissionHeaderComment,
   getPullRequestByIssue,
   excludedAccounts,
-  reinsertComment,
-  runPrFixCheckRun
+  reinsertComment
 } from '../utils';
+import { bugReportRegex, runPrFixCheckRun } from '../fix-pr';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: IssueCommentEvent,
