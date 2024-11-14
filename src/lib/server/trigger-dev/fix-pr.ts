@@ -1,12 +1,12 @@
-import { Autoinvoicing } from '@holdex/autoinvoicing';
-import {
+import type { IOWithIntegrations } from '@trigger.dev/sdk';
+import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import type {
   IssueCommentEvent,
   PullRequest,
   PullRequestEvent,
   PullRequestReviewEvent,
   SimplePullRequest
 } from '@octokit/webhooks-types';
-import { IOWithIntegrations } from '@trigger.dev/sdk';
 
 import {
   createCheckRunIfNotExists,
