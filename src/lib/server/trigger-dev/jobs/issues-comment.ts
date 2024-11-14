@@ -78,6 +78,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       }
       break;
     }
+    case 'deleted': {
+      const isBugReport = bugReportRegex.test(payload.comment.body);
+      if (isBugReport) {
+        await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
+      }
+      break;
+    }
     default: {
       io.logger.log('current action for issue comment is not in the parse candidate', payload);
     }
