@@ -66,6 +66,18 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
       break;
     }
+    case 'edited': {
+      const isChangedToOrFromBugReport =
+        (bugReportRegex.test(payload.comment.body) &&
+          bugReportRegex.test(payload.changes.body?.from ?? '')) ||
+        (!bugReportRegex.test(payload.comment.body) &&
+          bugReportRegex.test(payload.changes.body?.from ?? ''));
+
+      if (isChangedToOrFromBugReport) {
+        await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
+      }
+      break;
+    }
     default: {
       io.logger.log('current action for issue comment is not in the parse candidate', payload);
     }
