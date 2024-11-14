@@ -8,7 +8,8 @@ import type {
   Repository,
   PullRequestEvent,
   PullRequestReviewEvent,
-  Issue
+  Issue,
+  IssueCommentEvent
 } from '@octokit/webhooks-types';
 import type {
   User as UserGQL,
@@ -242,13 +243,47 @@ const checkRunFromEvent = async (
 
 async function runPrFixCheckRun<
   T extends IOWithIntegrations<{ github: Autoinvoicing }>,
-  E extends PullRequestEvent | PullRequestReviewEvent = PullRequestEvent | PullRequestReviewEvent
+  E extends PullRequestEvent | PullRequestReviewEvent | IssueCommentEvent =
+    | PullRequestEvent
+    | PullRequestReviewEvent
+    | IssueCommentEvent
 >(payload: E, io: T) {
-  const { pull_request, repository, organization } = payload;
+  const { repository, organization } = payload;
+  let title;
+  if ('pull_request' in payload) {
+    title = payload.pull_request.title;
+  } else {
+    title = payload.issue.title;
+  }
 
-  const { title, user } = pull_request;
+  // TODO: remove this when the feature is ready
+  const dummy = true;
   if (/^fix:/.test(title)) {
-    return io.logger.log('identified pull request');
+    if (dummy) {
+      return io.logger.log('identified pull request');
+    }
+
+    let pull_request: SimplePullRequest | PullRequest;
+    if ('pull_request' in payload) {
+      pull_request = payload.pull_request;
+    } else {
+      if (!payload.organization) {
+        return io.logger.log('organization not found');
+      }
+      const pr = await getPullRequestByIssue(
+        payload.issue,
+        payload.organization?.id,
+        payload.organization?.login,
+        payload.repository.name,
+        io
+      );
+      if (!pr) {
+        return io.logger.log('pull request from issue not found');
+      }
+      pull_request = pr;
+    }
+
+    const { user } = pull_request;
 
     const orgDetails = await io.runTask(
       'get org installation',
@@ -307,19 +342,22 @@ async function deleteComment(
   }
 }
 
-function submissionHeaderComment(type: 'Issue' | 'Pull Request', header: string): string {
+type SubmissionHeaderType = 'Issue' | 'Pull Request' | 'Bug Report';
+function submissionHeaderComment(type: SubmissionHeaderType, header: string): string {
   return `<!-- Sticky ${type} Comment${header} -->`;
 }
-
-function bodyWithHeader(type: 'Issue' | 'Pull Request', body: string, header: string): string {
+function bodyWithHeader(type: SubmissionHeaderType, body: string, header: string): string {
   return `${body}\n${submissionHeaderComment(type, header)}`;
 }
 
+type PreviousCommentCategory = 'pullRequest' | 'issue';
+type PreviousCommentSenderFilter = 'bot' | 'others';
 const queryPreviousComment = async <T extends Octokit>(
   repo: { owner: string; repo: string },
   idNumber: number,
-  category: string,
+  category: PreviousCommentCategory,
   h: string,
+  senderFilter: PreviousCommentSenderFilter,
   octokit: T
 ) => {
   let after = null;
@@ -360,12 +398,14 @@ const queryPreviousComment = async <T extends Octokit>(
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const repository = data.repository as RepoGQL;
     const categoryObj = category === 'issue' ? repository.issue : repository.pullRequest;
-    const target = categoryObj?.comments?.nodes?.find(
-      (node: IssueComment | null | undefined) =>
-        node?.author?.login === viewer.login.replace('[bot]', '') &&
+    const target = categoryObj?.comments?.nodes?.find((node: IssueComment | null | undefined) => {
+      const isSentByBot = node?.author?.login === viewer.login.replace('[bot]', '');
+      return (
+        ((senderFilter === 'bot' && isSentByBot) || (senderFilter === 'others' && !isSentByBot)) &&
         !node?.isMinimized &&
         node?.body?.includes(h)
-    );
+      );
+    });
     if (target) {
       return target;
     }
@@ -382,7 +422,8 @@ async function getPreviousComment(
   repositoryName: string,
   header: string,
   issueNumber: number,
-  category: string,
+  category: PreviousCommentCategory,
+  senderFilter: PreviousCommentSenderFilter,
   io: any
 ): Promise<IssueComment | undefined> {
   const previousComment = await io.runTask('get-previous-comment', async () => {
@@ -393,6 +434,7 @@ async function getPreviousComment(
         issueNumber,
         category,
         header,
+        senderFilter,
         octokit
       );
       return previous;
@@ -432,7 +474,7 @@ async function getPullRequestByIssue(
   orgName: string,
   repositoryName: string,
   io: any
-): Promise<PullRequestGQL | undefined> {
+): Promise<PullRequest | undefined> {
   const previousComment = await io.runTask('get-pull-request-by-issue', async () => {
     try {
       const octokit = await githubApp.getInstallationOctokit(orgID);
@@ -467,6 +509,7 @@ async function reinsertComment<T extends IOWithIntegrations<{ github: Autoinvoic
       header,
       prOrIssueNumber,
       'pullRequest',
+      'bot',
       io
     );
 

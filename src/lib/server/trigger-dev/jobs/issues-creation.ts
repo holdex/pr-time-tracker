@@ -40,6 +40,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           submissionHeaderComment('Issue', payload.issue.id.toString()),
           issue.number,
           'issue',
+          'bot',
           io
         );
 
