@@ -16,10 +16,9 @@ import {
   getPreviousComment,
   getPullRequestByIssue
 } from './utils';
-import { contributors } from '../mongo/collections';
 import { insertEvent } from '../gcloud';
 
-import { EventType } from '$lib/@types';
+import { EventsSchema, EventType } from '$lib/@types';
 
 export const bugCheckPrefix = 'Bug Report Info';
 export const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
@@ -162,40 +161,12 @@ async function processBugReport(
         [, commitLink] = regexMatch;
       }
 
-      let reporterId: number | undefined | null;
       const reporter = bugReportComment.author;
-      const reporterUsername = reporter?.login;
-
-      if (reporter) {
-        const user = await io.runTask(
-          'get-reporter',
-          async () => {
-            return await contributors.getOne({ login: reporter.login });
-          },
-          { name: 'Get reporter' }
-        );
-        if (user) {
-          reporterId = user.id;
-        }
-      }
-
-      if (!reporterId || !reporterUsername) {
-        return io.logger.log('Bug report author not found');
-      }
-
-      const bugAuthorContributor = await io.runTask(
-        'get-bug-author',
-        async () => {
-          return await contributors.getOne({ login: bugAuthor });
-        },
-        { name: 'Get bug author' }
-      );
+      const reporterUsername = reporter?.login ?? 'unknown';
 
       const bugReport: BugReport = {
         commitLink,
         bugAuthorUsername: bugAuthor,
-        bugAuthorId: bugAuthorContributor?.id,
-        reporterId: reporterId,
         reporterUsername: reporterUsername
       };
       await sendBugReportEvent(bugReport, pullRequest, orgName, repositoryName, io);
@@ -207,8 +178,6 @@ async function processBugReport(
 type BugReport = {
   commitLink: string;
   bugAuthorUsername: string;
-  bugAuthorId: number;
-  reporterId: number;
   reporterUsername: string;
 };
 async function sendBugReportEvent<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
@@ -218,20 +187,16 @@ async function sendBugReportEvent<T extends IOWithIntegrations<{ github: Autoinv
   repositoryName: string,
   io: T
 ) {
-  const event = {
-    action: EventType.PR_CLOSED,
-    id: pullRequest.number,
+  const event: EventsSchema = {
+    action: EventType.BUG_INTRODUCED,
+    id: pullRequest.id,
+    label: bugReport.commitLink,
     index: 1,
     organization: orgName || 'holdex',
-    owner: pullRequest.user.login,
+    owner: bugReport.bugAuthorUsername,
     repository: repositoryName,
-    sender: pullRequest.user.login,
+    sender: bugReport.reporterUsername,
     title: pullRequest.title,
-    commit_link: bugReport.commitLink,
-    bug_author_username: bugReport.bugAuthorUsername,
-    bug_author_id: bugReport.bugAuthorId,
-    reporter_id: bugReport.reporterId,
-    reporter_username: bugReport.reporterUsername,
     created_at: Math.round(new Date(pullRequest.created_at).getTime() / 1000).toFixed(0),
     updated_at: Math.round(new Date(pullRequest.updated_at).getTime() / 1000).toFixed(0)
   };
