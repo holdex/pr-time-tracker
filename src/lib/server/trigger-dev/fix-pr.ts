@@ -17,11 +17,10 @@ import {
   getPullRequestByIssue,
   submissionHeaderComment
 } from './utils';
-import { bugReports } from '../mongo/collections/bug-reports.collection';
 import { contributors } from '../mongo/collections';
 import { insertEvent } from '../gcloud';
 
-import { type BugReportSchema, EventType } from '$lib/@types';
+import { EventType } from '$lib/@types';
 
 export const bugCheckPrefix = 'Bug Report Info';
 export const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
@@ -112,7 +111,7 @@ export async function runPrFixCheckRun<
         { name: `check run for fix PR` }
       );
     } else if (payload.action === 'closed' && payload.pull_request.merged) {
-      await saveBugReportToDb(orgDetails.id, organization.login, repository.name, pullRequest, io);
+      await processBugReport(orgDetails.id, organization.login, repository.name, pullRequest, io);
     }
   } else if (isTitleChangedFromFixPr) {
     await deleteFixPrReportAndResolveCheckRun(
@@ -126,7 +125,7 @@ export async function runPrFixCheckRun<
   }
 }
 
-async function saveBugReportToDb(
+async function processBugReport(
   orgID: number,
   orgName: string,
   repositoryName: string,
@@ -144,63 +143,81 @@ async function saveBugReportToDb(
     io
   );
   if (!bugReportComment) {
-    return io.logger('Bug report not found');
+    return io.logger.log('Bug report not found');
   }
 
-  const bugReport = await io.runTask(`save-bug-report-to-db`, async () => {
-    const bugReportMatch = bugReportRegex.exec(bugReportComment.body);
-    if (!bugReportMatch) {
-      return io.logger('Bug report regex does not match!');
-    }
+  await io.runTask(
+    `send-bug-report-event`,
+    async () => {
+      const bugReportMatch = bugReportRegex.exec(bugReportComment.body);
+      if (!bugReportMatch) {
+        return io.logger.log('Bug report regex does not match!');
+      }
 
-    const [, commitLinkOrLinkMd, bugAuthor] = bugReportMatch;
-    const markdownLinkRegex = /\[[^\]]*\]\(([^)]+)\)/;
+      const [, commitLinkOrLinkMd, bugAuthor] = bugReportMatch;
+      const markdownLinkRegex = /\[[^\]]*\]\(([^)]+)\)/;
 
-    let commitLink = commitLinkOrLinkMd;
-    const regexMatch = markdownLinkRegex.exec(commitLinkOrLinkMd);
-    if (regexMatch) {
-      [, commitLink] = regexMatch;
-    }
+      let commitLink = commitLinkOrLinkMd;
+      const regexMatch = markdownLinkRegex.exec(commitLinkOrLinkMd);
+      if (regexMatch) {
+        [, commitLink] = regexMatch;
+      }
 
-    let reporterId: number | undefined | null;
-    const bugReporter = bugReportComment.author;
-    const reporterUsername = bugReporter?.login;
+      let reporterId: number | undefined | null;
+      const reporter = bugReportComment.author;
+      const reporterUsername = reporter?.login;
 
-    if (bugReporter) {
-      if ('databaseId' in bugReporter) {
-        reporterId = bugReporter.databaseId;
-      } else {
-        const reporter = await io.runTask(
-          'get-reporter',
-          async () => {
-            return await contributors.getOne({ login: bugReporter.login });
-          },
-          { name: 'Get reporter' }
-        );
-        if (reporter) {
-          reporterId = reporter.id;
+      if (reporter) {
+        if ('databaseId' in reporter) {
+          reporterId = reporter.databaseId;
+        } else {
+          const user = await io.runTask(
+            'get-reporter',
+            async () => {
+              return await contributors.getOne({ login: reporter.login });
+            },
+            { name: 'Get reporter' }
+          );
+          if (user) {
+            reporterId = user.id;
+          }
         }
       }
-    }
 
-    if (!reporterId || !reporterUsername) {
-      return io.logger('Bug report author not found');
-    }
+      if (!reporterId || !reporterUsername) {
+        return io.logger.log('Bug report author not found');
+      }
 
-    return await bugReports.create({
-      bug_author_username: bugAuthor,
-      commit_link: commitLink,
-      item_id: pullRequest.number,
-      reporter_id: reporterId,
-      reporter_username: reporterUsername
-    });
-  });
+      const bugAuthorContributor = await io.runTask(
+        'get-bug-author',
+        async () => {
+          return await contributors.getOne({ login: bugAuthor });
+        },
+        { name: 'Get bug author' }
+      );
 
-  await insertBugReportEvent(bugReport, pullRequest, orgName, repositoryName, io);
+      const bugReport: BugReport = {
+        commitLink,
+        bugAuthorUsername: bugAuthor,
+        bugAuthorId: bugAuthorContributor.id,
+        reporterId: reporterId,
+        reporterUsername: reporterUsername
+      };
+      await sendBugReportEvent(bugReport, pullRequest, orgName, repositoryName, io);
+    },
+    { name: 'send bug report event' }
+  );
 }
 
-async function insertBugReportEvent<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
-  bugReport: BugReportSchema,
+type BugReport = {
+  commitLink: string;
+  bugAuthorUsername: string;
+  bugAuthorId: number;
+  reporterId: number;
+  reporterUsername: string;
+};
+async function sendBugReportEvent<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
+  bugReport: BugReport,
   pullRequest: SimplePullRequest | PullRequest,
   orgName: string,
   repositoryName: string,
@@ -215,11 +232,11 @@ async function insertBugReportEvent<T extends IOWithIntegrations<{ github: Autoi
     repository: repositoryName,
     sender: pullRequest.user.login,
     title: pullRequest.title,
-    commit_link: bugReport.commit_link,
-    bug_author_username: bugReport.bug_author_username,
-    bug_author_id: bugReport.bug_author_id,
-    reporter_id: bugReport.reporter_id,
-    reporter_username: bugReport.reporter_username,
+    commit_link: bugReport.commitLink,
+    bug_author_username: bugReport.bugAuthorUsername,
+    bug_author_id: bugReport.bugAuthorId,
+    reporter_id: bugReport.reporterId,
+    reporter_username: bugReport.reporterUsername,
     created_at: Math.round(new Date(pullRequest.created_at).getTime() / 1000).toFixed(0),
     updated_at: Math.round(new Date(pullRequest.updated_at).getTime() / 1000).toFixed(0)
   };

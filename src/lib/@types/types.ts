@@ -45,8 +45,7 @@ export enum CollectionNames {
   ITEMS = 'items',
   EVENTS = 'events',
   CONTRIBUTORS = 'contributors',
-  SUBMISSIONS = 'submissions',
-  BUG_REPORTS = 'bug_reports'
+  SUBMISSIONS = 'submissions'
 }
 
 export interface EventsSchema extends TimeStamps {
@@ -112,17 +111,6 @@ export interface SubmissionSchema extends TimeStamps {
   item_id: number;
   /** This is used to calculate the PR `cost` at the time of submission relative to the `contributor`'s rate at the time. It will be stored once (on item submission) */
   rate: number;
-}
-
-export interface BugReportSchema extends TimeStamps {
-  _id?: ObjectId;
-  commit_link: string;
-  /** Note that this is equivalent to `contributor_id`(s) in `ItemSchema`. */
-  reporter_id: number;
-  reporter_username: string;
-  bug_author_username: string;
-  bug_author_id?: number;
-  item_id: number;
 }
 
 export enum Approval {
