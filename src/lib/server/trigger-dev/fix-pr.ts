@@ -55,12 +55,6 @@ export async function runPrFixCheckRun<
     !fixPrRegex.test(title);
   const isFixPr = fixPrRegex.test(title);
 
-  // TODO: remove this after the feature is all ready
-  const dummy = true;
-  if (dummy) {
-    return;
-  }
-
   if (!isFixPr && !isTitleChangedFromFixPr) {
     return;
   }
