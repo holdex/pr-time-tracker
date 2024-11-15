@@ -256,7 +256,7 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   // if success -> check comment -> create if not exits -> update the list
 
   const previous = await io.runTask('get previous comment', async () => {
-    const previous = await getPreviousComment(
+    return await getPreviousComment(
       orgDetails.id,
       payload.organization,
       payload.repo,
@@ -266,7 +266,6 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
       'bot',
       io
     );
-    return previous;
   });
   let current: any = null;
 
@@ -336,6 +335,7 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   }
 }
 
+const bugReportPrefix = '@pr-time-tracker bug commit';
 async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
   io: T
@@ -378,21 +378,20 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   );
 
   const bugReportComment = await io.runTask('get-report-comment', async () => {
-    const comment = await getPreviousComment(
+    return await getPreviousComment(
       orgDetails.id,
       payload.organization,
       payload.repo,
-      bugReportRegex,
+      bugReportPrefix,
       payload.prNumber,
       'pullRequest',
       'others',
       io
     );
-    return comment;
   });
 
   const previousBugReportWarning = await io.runTask('get-previous-bug-report-warning', async () => {
-    const comment = await getPreviousComment(
+    return await getPreviousComment(
       orgDetails.id,
       payload.organization,
       payload.repo,
@@ -402,7 +401,6 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
       'bot',
       io
     );
-    return comment;
   });
 
   if (!bugReportComment) {
