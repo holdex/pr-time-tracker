@@ -15,7 +15,8 @@ import type {
   User as UserGQL,
   Repository as RepoGQL,
   IssueComment,
-  PullRequest as PullRequestGQL
+  UpdateCheckRunInput,
+  UpdateCheckRunPayload
 } from '@octokit/graphql-schema';
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
 import type { IOWithIntegrations } from '@trigger.dev/sdk';
@@ -174,6 +175,104 @@ const createCheckRunIfNotExists = async (
   }
 };
 
+async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
+  return octokit.graphql<{ updateCheckRun: UpdateCheckRunPayload }>(
+    `
+      mutation($input: UpdateCheckRunInput!) {
+        updateCheckRun(input: $input) {
+          checkRun {
+            id
+            conclusion
+            title
+            summary
+          }
+          clientMutationId
+        }
+      }
+      `,
+    { input }
+  );
+}
+
+const deleteCheckRun = async (
+  org: { name: string; installationId: number; repo: string },
+  sender: { login: string; id: number },
+  pull_request: PullRequest | SimplePullRequest,
+  checkName: (s: string) => string,
+  io: any
+) => {
+  return await io.runTask('delete-check-run', async () => {
+    const checkRunId = await io.runTask('get-check-run-id', async () => {
+      const octokit = await githubApp.getInstallationOctokit(org.installationId);
+
+      const { data } = await octokit.rest.checks
+        .listForRef({
+          owner: org.name,
+          repo: org.repo,
+          ref: pull_request.head.sha,
+          check_name: checkName(sender.login)
+        })
+        .catch(() => ({
+          data: {
+            total_count: 0,
+            check_runs: []
+          }
+        }));
+
+      if (data.total_count === 0) {
+        return null;
+      }
+      return data.check_runs[data.total_count - 1].id;
+    });
+
+    if (checkRunId) {
+      const repoDetails = await io.runTask(
+        'get-repo-id',
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+
+          return octokit.rest.repos.get({ owner: org.name, repo: org.repo });
+        },
+        { name: 'Get Repo Details' }
+      );
+
+      const checkDetails = await io.runTask(
+        'get-check-id',
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+          return octokit.rest.checks.get({
+            owner: org.name,
+            repo: org.repo,
+            check_run_id: checkRunId
+          });
+        },
+        { name: 'Get Check Details' }
+      );
+
+      await io.runTask(
+        'update-check-run-to-completed',
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+
+          return updateCheckRun(octokit, {
+            repositoryId: repoDetails.data.node_id,
+            checkRunId: checkDetails.data.node_id,
+            status: 'COMPLETED',
+            conclusion: 'NEUTRAL',
+            completedAt: new Date().toISOString(),
+            detailsUrl: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoDetails.data.name}/${pull_request.id}`,
+            output: {
+              title: '⚪ bug info check cancelled',
+              summary: 'Pull request title no longer includes `fix:`. No further actions required'
+            }
+          }).then((r) => r.updateCheckRun);
+        },
+        { name: 'Update check run' }
+      );
+    }
+  });
+};
+
 const reRequestCheckRun = async (
   org: { name: string; installationId: number },
   repoName: string,
@@ -241,6 +340,7 @@ const checkRunFromEvent = async (
   );
 };
 
+const fixPrRegex = /^fix:/;
 async function runPrFixCheckRun<
   T extends IOWithIntegrations<{ github: Autoinvoicing }>,
   E extends PullRequestEvent | PullRequestReviewEvent | IssueCommentEvent =
@@ -248,7 +348,7 @@ async function runPrFixCheckRun<
     | PullRequestReviewEvent
     | IssueCommentEvent
 >(payload: E, io: T) {
-  const { repository, organization } = payload;
+  const { repository, organization, sender } = payload;
   let title;
   if ('pull_request' in payload) {
     title = payload.pull_request.title;
@@ -256,43 +356,54 @@ async function runPrFixCheckRun<
     title = payload.issue.title;
   }
 
-  // TODO: remove this when the feature is ready
+  const isTitleChangedFromFixPr =
+    payload.action === 'edited' &&
+    'title' in payload.changes &&
+    fixPrRegex.test(payload.changes.title?.from ?? '') &&
+    !fixPrRegex.test(title);
+  const isFixPr = fixPrRegex.test(title);
+
+  // TODO: remove this after the feature is all ready
   const dummy = true;
-  if (/^fix:/.test(title)) {
-    if (dummy) {
-      return io.logger.log('identified pull request');
+  if (dummy) {
+    return;
+  }
+
+  if (!isFixPr && !isTitleChangedFromFixPr) {
+    return;
+  }
+
+  let pullRequest: SimplePullRequest | PullRequest;
+  if ('pull_request' in payload) {
+    pullRequest = payload.pull_request;
+  } else {
+    if (!payload.organization) {
+      return io.logger.log('organization not found');
     }
-
-    let pull_request: SimplePullRequest | PullRequest;
-    if ('pull_request' in payload) {
-      pull_request = payload.pull_request;
-    } else {
-      if (!payload.organization) {
-        return io.logger.log('organization not found');
-      }
-      const pr = await getPullRequestByIssue(
-        payload.issue,
-        payload.organization?.id,
-        payload.organization?.login,
-        payload.repository.name,
-        io
-      );
-      if (!pr) {
-        return io.logger.log('pull request from issue not found');
-      }
-      pull_request = pr;
-    }
-
-    const { user } = pull_request;
-
-    const orgDetails = await io.runTask(
-      'get org installation',
-      async () => {
-        const { data } = await getInstallationId(organization?.login as string);
-        return data;
-      },
-      { name: 'Get Organization installation' }
+    const pr = await getPullRequestByIssue(
+      payload.issue,
+      payload.organization?.id,
+      payload.organization?.login,
+      payload.repository.name,
+      io
     );
+    if (!pr) {
+      return io.logger.log('pull request from issue not found');
+    }
+    pullRequest = pr;
+  }
+
+  const orgDetails = await io.runTask(
+    'get org installation',
+    async () => {
+      const { data } = await getInstallationId(organization?.login as string);
+      return data;
+    },
+    { name: 'Get Organization installation' }
+  );
+
+  if (isFixPr) {
+    const { user } = pullRequest;
 
     await io.runTask(
       `create-check-run-for-fix-pr`,
@@ -304,7 +415,7 @@ async function runPrFixCheckRun<
             repo: repository.name
           },
           user,
-          pull_request,
+          pullRequest,
           (b) => bugCheckName(b),
           'bug_report'
         );
@@ -313,7 +424,57 @@ async function runPrFixCheckRun<
       },
       { name: `check run for fix PR` }
     );
+  } else if (isTitleChangedFromFixPr) {
+    if (!payload.organization) {
+      return io.logger.log('organization not found');
+    }
+
+    await deleteFixPrReportAndResolveCheckRun(
+      orgDetails.id,
+      payload.organization.login,
+      repository.name,
+      pullRequest,
+      sender,
+      io
+    );
   }
+}
+
+async function deleteFixPrReportAndResolveCheckRun(
+  orgID: number,
+  orgName: string,
+  repositoryName: string,
+  pullRequest: SimplePullRequest | PullRequest,
+  sender: { login: string; id: number },
+  io: any
+) {
+  await io.runTask(
+    `delete-fix-pr-warning-and-resolve-check-run`,
+    async () => {
+      const previousBugReportWarning = await getPreviousComment(
+        orgID,
+        orgName,
+        repositoryName,
+        submissionHeaderComment('Bug Report', pullRequest.number.toString()),
+        pullRequest.number,
+        'pullRequest',
+        'bot',
+        io
+      );
+      if (previousBugReportWarning) {
+        await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning, io);
+      }
+
+      await deleteCheckRun(
+        { name: orgName, installationId: orgID, repo: repositoryName },
+        sender,
+        pullRequest,
+        (s) => bugCheckName(s),
+        io
+      );
+    },
+    { name: `delete fix pr warning and resolve check run` }
+  );
 }
 
 async function deleteComment(
@@ -537,6 +698,8 @@ export {
   createCheckRunIfNotExists,
   getContributorInfo,
   checkRunFromEvent,
+  updateCheckRun,
+  deleteCheckRun,
   getPrInfo,
   getSubmissionStatus,
   bugCheckName,
