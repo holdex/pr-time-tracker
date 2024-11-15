@@ -19,6 +19,9 @@ import {
 } from './utils';
 import { bugReports } from '../mongo/collections/bug-reports.collection';
 import { contributors } from '../mongo/collections';
+import { insertEvent } from '../gcloud';
+
+import { type BugReportSchema, EventType } from '$lib/@types';
 
 export const bugCheckPrefix = 'Bug Report Info';
 export const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
@@ -199,7 +202,46 @@ async function saveBugReportToDb(
     });
   });
 
-  // TODO: send event
+  await insertBugReportEvent(bugReport, pullRequest, orgName, repositoryName, io);
+}
+
+async function insertBugReportEvent<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
+  bugReport: BugReportSchema,
+  pullRequest: SimplePullRequest | PullRequest,
+  orgName: string,
+  repositoryName: string,
+  io: T
+) {
+  const event = {
+    action: EventType.PR_CLOSED,
+    id: pullRequest.number,
+    index: 1,
+    organization: orgName || 'holdex',
+    owner: pullRequest.user.login,
+    repository: repositoryName,
+    sender: pullRequest.user.login,
+    title: pullRequest.title,
+    commit_link: bugReport.commit_link,
+    bug_author_username: bugReport.bug_author_username,
+    bug_author_id: bugReport.bug_author_id,
+    reporter_id: bugReport.reporter_id,
+    reporter_username: bugReport.reporter_username,
+    created_at: Math.round(new Date(pullRequest.created_at).getTime() / 1000).toFixed(0),
+    updated_at: Math.round(new Date(pullRequest.updated_at).getTime() / 1000).toFixed(0)
+  };
+
+  const eventId = `${event.organization}/${event.repository}@${event.id}_${event.action}_bug-report`;
+  await io.runTask(
+    `insert event: ${eventId}`,
+    async () => {
+      const data = await insertEvent(event, eventId);
+      return data;
+    },
+    { name: 'Insert Bigquery event' },
+    (err: any, _, _io) => {
+      _io.logger.error(err);
+    }
+  );
 }
 
 async function deleteFixPrReportAndResolveCheckRun(
