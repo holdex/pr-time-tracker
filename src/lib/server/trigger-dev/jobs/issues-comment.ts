@@ -68,10 +68,8 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     }
     case 'edited': {
       const isChangedToOrFromBugReport =
-        (bugReportRegex.test(payload.comment.body) &&
-          !bugReportRegex.test(payload.changes.body?.from ?? '')) ||
-        (!bugReportRegex.test(payload.comment.body) &&
-          bugReportRegex.test(payload.changes.body?.from ?? ''));
+        bugReportRegex.test(payload.comment.body) !==
+        bugReportRegex.test(payload.changes.body?.from ?? '');
 
       if (isChangedToOrFromBugReport) {
         await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
