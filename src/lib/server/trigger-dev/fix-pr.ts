@@ -14,8 +14,7 @@ import {
   deleteComment,
   getInstallationId,
   getPreviousComment,
-  getPullRequestByIssue,
-  submissionHeaderComment
+  getPullRequestByIssue
 } from './utils';
 import { contributors } from '../mongo/collections';
 import { insertEvent } from '../gcloud';
@@ -25,7 +24,7 @@ import { EventType } from '$lib/@types';
 export const bugCheckPrefix = 'Bug Report Info';
 export const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
 
-export const bugReportRegex = /^@pr-time-tracker bug commit (.+) && bug author @(.+)/;
+export const bugReportRegex = /^@pr-time-tracker bug commit (.+) && bug author @([^\s]+)/;
 
 export function getBugReportWarningTemplate(sender: string) {
   return `@${sender} please use git blame and specify the link to the commit link that has introduced this bug. Send the following message in this PR: \`@pr-time-tracker bug commit [link] && bug author @name\``;
@@ -136,7 +135,7 @@ async function processBugReport(
     orgID,
     orgName,
     repositoryName,
-    bugCheckPrefix,
+    bugReportRegex,
     pullRequest.number,
     'pullRequest',
     'others',
@@ -195,7 +194,7 @@ async function processBugReport(
       const bugReport: BugReport = {
         commitLink,
         bugAuthorUsername: bugAuthor,
-        bugAuthorId: bugAuthorContributor.id,
+        bugAuthorId: bugAuthorContributor?.id,
         reporterId: reporterId,
         reporterUsername: reporterUsername
       };
@@ -266,7 +265,7 @@ async function deleteFixPrReportAndResolveCheckRun(
         orgID,
         orgName,
         repositoryName,
-        submissionHeaderComment('Bug Report', pullRequest.number.toString()),
+        bugReportRegex,
         pullRequest.number,
         'pullRequest',
         'bot',
