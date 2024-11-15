@@ -17,8 +17,9 @@ import {
   getPullRequestByIssue
 } from './utils';
 import { insertEvent } from '../gcloud';
+import { items } from '../mongo/collections';
 
-import { type EventsSchema, EventType } from '$lib/@types';
+import { type EventsSchema, EventType, type ItemSchema } from '$lib/@types';
 
 export const bugCheckPrefix = 'Bug Report Info';
 export const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
@@ -169,7 +170,7 @@ async function processBugReport(
         bugAuthorUsername: bugAuthor,
         reporterUsername: reporterUsername
       };
-      await sendBugReportEvent(bugReport, pullRequest, orgName, repositoryName, io);
+      await sendBugReportEvent(bugReport, io);
     },
     { name: 'send bug report event' }
   );
@@ -180,38 +181,50 @@ type BugReport = {
   bugAuthorUsername: string;
   reporterUsername: string;
 };
-async function sendBugReportEvent<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
-  bugReport: BugReport,
-  pullRequest: SimplePullRequest | PullRequest,
-  orgName: string,
-  repositoryName: string,
-  io: T
-) {
+async function sendBugReportEvent(bugReport: BugReport, io: any) {
+  const commitLinkRegex = /https:\/\/github.com\/([^/]+)\/([^/]+)\/pull\/([^/]+)\/commits\/([^/]+)/;
+  const regexRes = commitLinkRegex.exec(bugReport.commitLink);
+  if (!regexRes) {
+    return io.logger.log('commit link regex does not match');
+  }
+  const [, org, repo, prNumber] = commitLinkRegex.exec(bugReport.commitLink) ?? [];
+  const pullRequest: ItemSchema | null = await io.runTask(
+    `get-pull-request`,
+    async () => {
+      return items.getOne({
+        number: { $eq: Number(prNumber) },
+        repo: { $eq: repo },
+        org: { $eq: org }
+      });
+    },
+    { name: 'get pull request' }
+  );
+
   const event: EventsSchema = {
     action: EventType.BUG_INTRODUCED,
-    id: pullRequest.id,
-    label: bugReport.commitLink,
+    id: pullRequest?.number ?? Number(prNumber),
     index: 1,
-    organization: orgName || 'holdex',
+    organization: pullRequest?.org ?? org ?? 'holdex',
     owner: bugReport.bugAuthorUsername,
-    repository: repositoryName,
+    repository: pullRequest?.repo ?? repo,
     sender: bugReport.reporterUsername,
-    title: pullRequest.title,
-    created_at: Math.round(new Date(pullRequest.created_at).getTime() / 1000).toFixed(0),
-    updated_at: Math.round(new Date(pullRequest.updated_at).getTime() / 1000).toFixed(0)
+    title: pullRequest?.title ?? 'unknown',
+    created_at: pullRequest?.created_at
+      ? Math.round(new Date(pullRequest.created_at).getTime() / 1000).toFixed(0)
+      : undefined,
+    updated_at: pullRequest?.updated_at
+      ? Math.round(new Date(pullRequest.updated_at).getTime() / 1000).toFixed(0)
+      : undefined
   };
 
-  const eventId = `${event.organization}/${event.repository}@${event.id}_${event.action}_bug-report`;
+  const eventId = `${event.organization}/${event.repository}@${event.id}_${event.action}`;
   await io.runTask(
     `insert event: ${eventId}`,
     async () => {
       const data = await insertEvent(event, eventId);
       return data;
     },
-    { name: 'Insert Bigquery event' },
-    (err: any, _, _io) => {
-      _io.logger.error(err);
-    }
+    { name: 'Insert Bigquery event' }
   );
 }
 
