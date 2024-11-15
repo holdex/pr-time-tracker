@@ -397,7 +397,6 @@ const queryPreviousComment = async <T extends Octokit>(
                 databaseId
                 author {
                   login
-                  databaseId
                 }
                 isMinimized
                 body

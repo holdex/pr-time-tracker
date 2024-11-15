@@ -168,19 +168,15 @@ async function processBugReport(
       const reporterUsername = reporter?.login;
 
       if (reporter) {
-        if ('databaseId' in reporter) {
-          reporterId = reporter.databaseId;
-        } else {
-          const user = await io.runTask(
-            'get-reporter',
-            async () => {
-              return await contributors.getOne({ login: reporter.login });
-            },
-            { name: 'Get reporter' }
-          );
-          if (user) {
-            reporterId = user.id;
-          }
+        const user = await io.runTask(
+          'get-reporter',
+          async () => {
+            return await contributors.getOne({ login: reporter.login });
+          },
+          { name: 'Get reporter' }
+        );
+        if (user) {
+          reporterId = user.id;
         }
       }
 
