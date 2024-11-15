@@ -7,10 +7,11 @@ import { CollectionNames, type SubmissionSchema, type BugReportSchema } from '$l
 export class BugReportCollection extends BaseCollection<BugReportSchema> {
   async create({
     item_id,
-    bug_owner_username,
+    bug_author_username,
     commit_link,
-    reporter_id
-  }: Omit<BugReportSchema, 'bug_owner_id'>) {
+    reporter_id,
+    reporter_username
+  }: Omit<BugReportSchema, 'bug_author_id'>) {
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Bug report declined.`);
@@ -22,17 +23,18 @@ export class BugReportCollection extends BaseCollection<BugReportSchema> {
     const created_at = new Date().toISOString();
     const session = this.client.startSession();
 
-    const bugOwner = await contributors.getOne({ login: bug_owner_username });
+    const bugOwner = await contributors.getOne({ login: bug_author_username });
 
     try {
       session.startTransaction();
 
       const bugReport = await super.create({
         item_id,
-        bug_owner_username,
-        bug_owner_id: bugOwner?.id,
+        bug_author_username: bug_author_username,
+        bug_author_id: bugOwner?.id,
         commit_link,
         reporter_id,
+        reporter_username,
         created_at,
         updated_at: created_at
       });
@@ -54,18 +56,30 @@ export class BugReportCollection extends BaseCollection<BugReportSchema> {
 }
 
 export const bugReports = new BugReportCollection(CollectionNames.BUG_REPORTS, {
-  required: ['bug_owner_id', 'commit_link', 'reporter_id', 'item_id', 'created_at', 'updated_at'],
+  required: [
+    'bug_author_id',
+    'commit_link',
+    'reporter_id',
+    'reporter_username',
+    'item_id',
+    'created_at',
+    'updated_at'
+  ],
   properties: {
-    bug_owner_id: {
+    bug_author_id: {
       bsonType: ['int', 'double', 'undefined'],
       description: 'must be number or undefined.'
     },
-    bug_owner_username: {
+    bug_author_username: {
       bsonType: ['int', 'double'],
       description: 'must be provided.'
     },
     reporter_id: {
       bsonType: ['int', 'double'],
+      description: 'must be provided.'
+    },
+    reporter_username: {
+      bsonType: 'string',
       description: 'must be provided.'
     },
     commit_link: {

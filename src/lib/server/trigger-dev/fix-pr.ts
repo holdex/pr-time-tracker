@@ -17,6 +17,8 @@ import {
   getPullRequestByIssue,
   submissionHeaderComment
 } from './utils';
+import { bugReports } from '../mongo/collections/bug-reports.collection';
+import { contributors } from '../mongo/collections';
 
 export const bugCheckPrefix = 'Bug Report Info';
 export const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
@@ -112,7 +114,7 @@ export async function runPrFixCheckRun<
         },
         { name: `check run for fix PR` }
       );
-    } else {
+    } else if (payload.action === 'closed' && payload.pull_request.merged) {
       await saveBugReportToDb(orgDetails.id, organization.login, repository.name, pullRequest, io);
     }
   } else if (isTitleChangedFromFixPr) {
@@ -148,8 +150,56 @@ async function saveBugReportToDb(
     return io.logger('Bug report not found');
   }
 
-  // TODO: save to db
-  // const bugReport =
+  const bugReport = await io.runTask(`save-bug-report-to-db`, async () => {
+    const bugReportMatch = bugReportRegex.exec(bugReportComment.body);
+    if (!bugReportMatch) {
+      return io.logger('Bug report regex does not match!');
+    }
+
+    const [, commitLinkOrLinkMd, bugAuthor] = bugReportMatch;
+    const markdownLinkRegex = /\[[^\]]*\]\(([^)]+)\)/;
+
+    let commitLink = commitLinkOrLinkMd;
+    const regexMatch = markdownLinkRegex.exec(commitLinkOrLinkMd);
+    if (regexMatch) {
+      [, commitLink] = regexMatch;
+    }
+
+    let reporterId: number | undefined | null;
+    const bugReporter = bugReportComment.author;
+    const reporterUsername = bugReporter?.login;
+
+    if (bugReporter) {
+      if ('databaseId' in bugReporter) {
+        reporterId = bugReporter.databaseId;
+      } else {
+        const reporter = await io.runTask(
+          'get-reporter',
+          async () => {
+            return await contributors.getOne({ login: bugReporter.login });
+          },
+          { name: 'Get reporter' }
+        );
+        if (reporter) {
+          reporterId = reporter.id;
+        }
+      }
+    }
+
+    if (!reporterId || !reporterUsername) {
+      return io.logger('Bug report author not found');
+    }
+
+    return await bugReports.create({
+      bug_author_username: bugAuthor,
+      commit_link: commitLink,
+      item_id: pullRequest.number,
+      reporter_id: reporterId,
+      reporter_username: reporterUsername
+    });
+  });
+
+  // TODO: send event
 }
 
 async function deleteFixPrReportAndResolveCheckRun(

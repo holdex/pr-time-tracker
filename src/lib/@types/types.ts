@@ -119,8 +119,9 @@ export interface BugReportSchema extends TimeStamps {
   commit_link: string;
   /** Note that this is equivalent to `contributor_id`(s) in `ItemSchema`. */
   reporter_id: number;
-  bug_owner_username: string;
-  bug_owner_id?: number;
+  reporter_username: string;
+  bug_author_username: string;
+  bug_author_id?: number;
   item_id: number;
 }
 
