@@ -16,7 +16,6 @@ import {
   getSubmissionStatus,
   submissionCheckPrefix,
   githubApp,
-  bugCheckPrefix,
   submissionHeaderComment,
   bodyWithHeader,
   reinsertComment,
@@ -25,6 +24,7 @@ import {
   createComment,
   updateCheckRun
 } from '../utils';
+import { bugCheckPrefix, bugReportRegex, getBugReportWarningTemplate } from '../fix-pr';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -471,7 +471,7 @@ async function addBugReportWarning(
         payload.repo,
         bodyWithHeader(
           'Bug Report',
-          `@${payload.senderLogin} please use git blame and specify the link to the commit link that has introduced this bug. Send the following message in this PR: \`${bugReportPrefix} [link] && bug author @name\``,
+          getBugReportWarningTemplate(payload.senderLogin),
           payload.prNumber.toString()
         ),
         payload.prNumber,

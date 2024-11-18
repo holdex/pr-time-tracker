@@ -306,7 +306,7 @@ const onIssueComment: EventSpecification<IssueCommentEvent> = {
   source: 'github.com',
   icon: 'github',
   filter: {
-    action: ['created']
+    action: ['created', 'edited', 'deleted']
   },
   examples: [issueCommentCreated],
   parsePayload: (payload) => payload as IssueCommentEvent,

@@ -6,15 +6,14 @@ import { insertEvent } from '$lib/server/gcloud';
 import { contributors, items } from '$lib/server/mongo/collections';
 
 import {
-  bugCheckName,
   createCheckRunIfNotExists,
   excludedAccounts,
   getContributorInfo,
   getInstallationId,
   getPrInfo,
-  runPrFixCheckRun,
   submissionCheckName
 } from '../utils';
+import { runPrFixCheckRun } from '../fix-pr';
 
 import { EventType, type ItemSchema } from '$lib/@types';
 

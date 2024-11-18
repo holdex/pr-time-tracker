@@ -12,10 +12,10 @@ import {
   getInstallationId,
   getPrInfo,
   reinsertComment,
-  runPrFixCheckRun,
   submissionCheckName,
   submissionHeaderComment
 } from '../utils';
+import { runPrFixCheckRun } from '../fix-pr';
 
 import { EventType, type ItemSchema } from '$lib/@types';
 

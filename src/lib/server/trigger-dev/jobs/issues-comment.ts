@@ -7,9 +7,9 @@ import {
   submissionHeaderComment,
   getPullRequestByIssue,
   excludedAccounts,
-  reinsertComment,
-  runPrFixCheckRun
+  reinsertComment
 } from '../utils';
+import { bugReportRegex, runPrFixCheckRun } from '../fix-pr';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: IssueCommentEvent,
@@ -64,6 +64,23 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
 
       await runPrFixCheckRun({ ...payload, pull_request: pr }, io);
 
+      break;
+    }
+    case 'edited': {
+      const isChangedToOrFromBugReport =
+        bugReportRegex.test(payload.comment.body) !==
+        bugReportRegex.test(payload.changes.body?.from ?? '');
+
+      if (isChangedToOrFromBugReport) {
+        await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
+      }
+      break;
+    }
+    case 'deleted': {
+      const isBugReport = bugReportRegex.test(payload.comment.body);
+      if (isBugReport) {
+        await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
+      }
       break;
     }
     default: {
