@@ -343,18 +343,23 @@ async function deleteComment(
   io: any
 ): Promise<boolean> {
   try {
-    return await io.runTask('delete-comment', async () => {
-      const octokit = await githubApp.getInstallationOctokit(orgID);
-      if (previousComment?.databaseId) {
-        await octokit.rest.issues.deleteComment({
-          owner: orgName,
-          repo: repositoryName,
-          comment_id: previousComment.databaseId
-        });
-        return true;
-      }
+    if (previousComment.databaseId) {
+      return await io.runTask(
+        `delete-comment-${previousComment.databaseId ?? ''}`,
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(orgID);
+          await octokit.rest.issues.deleteComment({
+            owner: orgName,
+            repo: repositoryName,
+            comment_id: previousComment.databaseId
+          });
+          return true;
+        },
+        { name: 'Delete comment' }
+      );
+    } else {
       return false;
-    });
+    }
   } catch (error) {
     await io.logger.error('delete comment', { error });
     return (error as { location: string })?.location === 'after_complete_task';
@@ -445,23 +450,27 @@ async function getPreviousComment(
   senderFilter: PreviousCommentSenderFilter,
   io: any
 ): Promise<IssueComment | undefined> {
-  const previousComment = await io.runTask('get-previous-comment', async () => {
-    try {
-      const octokit = await githubApp.getInstallationOctokit(orgID);
-      const previous = await queryPreviousComment<typeof octokit>(
-        { owner: orgName, repo: repositoryName },
-        issueNumber,
-        category,
-        header,
-        senderFilter,
-        octokit
-      );
-      return previous;
-    } catch (error) {
-      await io.logger.error('get previous comment', { error });
-      return undefined;
-    }
-  });
+  const previousComment = await io.runTask(
+    `get-previous-comment-${issueNumber}-${category}-${header}-${senderFilter}`,
+    async () => {
+      try {
+        const octokit = await githubApp.getInstallationOctokit(orgID);
+        const previous = await queryPreviousComment<typeof octokit>(
+          { owner: orgName, repo: repositoryName },
+          issueNumber,
+          category,
+          header,
+          senderFilter,
+          octokit
+        );
+        return previous;
+      } catch (error) {
+        await io.logger.error('get previous comment', { error });
+        return undefined;
+      }
+    },
+    { name: 'Get Previous Comment' }
+  );
 
   return previousComment;
 }
@@ -494,20 +503,23 @@ async function getPullRequestByIssue(
   repositoryName: string,
   io: any
 ): Promise<PullRequest | undefined> {
-  const previousComment = await io.runTask('get-pull-request-by-issue', async () => {
-    try {
-      const octokit = await githubApp.getInstallationOctokit(orgID);
-      const data = await octokit.rest.pulls.get({
-        owner: orgName,
-        repo: repositoryName,
-        pull_number: issue.number
-      });
-      return data.data;
-    } catch (error) {
-      await io.logger.error('get pull request id by issue id', { error });
-      return undefined;
+  const previousComment = await io.runTask(
+    `get-pull-request-by-issue-${issue.number}`,
+    async () => {
+      try {
+        const octokit = await githubApp.getInstallationOctokit(orgID);
+        const data = await octokit.rest.pulls.get({
+          owner: orgName,
+          repo: repositoryName,
+          pull_number: issue.number
+        });
+        return data.data;
+      } catch (error) {
+        await io.logger.error('get pull request id by issue id', { error });
+        return undefined;
+      }
     }
-  });
+  );
 
   return previousComment;
 }

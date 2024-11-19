@@ -93,7 +93,7 @@ export async function runPrFixCheckRun<
   }
 
   const orgDetails = await io.runTask(
-    'get org installation',
+    'fix-pr-get-org-installation',
     async () => {
       const { data } = await getInstallationId(organization?.login as string);
       return data;
@@ -208,7 +208,7 @@ async function sendBugReportEvent(bugReport: BugReport, io: any) {
   }
   const [, org, repo, prNumber] = commitLinkRegex.exec(bugReport.commitLink) ?? [];
   const pullRequest: ItemSchema | null = await io.runTask(
-    `get-pull-request`,
+    `fix-pr-get-pull-request-${prNumber}`,
     async () => {
       return items.getOne({
         number: { $eq: Number(prNumber) },
