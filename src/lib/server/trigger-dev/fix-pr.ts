@@ -40,20 +40,35 @@ export async function runPrFixCheckRun<
 >(payload: E, io: T) {
   const { repository, organization, sender } = payload;
   let title;
+  let isPullRequestEvent = false;
   if ('pull_request' in payload) {
+    isPullRequestEvent = true;
     title = payload.pull_request.title;
   } else {
     title = payload.issue.title;
   }
 
-  const isTitleChangedFromFixPr =
-    payload.action === 'edited' &&
-    'title' in payload.changes &&
-    fixPrRegex.test(payload.changes.title?.from ?? '') &&
-    !fixPrRegex.test(title);
-  const isFixPr = fixPrRegex.test(title);
+  let shouldRunFixPrCheck = false;
+  if (fixPrRegex.test(title)) {
+    shouldRunFixPrCheck = true;
+    if (isPullRequestEvent && payload.action === 'edited') {
+      // if the pr's body is edited, then don't need to do anything
+      if ('body' in payload.changes) {
+        shouldRunFixPrCheck = false;
+      }
+    }
+  }
 
-  if (!isFixPr && !isTitleChangedFromFixPr) {
+  let shouldDeleteFixPrCheck = false;
+  if (isPullRequestEvent && payload.action === 'edited') {
+    if ('title' in payload.changes) {
+      if (fixPrRegex.test(payload.changes.title?.from ?? '') && !fixPrRegex.test(title)) {
+        shouldDeleteFixPrCheck = true;
+      }
+    }
+  }
+
+  if (!shouldRunFixPrCheck && !shouldDeleteFixPrCheck) {
     return;
   }
   if (!organization) {
@@ -78,7 +93,7 @@ export async function runPrFixCheckRun<
   }
 
   const orgDetails = await io.runTask(
-    'get org installation',
+    'fix-pr-get-org-installation',
     async () => {
       const { data } = await getInstallationId(organization?.login as string);
       return data;
@@ -86,8 +101,12 @@ export async function runPrFixCheckRun<
     { name: 'Get Organization installation' }
   );
 
-  if (isFixPr) {
+  if (shouldRunFixPrCheck) {
     const { user } = pullRequest;
+
+    if (pullRequest.draft) {
+      return io.logger.log('skipped draft pull request');
+    }
 
     if (payload.action !== 'closed') {
       await io.runTask(
@@ -112,7 +131,7 @@ export async function runPrFixCheckRun<
     } else if (payload.action === 'closed' && payload.pull_request.merged) {
       await processBugReport(orgDetails.id, organization.login, repository.name, pullRequest, io);
     }
-  } else if (isTitleChangedFromFixPr) {
+  } else if (shouldDeleteFixPrCheck) {
     await deleteFixPrReportAndResolveCheckRun(
       orgDetails.id,
       organization.login,
@@ -189,7 +208,7 @@ async function sendBugReportEvent(bugReport: BugReport, io: any) {
   }
   const [, org, repo, prNumber] = commitLinkRegex.exec(bugReport.commitLink) ?? [];
   const pullRequest: ItemSchema | null = await io.runTask(
-    `get-pull-request`,
+    `fix-pr-get-pull-request-${prNumber}`,
     async () => {
       return items.getOne({
         number: { $eq: Number(prNumber) },
