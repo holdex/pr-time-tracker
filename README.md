@@ -133,7 +133,7 @@ Where:
 
       ```
 
-1.  Setup **Local Trigger.dev v2 with Supabase DB**
+1.  Setup **Local Trigger.dev v2**
 
     - Start proxy server for `localhost:3030` to Telebit `pnpm trigger-dev:proxy`
 
