@@ -187,7 +187,7 @@ Where:
 
       ![Local Triggerdotdev 3](./docs/images/local-development-setup/local-triggerdotdev-3.png)
 
-      Copy and paste to browser to access and you'll be redirected to your project.
+      Copy and paste to browser to access, and you'll be redirected to your project.
 
       ![Local Triggerdotdev 4](./docs/images/local-development-setup/local-triggerdotdev-4.png)
 
@@ -340,5 +340,5 @@ Where:
    <details>
     Make sure the root `.env` `TRIGGER_API_KEY`, `TRIGGER_API_URL`, and `TRIGGER_PROJECT_ID` points to the correct values.
 
-   If you have make sure of this but still no new `Runs` entry made, try to create a new project in your local trigger.dev and rerun the setup process using this new project data.
+   If you have verified these settings but still don't see any new `Runs` entries, try creating a new project in your local trigger.dev and rerun the setup process using the new project data.
    </details>
