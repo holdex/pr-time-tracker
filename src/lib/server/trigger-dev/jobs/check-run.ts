@@ -2,14 +2,10 @@ import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { Octokit } from 'octokit';
 import type {
-  User,
-  Repository,
   IssueComment,
   CheckRun,
   PullRequestConnection,
-  PullRequest,
-  UpdateCheckRunPayload,
-  UpdateCheckRunInput
+  PullRequest
 } from '@octokit/graphql-schema';
 import type { CheckRunEvent } from '@octokit/webhooks-types';
 
@@ -20,10 +16,15 @@ import {
   getSubmissionStatus,
   submissionCheckPrefix,
   githubApp,
-  bugCheckPrefix,
   submissionHeaderComment,
-  bodyWithHeader
+  bodyWithHeader,
+  reinsertComment,
+  deleteComment,
+  getPreviousComment,
+  createComment,
+  updateCheckRun
 } from '../utils';
+import { bugCheckPrefix, bugReportRegex, getBugReportWarningTemplate } from '../fix-pr';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,
@@ -255,15 +256,16 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   // if success -> check comment -> create if not exits -> update the list
 
   const previous = await io.runTask('get previous comment', async () => {
-    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-
-    const previous = await getPreviousComment<typeof octokit>(
-      { owner: payload.organization, repo: repoDetails.data.name },
-      payload.prNumber,
+    return await getPreviousComment(
+      orgDetails.id,
+      payload.organization,
+      payload.repo,
       submissionHeaderComment('Pull Request', payload.prId.toString()),
-      octokit
+      payload.prNumber,
+      'pullRequest',
+      'bot',
+      io
     );
-    return previous;
   });
   let current: any = null;
 
@@ -333,6 +335,7 @@ async function runSubmissionJob<T extends IOWithIntegrations<{ github: Autoinvoi
   }
 }
 
+const bugReportPrefix = '@pr-time-tracker bug commit';
 async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: EventSchema,
   io: T
@@ -374,17 +377,47 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
     { name: 'Get Check Details' }
   );
 
-  const bugReportComment = await io.runTask('get report comment', async () => {
-    const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
-
-    const previous = await getPreviousComment<typeof octokit>(
-      { owner: payload.organization, repo: repoDetails.data.name },
+  const bugReportComment = await io.runTask('get-report-comment', async () => {
+    return await getPreviousComment(
+      orgDetails.id,
+      payload.organization,
+      payload.repo,
+      bugReportPrefix,
       payload.prNumber,
-      `@pr-time-tracker bug commit`,
-      octokit
+      'pullRequest',
+      'others',
+      io
     );
-    return previous;
   });
+
+  const previousBugReportWarning = await io.runTask('get-previous-bug-report-warning', async () => {
+    return await getPreviousComment(
+      orgDetails.id,
+      payload.organization,
+      payload.repo,
+      submissionHeaderComment('Bug Report', payload.prNumber.toString()),
+      payload.prNumber,
+      'pullRequest',
+      'bot',
+      io
+    );
+  });
+
+  if (!bugReportComment) {
+    await addBugReportWarning(previousBugReportWarning, orgDetails, payload, io);
+  } else {
+    if (previousBugReportWarning) {
+      await io.runTask('delete-bug-report-warning', async () => {
+        await deleteComment(
+          orgDetails.id,
+          payload.organization,
+          payload.repo,
+          previousBugReportWarning,
+          io
+        );
+      });
+    }
+  }
 
   await io.runTask(
     'update-report-check-run',
@@ -415,61 +448,37 @@ async function runBugReportJob<T extends IOWithIntegrations<{ github: Autoinvoic
   // }
 }
 
-async function getPreviousComment<T extends Octokit>(
-  repo: { owner: string; repo: string },
-  prNumber: number,
-  h: string,
-  octokit: T
+async function addBugReportWarning(
+  previousBugReportWarning: IssueComment | undefined,
+  orgDetails: { id: number },
+  payload: EventSchema,
+  io: any
 ) {
-  let after = null;
-  let hasNextPage = true;
-
-  while (hasNextPage) {
-    /* eslint-disable no-await-in-loop */
-    const data = await octokit.graphql<{ repository: Repository; viewer: User }>(
-      `
-      query($repo: String! $owner: String! $number: Int! $after: String) {
-        viewer { login }
-        repository(name: $repo owner: $owner) {
-          pullRequest(number: $number) {
-            comments(first: 100 after: $after) {
-              nodes {
-                id
-                databaseId
-                author {
-                  login
-                }
-                isMinimized
-                body
-              }
-              pageInfo {
-                endCursor
-                hasNextPage
-              }
-            }
-          }
-        }
-      }
-      `,
-      { ...repo, after, number: prNumber }
-    );
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const viewer = data.viewer as User;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const repository = data.repository as Repository;
-    const target = repository.pullRequest?.comments?.nodes?.find(
-      (node: IssueComment | null | undefined) =>
-        node?.author?.login === viewer.login.replace('[bot]', '') &&
-        !node?.isMinimized &&
-        node?.body?.includes(h)
-    );
-    if (target) {
-      return target;
+  return await io.runTask('add-bug-report-warning', async () => {
+    if (previousBugReportWarning) {
+      return await reinsertComment(
+        orgDetails.id,
+        payload.organization,
+        payload.repo,
+        submissionHeaderComment('Bug Report', payload.prNumber.toString()),
+        payload.prNumber,
+        io
+      );
+    } else {
+      return await createComment(
+        orgDetails.id,
+        payload.organization,
+        payload.repo,
+        bodyWithHeader(
+          'Bug Report',
+          getBugReportWarningTemplate(payload.senderLogin),
+          payload.prNumber.toString()
+        ),
+        payload.prNumber,
+        io
+      );
     }
-    after = repository.pullRequest?.comments?.pageInfo?.endCursor;
-    hasNextPage = repository.pullRequest?.comments?.pageInfo?.hasNextPage ?? false;
-  }
-  return undefined;
+  });
 }
 
 async function getPrInfoByCheckRunNodeId<T extends Octokit>(
@@ -557,25 +566,6 @@ async function getPrInfoByCheckRunNodeId<T extends Octokit>(
     }
   }
   return ((commit.associatedPullRequests as PullRequestConnection).nodes as PullRequest[])[0];
-}
-
-async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
-  return octokit.graphql<{ updateCheckRun: UpdateCheckRunPayload }>(
-    `
-      mutation($input: UpdateCheckRunInput!) {
-        updateCheckRun(input: $input) {
-          checkRun {
-            id
-            conclusion
-            title
-            summary
-          }
-          clientMutationId
-        }
-      }
-      `,
-    { input }
-  );
 }
 
 const regex = new RegExp(/\B@([a-z0-9](?:-(?=[a-z0-9])|[a-z0-9]){0,38}(?<=[a-z0-9]))/, 'gmi');

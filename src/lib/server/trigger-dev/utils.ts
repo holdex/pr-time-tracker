@@ -6,15 +6,14 @@ import type {
   SimplePullRequest,
   Organization,
   Repository,
-  PullRequestEvent,
-  PullRequestReviewEvent,
   Issue
 } from '@octokit/webhooks-types';
 import type {
   User as UserGQL,
   Repository as RepoGQL,
   IssueComment,
-  PullRequest as PullRequestGQL
+  UpdateCheckRunInput,
+  UpdateCheckRunPayload
 } from '@octokit/graphql-schema';
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
 import type { IOWithIntegrations } from '@trigger.dev/sdk';
@@ -51,9 +50,7 @@ const getContributorInfo = (user: User): Omit<ContributorSchema, 'role' | 'rate'
 });
 
 const submissionCheckPrefix = 'Cost Submission';
-const bugCheckPrefix = 'Bug Report Info';
 const submissionCheckName = (login: string) => `${submissionCheckPrefix} (${login})`;
-const bugCheckName = (login: string) => `${bugCheckPrefix} (${login})`;
 
 const getPrInfo = async (
   pr: PullRequest | SimplePullRequest,
@@ -173,6 +170,104 @@ const createCheckRunIfNotExists = async (
   }
 };
 
+async function updateCheckRun<T extends Octokit>(octokit: T, input: UpdateCheckRunInput) {
+  return octokit.graphql<{ updateCheckRun: UpdateCheckRunPayload }>(
+    `
+      mutation($input: UpdateCheckRunInput!) {
+        updateCheckRun(input: $input) {
+          checkRun {
+            id
+            conclusion
+            title
+            summary
+          }
+          clientMutationId
+        }
+      }
+      `,
+    { input }
+  );
+}
+
+const deleteCheckRun = async (
+  org: { name: string; installationId: number; repo: string },
+  sender: { login: string; id: number },
+  pull_request: PullRequest | SimplePullRequest,
+  checkName: (s: string) => string,
+  io: any
+) => {
+  return await io.runTask('delete-check-run', async () => {
+    const checkRunId = await io.runTask('get-check-run-id', async () => {
+      const octokit = await githubApp.getInstallationOctokit(org.installationId);
+
+      const { data } = await octokit.rest.checks
+        .listForRef({
+          owner: org.name,
+          repo: org.repo,
+          ref: pull_request.head.sha,
+          check_name: checkName(sender.login)
+        })
+        .catch(() => ({
+          data: {
+            total_count: 0,
+            check_runs: []
+          }
+        }));
+
+      if (data.total_count === 0) {
+        return null;
+      }
+      return data.check_runs[data.total_count - 1].id;
+    });
+
+    if (checkRunId) {
+      const repoDetails = await io.runTask(
+        'get-repo-id',
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+
+          return octokit.rest.repos.get({ owner: org.name, repo: org.repo });
+        },
+        { name: 'Get Repo Details' }
+      );
+
+      const checkDetails = await io.runTask(
+        'get-check-id',
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+          return octokit.rest.checks.get({
+            owner: org.name,
+            repo: org.repo,
+            check_run_id: checkRunId
+          });
+        },
+        { name: 'Get Check Details' }
+      );
+
+      await io.runTask(
+        'update-check-run-to-completed',
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+
+          return updateCheckRun(octokit, {
+            repositoryId: repoDetails.data.node_id,
+            checkRunId: checkDetails.data.node_id,
+            status: 'COMPLETED',
+            conclusion: 'NEUTRAL',
+            completedAt: new Date().toISOString(),
+            detailsUrl: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoDetails.data.name}/${pull_request.id}`,
+            output: {
+              title: '⚪ bug info check cancelled',
+              summary: 'Pull request title no longer includes `fix:`. No further actions required'
+            }
+          }).then((r) => r.updateCheckRun);
+        },
+        { name: 'Update check run' }
+      );
+    }
+  });
+};
+
 const reRequestCheckRun = async (
   org: { name: string; installationId: number },
   repoName: string,
@@ -240,47 +335,6 @@ const checkRunFromEvent = async (
   );
 };
 
-async function runPrFixCheckRun<
-  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
-  E extends PullRequestEvent | PullRequestReviewEvent = PullRequestEvent | PullRequestReviewEvent
->(payload: E, io: T) {
-  const { pull_request, repository, organization } = payload;
-
-  const { title, user } = pull_request;
-  if (/^fix:/.test(title)) {
-    return io.logger.log('identified pull request');
-
-    const orgDetails = await io.runTask(
-      'get org installation',
-      async () => {
-        const { data } = await getInstallationId(organization?.login as string);
-        return data;
-      },
-      { name: 'Get Organization installation' }
-    );
-
-    await io.runTask(
-      `create-check-run-for-fix-pr`,
-      async () => {
-        const result = await createCheckRunIfNotExists(
-          {
-            name: organization?.login as string,
-            installationId: orgDetails.id,
-            repo: repository.name
-          },
-          user,
-          pull_request,
-          (b) => bugCheckName(b),
-          'bug_report'
-        );
-        await io.logger.info(`check result`, { result });
-        return Promise.resolve();
-      },
-      { name: `check run for fix PR` }
-    );
-  }
-}
-
 async function deleteComment(
   orgID: number,
   orgName: string,
@@ -289,37 +343,45 @@ async function deleteComment(
   io: any
 ): Promise<boolean> {
   try {
-    return await io.runTask('delete-comment', async () => {
-      const octokit = await githubApp.getInstallationOctokit(orgID);
-      if (previousComment?.databaseId) {
-        await octokit.rest.issues.deleteComment({
-          owner: orgName,
-          repo: repositoryName,
-          comment_id: previousComment.databaseId
-        });
-        return true;
-      }
+    if (previousComment.databaseId) {
+      return await io.runTask(
+        `delete-comment-${previousComment.databaseId ?? ''}`,
+        async () => {
+          const octokit = await githubApp.getInstallationOctokit(orgID);
+          await octokit.rest.issues.deleteComment({
+            owner: orgName,
+            repo: repositoryName,
+            comment_id: previousComment.databaseId
+          });
+          return true;
+        },
+        { name: 'Delete comment' }
+      );
+    } else {
       return false;
-    });
+    }
   } catch (error) {
     await io.logger.error('delete comment', { error });
     return (error as { location: string })?.location === 'after_complete_task';
   }
 }
 
-function submissionHeaderComment(type: 'Issue' | 'Pull Request', header: string): string {
+type SubmissionHeaderType = 'Issue' | 'Pull Request' | 'Bug Report';
+function submissionHeaderComment(type: SubmissionHeaderType, header: string): string {
   return `<!-- Sticky ${type} Comment${header} -->`;
 }
-
-function bodyWithHeader(type: 'Issue' | 'Pull Request', body: string, header: string): string {
+function bodyWithHeader(type: SubmissionHeaderType, body: string, header: string): string {
   return `${body}\n${submissionHeaderComment(type, header)}`;
 }
 
+type PreviousCommentCategory = 'pullRequest' | 'issue';
+type PreviousCommentSenderFilter = 'bot' | 'others';
 const queryPreviousComment = async <T extends Octokit>(
   repo: { owner: string; repo: string },
   idNumber: number,
-  category: string,
-  h: string,
+  category: PreviousCommentCategory,
+  h: string | RegExp,
+  senderFilter: PreviousCommentSenderFilter,
   octokit: T
 ) => {
   let after = null;
@@ -360,12 +422,14 @@ const queryPreviousComment = async <T extends Octokit>(
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const repository = data.repository as RepoGQL;
     const categoryObj = category === 'issue' ? repository.issue : repository.pullRequest;
-    const target = categoryObj?.comments?.nodes?.find(
-      (node: IssueComment | null | undefined) =>
-        node?.author?.login === viewer.login.replace('[bot]', '') &&
+    const target = categoryObj?.comments?.nodes?.find((node: IssueComment | null | undefined) => {
+      const isSentByBot = node?.author?.login === viewer.login.replace('[bot]', '');
+      return (
+        ((senderFilter === 'bot' && isSentByBot) || (senderFilter === 'others' && !isSentByBot)) &&
         !node?.isMinimized &&
-        node?.body?.includes(h)
-    );
+        (typeof h === 'string' ? node?.body?.includes(h) : h.test(node?.body ?? ''))
+      );
+    });
     if (target) {
       return target;
     }
@@ -380,27 +444,33 @@ async function getPreviousComment(
   orgID: number,
   orgName: string,
   repositoryName: string,
-  header: string,
+  header: string | RegExp,
   issueNumber: number,
-  category: string,
+  category: PreviousCommentCategory,
+  senderFilter: PreviousCommentSenderFilter,
   io: any
 ): Promise<IssueComment | undefined> {
-  const previousComment = await io.runTask('get-previous-comment', async () => {
-    try {
-      const octokit = await githubApp.getInstallationOctokit(orgID);
-      const previous = await queryPreviousComment<typeof octokit>(
-        { owner: orgName, repo: repositoryName },
-        issueNumber,
-        category,
-        header,
-        octokit
-      );
-      return previous;
-    } catch (error) {
-      await io.logger.error('get previous comment', { error });
-      return undefined;
-    }
-  });
+  const previousComment = await io.runTask(
+    `get-previous-comment-${issueNumber}-${category}-${header}-${senderFilter}`,
+    async () => {
+      try {
+        const octokit = await githubApp.getInstallationOctokit(orgID);
+        const previous = await queryPreviousComment<typeof octokit>(
+          { owner: orgName, repo: repositoryName },
+          issueNumber,
+          category,
+          header,
+          senderFilter,
+          octokit
+        );
+        return previous;
+      } catch (error) {
+        await io.logger.error('get previous comment', { error });
+        return undefined;
+      }
+    },
+    { name: 'Get Previous Comment' }
+  );
 
   return previousComment;
 }
@@ -432,21 +502,24 @@ async function getPullRequestByIssue(
   orgName: string,
   repositoryName: string,
   io: any
-): Promise<PullRequestGQL | undefined> {
-  const previousComment = await io.runTask('get-pull-request-by-issue', async () => {
-    try {
-      const octokit = await githubApp.getInstallationOctokit(orgID);
-      const data = await octokit.rest.pulls.get({
-        owner: orgName,
-        repo: repositoryName,
-        pull_number: issue.number
-      });
-      return data.data;
-    } catch (error) {
-      await io.logger.error('get pull request id by issue id', { error });
-      return undefined;
+): Promise<PullRequest | undefined> {
+  const previousComment = await io.runTask(
+    `get-pull-request-by-issue-${issue.number}`,
+    async () => {
+      try {
+        const octokit = await githubApp.getInstallationOctokit(orgID);
+        const data = await octokit.rest.pulls.get({
+          owner: orgName,
+          repo: repositoryName,
+          pull_number: issue.number
+        });
+        return data.data;
+      } catch (error) {
+        await io.logger.error('get pull request id by issue id', { error });
+        return undefined;
+      }
     }
-  });
+  );
 
   return previousComment;
 }
@@ -467,6 +540,7 @@ async function reinsertComment<T extends IOWithIntegrations<{ github: Autoinvoic
       header,
       prOrIssueNumber,
       'pullRequest',
+      'bot',
       io
     );
 
@@ -487,18 +561,17 @@ async function reinsertComment<T extends IOWithIntegrations<{ github: Autoinvoic
 
 export {
   githubApp,
-  runPrFixCheckRun,
   excludedAccounts,
   reRequestCheckRun,
   getInstallationId,
   createCheckRunIfNotExists,
   getContributorInfo,
   checkRunFromEvent,
+  updateCheckRun,
+  deleteCheckRun,
   getPrInfo,
   getSubmissionStatus,
-  bugCheckName,
   submissionCheckName,
-  bugCheckPrefix,
   submissionCheckPrefix,
   getPreviousComment,
   deleteComment,
