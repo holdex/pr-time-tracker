@@ -56,11 +56,10 @@ Where:
 1. `nodejs` <https://nodejs.org/en/download/package-manager>
 1. `pnpm` <https://pnpm.io/installation>
 
-
 ### Steps and Setups
 
-1. Clone this repository
-1. Make GitHub Access Token for installing some of the hosted dependencies:
+1.  Clone this repository
+1.  Make GitHub Access Token for installing some of the hosted dependencies:
 
     - Create a **GitHub Classic Access Token** with the necessary permissions <https://github.com/settings/tokens>.
 
@@ -69,72 +68,57 @@ Where:
           Github access token with `read:packages` access permission
         </summary>
 
-        ![GitHub Access Token Setup](./docs/images/local-development-setup/github-access-token.png)
+      ![GitHub Access Token Setup](./docs/images/local-development-setup/github-access-token.png)
 
       </details>
 
+1.  Copy `.npmrc.example` to `.npmrc` in the root folder and replace the `NPM_TOKEN` with your generated GitHub access token.
 
-1. Copy `.npmrc.example` to `.npmrc` in the root folder and replace the `NPM_TOKEN` with your generated GitHub access token.
-
-1. Install the dependencies `pnpm install`
+1.  Install the dependencies `pnpm install`
 
     <details>
       <summary>
       You should have this if you setup your token properly with proper permission
       </summary>
 
-      ![Project Dependencies Installation](./docs/images/local-development-setup/dependencies-installations.png)
+    ![Project Dependencies Installation](./docs/images/local-development-setup/dependencies-installations.png)
 
     </details>
 
-1. Setup **Telebit** <https://telebit.cloud/>
+1.  Setup **Telebit** <https://telebit.cloud/>
 
     <details>
       <summary>
       Following the telebit setup you will have these, take note of your own unique telebit address.
       </summary>
 
-      ![Telebit Setup 1](./docs/images/local-development-setup/telebit-setup-1.png)
+    ![Telebit Setup 1](./docs/images/local-development-setup/telebit-setup-1.png)
 
-      ![Telebit Setup 2](./docs/images/local-development-setup/telebit-setup-2.png)
+    ![Telebit Setup 2](./docs/images/local-development-setup/telebit-setup-2.png)
     </details>
 
-1. Setup **Local Trigger.dev v2 with Supabase DB** based on this guide: <https://v2docs.trigger.dev/documentation/guides/self-hosting/supabase>
+1.  Setup your **Supabase Project** for Trigger.dev v2 based on this guide: <https://v2docs.trigger.dev/documentation/guides/self-hosting/supabase> **_(Optional)_**
 
-    - The `/container/` folder already have some setup configure we start from supabase db setup <https://v2docs.trigger.dev/documentation/guides/self-hosting/supabase#create-a-supabase-db>
-    - Create your supabase setup for triggerdotdev
+    You can skip this step if you don't need to run your own supabase for Trigger.dev v2. We provide a shared supabase project for development purpose that you can use.
 
-      <details>
-        <summary>
-        When creating take note of your Supabase DB uri and password.
-        </summary>
+    But if you for some reason have a problem with the shared supabase project, you can follow this guide to create your own supabase project.
 
-        ![Supabase DB Setup 1](./docs/images/local-development-setup/supabase-db-setup-1.png)
+    - You can follow this setup guide <https://v2docs.trigger.dev/documentation/guides/self-hosting/supabase#create-a-supabase-db>
+    - Create your supabase project for trigger.dev
+        <details>
+          <summary>
+          When creating the project, take note of your Supabase DB uri and password.
+          </summary>
+            ![Supabase DB Setup 1](./docs/images/local-development-setup/supabase-db-setup-1.png)
 
-        ![Supabase DB Setup 2](./docs/images/local-development-setup/supabase-db-setup-2.png)
-      </details>
+            ![Supabase DB Setup 2](./docs/images/local-development-setup/supabase-db-setup-2.png)
 
-    - Start proxy server for `localhost:3030` to Telebit `pnpm trigger-dev:proxy`
-
-      <details>
-
-        ![Telebit Proxy](./docs/images/local-development-setup/telebit-proxy.png)
-
-      </details>
+          </details>
 
     - Go to the `/container` folder
     - Duplicate the `.env.example` to `.env`
-    - In the `.env` file change the `LOGIN_ORIGIN` and `API_ORIGIN` with the forwarding URL from telebit above, e.g:
-      ```shell
-        # From this
-        LOGIN_ORIGIN=https://alert-seemingly-moccasin.telebit.io
-        APP_ORIGIN=https://alert-seemingly-moccasin.telebit.io
-
-        # To this (EXAMPLE)
-        LOGIN_ORIGIN=https://shaggy-termite-71.telebit.io
-        APP_ORIGIN=https://shaggy-termite-71.telebit.io
-      ```
     - In the `.env` file change the `DATABASE_URL` and `DIRECT_URL` you created in the Supabase DB creation step (don't forget to adjust with your own password).
+
       ```shell
         # From this
         DATABASE_URL=postgresql://postgres.phtaofoaormwpxwrwtkw:YZHPcdhJEwOUcK05@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?schema=triggerdotdev&pgbouncer=true
@@ -148,12 +132,36 @@ Where:
 
       ```
 
+1.  Setup **Local Trigger.dev v2 with Supabase DB**
+
+    - Start proxy server for `localhost:3030` to Telebit `pnpm trigger-dev:proxy`
+
+      <details>
+
+      ![Telebit Proxy](./docs/images/local-development-setup/telebit-proxy.png)
+
+      </details>
+
+    - Go to the `/container` folder
+    - Duplicate the `.env.example` to `.env`
+    - In the `.env` file change the `LOGIN_ORIGIN` and `API_ORIGIN` with the forwarding URL from telebit above, e.g:
+
+      ```shell
+        # From this
+        LOGIN_ORIGIN=https://alert-seemingly-moccasin.telebit.io
+        APP_ORIGIN=https://alert-seemingly-moccasin.telebit.io
+
+        # To this (EXAMPLE)
+        LOGIN_ORIGIN=https://shaggy-termite-71.telebit.io
+        APP_ORIGIN=https://shaggy-termite-71.telebit.io
+      ```
+
     - Run `docker compose up` within the container. Make sure you don't have running redis that use port `0.0.0.0:6379`. If you fail to run this see **Possible issues** on the bottom.
 
       <details>
         You should see this successful docker compose
 
-        ![Docker Compose Success](./docs/images/local-development-setup/docker-compose-up-success.png)
+      ![Docker Compose Success](./docs/images/local-development-setup/docker-compose-up-success.png)
 
       </details>
 
@@ -162,26 +170,25 @@ Where:
       <details>
         You should see this successful docker compose
 
-        ![Docker Compose Success](./docs/images/local-development-setup/docker-compose-up-success.png)
+      ![Docker Compose Success](./docs/images/local-development-setup/docker-compose-up-success.png)
 
       </details>
 
     - Setup your local account and triggerdotdev project
 
-
       <details>
 
-        Register your email here
+      Register your email here
 
-        ![Local Triggerdotdev 2](./docs/images/local-development-setup/local-triggerdotdev-2.png)
+      ![Local Triggerdotdev 2](./docs/images/local-development-setup/local-triggerdotdev-2.png)
 
-        You'll get a login url from `docker` container
+      You'll get a login url from `docker` container
 
-        ![Local Triggerdotdev 3](./docs/images/local-development-setup/local-triggerdotdev-3.png)
+      ![Local Triggerdotdev 3](./docs/images/local-development-setup/local-triggerdotdev-3.png)
 
-        Copy and paste to browser to access and you'll be redirected to your project.
+      Copy and paste to browser to access and you'll be redirected to your project.
 
-        ![Local Triggerdotdev 4](./docs/images/local-development-setup/local-triggerdotdev-4.png)
+      ![Local Triggerdotdev 4](./docs/images/local-development-setup/local-triggerdotdev-4.png)
 
       </details>
 
@@ -196,11 +203,14 @@ Where:
 
         # URL from telebit forwarding proxy for accessing local triggerdotdev
         TRIGGER_API_URL="https://shaggy-termite-71.telebit.io"
+
+        # slug for your created project in triggerdotdev (you can find this in the URL)
+        TRIGGER_PROJECT_ID="pr-time-tracker-lmz0"
       ```
 
       <details>
 
-        ![Local Triggerdotdev 7](./docs/images/local-development-setup/local-triggerdotdev-7.png)
+      ![Local Triggerdotdev 7](./docs/images/local-development-setup/local-triggerdotdev-7.png)
 
       </details>
 
@@ -210,7 +220,7 @@ Where:
 
       <details>
 
-        ![Local Triggerdotdev 8](./docs/images/local-development-setup/local-triggerdotdev-8.png)
+      ![Local Triggerdotdev 8](./docs/images/local-development-setup/local-triggerdotdev-8.png)
 
       </details>
 
@@ -219,98 +229,115 @@ Where:
 
       <details>
 
+      ![Local Triggerdotdev 5](./docs/images/local-development-setup/local-triggerdotdev-5.png)
 
-        ![Local Triggerdotdev 5](./docs/images/local-development-setup/local-triggerdotdev-5.png)
+      ![Local Triggerdotdev 6](./docs/images/local-development-setup/local-triggerdotdev-6.png)
 
-
-        ![Local Triggerdotdev 6](./docs/images/local-development-setup/local-triggerdotdev-6.png)
-
-
-        ![Local Triggerdotdev 9](./docs/images/local-development-setup/local-triggerdotdev-9.png)
-
+      ![Local Triggerdotdev 9](./docs/images/local-development-setup/local-triggerdotdev-9.png)
 
       </details>
 
+    - After the process is done, you should be able to see a new entry in `Runs` sidebar. Congrats! you have registered your local trigger.dev proxy url to github webhooks 🎉
 
-1. **Database Connection**:
-   - Use `MongoDB Compass` to connect to the database using the `MONGODB_URI` environment variable.
+      <details>
+        <summary>
+          You should see this successful run
+        </summary>
+
+      ![Local Triggerdotdev 10](./docs/images/local-development-setup/local-triggerdotdev-10.png)
+
+      ![Local Triggerdotdev 11](./docs/images/local-development-setup/local-triggerdotdev-11.png)
+
+      </details>
+
+1.  **Database Connection**:
+    - Use `MongoDB Compass` to connect to the database using the `MONGODB_URI` environment variable.
 
 ### Possible issues
 
 1. Telebit can't run. You might find this issue when running `pnpm trigger-dev:proxy`.
 
-    <details>
+   <details>
 
-    ```shell
-     pnpm trigger-dev:proxy
+   ```shell
+    pnpm trigger-dev:proxy
 
-    > pr-time-tracker@0.0.3 trigger-dev:proxy /home/ubuntu/Developer/pr-time-tracker
-    > ~/telebit http 3030
+   > pr-time-tracker@0.0.3 trigger-dev:proxy /home/ubuntu/Developer/pr-time-tracker
+   > ~/telebit http 3030
 
-    /home/ubuntu/Applications/telebit/bin/telebit-remote.js:643
-      var verstrd = [ pkg.name + ' daemon v' + state.config.version ];
-                                                            ^
+   /home/ubuntu/Applications/telebit/bin/telebit-remote.js:643
+     var verstrd = [ pkg.name + ' daemon v' + state.config.version ];
+                                                           ^
 
-    TypeError: Cannot read property 'version' of undefined
-        at handleConfig (/home/ubuntu/Applications/telebit/bin/telebit-remote.js:643:57)
-        at /home/ubuntu/Applications/telebit/bin/telebit-remote.js:359:22
-        at /home/ubuntu/Applications/telebit/usr/share/install-launcher.js:241:26
-        at ChildProcess.exithandler (child_process.js:280:7)
-        at ChildProcess.emit (events.js:182:13)
-        at maybeClose (internal/child_process.js:962:16)
-        at Process.ChildProcess._handle.onexit (internal/child_process.js:251:5)
-     ELIFECYCLE  Command failed with exit code 1.
-    ```
+   TypeError: Cannot read property 'version' of undefined
+       at handleConfig (/home/ubuntu/Applications/telebit/bin/telebit-remote.js:643:57)
+       at /home/ubuntu/Applications/telebit/bin/telebit-remote.js:359:22
+       at /home/ubuntu/Applications/telebit/usr/share/install-launcher.js:241:26
+       at ChildProcess.exithandler (child_process.js:280:7)
+       at ChildProcess.emit (events.js:182:13)
+       at maybeClose (internal/child_process.js:962:16)
+       at Process.ChildProcess._handle.onexit (internal/child_process.js:251:5)
+    ELIFECYCLE  Command failed with exit code 1.
+   ```
 
-    Try to reinstall telebit
+   Try to reinstall telebit
 
-    ```shell
-    curl https://get.telebit.io/ | bash
-    ```
+   ```shell
+   curl https://get.telebit.io/ | bash
+   ```
 
-    Then rerun  `pnpm trigger-dev:proxy`
+   Then rerun `pnpm trigger-dev:proxy`
 
-    </details>
+   </details>
 
 1. Trigger.dev local docker failed to run migration. You might face this issue when running `docker compose up` in `/container` folder.
 
-    <details>
+   <details>
 
-    ```
-    triggerdotdev  | 526 migrations found in prisma/migrations
-    triggerdotdev  |
-    triggerdotdev  | Error: P3009
-    triggerdotdev  |
-    triggerdotdev  | migrate found failed migrations in the target database, new migrations will not be applied. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
-    triggerdotdev  | The `20230616104937_remove_api_identifier` migration started at 2024-11-12 08:37:52.191805 UTC failed
-    triggerdotdev  |
-    ```
+   ```
+   triggerdotdev  | 526 migrations found in prisma/migrations
+   triggerdotdev  |
+   triggerdotdev  | Error: P3009
+   triggerdotdev  |
+   triggerdotdev  | migrate found failed migrations in the target database, new migrations will not be applied. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+   triggerdotdev  | The `20230616104937_remove_api_identifier` migration started at 2024-11-12 08:37:52.191805 UTC failed
+   triggerdotdev  |
+   ```
 
-    A fix mentioned in <https://github.com/triggerdotdev/trigger.dev/issues/1026>
+   A fix mentioned in <https://github.com/triggerdotdev/trigger.dev/issues/1026>
 
-    Make new Supabase project and change the `DATABASE_URL` and `DIRECT_URL` accordingly
+   Make new Supabase project and change the `DATABASE_URL` and `DIRECT_URL` accordingly
 
-    Add this to the `triggerdotdev` container within `docker-compose.yml`
+   Add this to the `triggerdotdev` container within `docker-compose.yml`
 
-    ```yaml
-      # This is the important bit!
-      command:
-        - sh
-        - -c
-        - sed -i s/public/triggerdotdev/ ./packages/database/prisma/migrations/20240130165343_add_composite_index_to_job_run_for_job_id_and_created_at/migration.sql && ./scripts/entrypoint.sh
-    ```
+   ```yaml
+   # This is the important bit!
+   command:
+     - sh
+     - -c
+     - sed -i s/public/triggerdotdev/ ./packages/database/prisma/migrations/20240130165343_add_composite_index_to_job_run_for_job_id_and_created_at/migration.sql && ./scripts/entrypoint.sh
+   ```
 
-    </details>
+   </details>
 
 1. Redis can't find addrinfo. You might face this issue when running `docker compose up` in `/container` folder.
 
-    <details>
+   <details>
 
-    ```shell
-      triggerdotdev  | [ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND host.docker.internal
-      triggerdotdev  |     at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26)
-      triggerdotdev  |     at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
-    ```
-    </details>
+   ```shell
+     triggerdotdev  | [ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND host.docker.internal
+     triggerdotdev  |     at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26)
+     triggerdotdev  |     at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+   ```
 
-    You might need to change the `REDIS_HOST="host.docker.internal"` in the `/container/.env` to docker specific ip address e.g: `REDIS_HOST=172.17.0.1`
+   </details>
+
+   You might need to change the `REDIS_HOST="host.docker.internal"` in the `/container/.env` to docker specific ip address e.g: `REDIS_HOST=172.17.0.1`
+
+1. After setting a development endpoint, no new `Runs` entry made.
+
+   <details>
+    Make sure the root `.env` `TRIGGER_API_KEY`, `TRIGGER_API_URL`, and `TRIGGER_PROJECT_ID` points to the correct values.
+
+   If you have make sure of this but still no new `Runs` entry made, try to create a new project in your local trigger.dev and rerun the setup process using this new project data.
+   </details>
