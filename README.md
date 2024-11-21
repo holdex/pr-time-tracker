@@ -101,7 +101,7 @@ Where:
 
     You can skip this step if you don't need to run your own supabase for Trigger.dev v2. We provide a shared supabase project for development purpose that you can use.
 
-    But if you for some reason have a problem with the shared supabase project, you can follow this guide to create your own supabase project.
+    But for some reason you have a problem when running with the shared supabase project, you can follow this guide to create your own supabase project.
 
     - You can follow this setup guide <https://v2docs.trigger.dev/documentation/guides/self-hosting/supabase#create-a-supabase-db>
     - Create your supabase project for trigger.dev
