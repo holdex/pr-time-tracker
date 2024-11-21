@@ -105,15 +105,16 @@ Where:
 
     - You can follow this setup guide <https://v2docs.trigger.dev/documentation/guides/self-hosting/supabase#create-a-supabase-db>
     - Create your supabase project for trigger.dev
-        <details>
-          <summary>
-          When creating the project, take note of your Supabase DB uri and password.
-          </summary>
-            ![Supabase DB Setup 1](./docs/images/local-development-setup/supabase-db-setup-1.png)
+      <details>
+        <summary>
+        When creating the project, take note of your Supabase DB uri and password.
+        </summary>
 
-            ![Supabase DB Setup 2](./docs/images/local-development-setup/supabase-db-setup-2.png)
+      ![Supabase DB Setup 1](./docs/images/local-development-setup/supabase-db-setup-1.png)
 
-          </details>
+      ![Supabase DB Setup 2](./docs/images/local-development-setup/supabase-db-setup-2.png)
+
+        </details>
 
     - Go to the `/container` folder
     - Duplicate the `.env.example` to `.env`
