@@ -271,7 +271,6 @@ async function deleteFixPrReportAndResolveCheckRun(
       if (previousBugReportWarning) {
         await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning, io);
       }
-
       await deleteCheckRun(
         { name: orgName, installationId: orgID, repo: repositoryName },
         sender,
