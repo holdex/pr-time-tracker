@@ -195,7 +195,7 @@ Where:
 
     - Go to the root path and download the environment variables using `pnpm pre-dev` and you will see a new file `.env` on root
 
-    - Take note of the Trigger.dev API Keys in Trigger dev UI (Environment & API Keys) and change the `TRIGGER_API_KEY` and `TRIGGER_API_URL` in the `.env` file, and the `projectId` in your `package.json` file.
+    - Take note of the Trigger.dev API Keys in Trigger dev UI (Environment & API Keys) and change the `TRIGGER_API_KEY` and `TRIGGER_API_URL` in the `.env` file, and the `endpointId` in your `package.json` file.
 
       ```shell
         # .env
