@@ -109,12 +109,8 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
     // get pr item
     const pr = await items.getOne({ id: body!.item_id });
     if (pr) {
-      const createdAtDate = isNaN(new Date(body!.created_at as string).getTime())
-        ? new Date()
-        : new Date(body!.created_at as string);
-      const updatedAtDate = isNaN(new Date(body!.updated_at as string).getTime())
-        ? new Date()
-        : new Date(body!.updated_at as string);
+      const createdAtDate = validateDate(body!.created_at as string);
+      const updatedAtDate = validateDate(body!.updated_at as string);
 
       // store these events in gcloud
       const gcEvent = {
@@ -154,4 +150,10 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
   } catch (e) {
     return jsonError(e, '/api/submissions', 'PATCH');
   }
+};
+
+const validateDate = (dateStr: string | null | undefined): Date => {
+  if (!dateStr) return new Date();
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
 };
