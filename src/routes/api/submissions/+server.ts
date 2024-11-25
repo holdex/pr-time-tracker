@@ -109,6 +109,11 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
     // get pr item
     const pr = await items.getOne({ id: body!.item_id });
     if (pr) {
+      const createdAtDate = isNaN(new Date(body!.created_at as string).getTime())
+        ? new Date()
+        : new Date(body!.created_at as string);
+      const updatedAtDate = new Date();
+
       // store these events in gcloud
       const gcEvent = {
         action:
@@ -123,8 +128,8 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         sender: user!.login,
         title: pr.title,
         payload: body!.hours,
-        created_at: Math.round(new Date(body!.created_at as string).getTime() / 1000).toFixed(0),
-        updated_at: Math.round(new Date(body!.updated_at as string).getTime() / 1000).toFixed(0)
+        created_at: Math.round(createdAtDate.getTime() / 1000).toFixed(0),
+        updated_at: Math.round(updatedAtDate.getTime() / 1000).toFixed(0)
       };
       await insertEvent(
         gcEvent,
