@@ -14,7 +14,8 @@ import {
   deleteComment,
   getInstallationId,
   getPreviousComment,
-  getPullRequestByIssue
+  getPullRequestByIssue,
+  submissionHeaderComment
 } from './utils';
 import { insertEvent } from '../gcloud';
 import { items } from '../mongo/collections';
@@ -262,7 +263,7 @@ async function deleteFixPrReportAndResolveCheckRun(
         orgID,
         orgName,
         repositoryName,
-        bugReportRegex,
+        submissionHeaderComment('Bug Report', pullRequest.number.toString()),
         pullRequest.number,
         'pullRequest',
         'bot',
