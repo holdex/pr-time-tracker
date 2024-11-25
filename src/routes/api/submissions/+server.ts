@@ -112,7 +112,9 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
       const createdAtDate = isNaN(new Date(body!.created_at as string).getTime())
         ? new Date()
         : new Date(body!.created_at as string);
-      const updatedAtDate = new Date();
+      const updatedAtDate = isNaN(new Date(body!.updated_at as string).getTime())
+        ? new Date()
+        : new Date(body!.updated_at as string);
 
       // store these events in gcloud
       const gcEvent = {
