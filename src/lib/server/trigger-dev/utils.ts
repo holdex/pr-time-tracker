@@ -346,13 +346,18 @@ async function deleteComment(
     return await io.runTask(
       `delete-comment-${previousComment.databaseId ?? ''}`,
       async () => {
-        const octokit = await githubApp.getInstallationOctokit(orgID);
-        await octokit.rest.issues.deleteComment({
-          owner: orgName,
-          repo: repositoryName,
-          comment_id: previousComment.databaseId
-        });
-        return true;
+        try {
+          const octokit = await githubApp.getInstallationOctokit(orgID);
+          await octokit.rest.issues.deleteComment({
+            owner: orgName,
+            repo: repositoryName,
+            comment_id: previousComment.databaseId
+          });
+          return true;
+        } catch (err) {
+          await io.logger.error('delete comment', { err });
+          return false;
+        }
       },
       { name: 'Delete comment' }
     );
