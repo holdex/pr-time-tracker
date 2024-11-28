@@ -24,7 +24,7 @@ import {
   createComment,
   updateCheckRun
 } from '../utils';
-import { bugCheckPrefix, bugReportRegex, getBugReportWarningTemplate } from '../fix-pr';
+import { bugCheckPrefix, getBugReportWarningTemplate } from '../fix-pr';
 
 export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
   payload: CheckRunEvent,

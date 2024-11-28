@@ -109,6 +109,9 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
     // get pr item
     const pr = await items.getOne({ id: body!.item_id });
     if (pr) {
+      const createdAtDate = validateDate(body!.created_at as string);
+      const updatedAtDate = validateDate(body!.updated_at as string);
+
       // store these events in gcloud
       const gcEvent = {
         action:
@@ -123,8 +126,8 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         sender: user!.login,
         title: pr.title,
         payload: body!.hours,
-        created_at: Math.round(new Date(body!.created_at as string).getTime() / 1000).toFixed(0),
-        updated_at: Math.round(new Date(body!.updated_at as string).getTime() / 1000).toFixed(0)
+        created_at: Math.round(createdAtDate.getTime() / 1000).toFixed(0),
+        updated_at: Math.round(updatedAtDate.getTime() / 1000).toFixed(0)
       };
       await insertEvent(
         gcEvent,
@@ -147,4 +150,10 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
   } catch (e) {
     return jsonError(e, '/api/submissions', 'PATCH');
   }
+};
+
+const validateDate = (dateStr: string | null | undefined): Date => {
+  if (!dateStr) return new Date();
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
 };

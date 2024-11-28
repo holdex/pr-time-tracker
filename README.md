@@ -195,10 +195,10 @@ Where:
 
     - Go to the root path and download the environment variables using `pnpm pre-dev` and you will see a new file `.env` on root
 
-    - Take note of the Trigger.dev API Keys in Trigger dev UI (Environment & API Keys) and change the `TRIGGER_API_KEY` and `TRIGGER_API_URL` in the `.env` file
+    - Take note of the Trigger.dev API Keys in Trigger dev UI (Environment & API Keys) and change the `TRIGGER_API_KEY` and `TRIGGER_API_URL` in the `.env` file, and the `endpointId` in your `package.json` file.
 
       ```shell
-
+        # .env
         # API Key from triggerdotdev UI
         TRIGGER_API_KEY="tr_dev_YIHNyqRKaKYt7lJ7hwF2"
 
@@ -207,6 +207,16 @@ Where:
 
         # slug for your created project in triggerdotdev (you can find this in the URL)
         TRIGGER_PROJECT_ID="pr-time-tracker-lmz0"
+      ```
+
+      ```json
+      // package.json
+      {
+        // ...
+        "trigger.dev": {
+          "endpointId": "pr-time-tracker-lmz0"
+        }
+      }
       ```
 
       <details>
@@ -340,5 +350,5 @@ Where:
    <details>
     Make sure the root `.env` `TRIGGER_API_KEY`, `TRIGGER_API_URL`, and `TRIGGER_PROJECT_ID` points to the correct values.
 
-   If you have verified these settings but still don't see any new `Runs` entries, try creating a new project in your local trigger.dev and rerun the setup process using the new project data.
+   If you have verified these settings but still don't see any new `Runs` entries, try creating a new project in your local trigger.dev and rerun the setup process using the new project data. You can also try to restart the whole docker container after changing the `.env` and `package.json` files.
    </details>
