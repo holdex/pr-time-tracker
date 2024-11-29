@@ -99,6 +99,9 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       await runPrFixCheckRun(payload, io);
       break;
     }
+    case 'ready_for_review': {
+      return runPrFixCheckRun(payload, io);
+    }
     case 'reopened': {
       await updatePrInfo(payload, io, (s) => ({ ...s, closed_at: '' }));
       break;
