@@ -31,7 +31,7 @@ export function getBugReportWarningTemplate(sender: string) {
   return `@${sender} please use git blame and specify the link to the commit link that has introduced this bug. Send the following message in this PR: \`@pr-time-tracker bug commit [link] && bug author @name\``;
 }
 
-const fixPrRegex = /^fix:/;
+const fixPrRegex = /^fix(\(.+\))?:/;
 export async function runPrFixCheckRun<
   T extends IOWithIntegrations<{ github: Autoinvoicing }>,
   E extends PullRequestEvent | PullRequestReviewEvent | IssueCommentEvent =
