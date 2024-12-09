@@ -19,6 +19,10 @@ export class Orgs {
     return this.runTask(
       key,
       async (client, task) => {
+        const currentWebhook = await client.rest.orgs.getWebhook({
+          org: params.org,
+          hook_id: params.hookId
+        });
         const result = await client.rest.orgs.updateWebhook({
           org: params.org,
           hook_id: params.hookId,
@@ -27,7 +31,7 @@ export class Orgs {
             url: params.url,
             secret: params.secret
           },
-          add_events: params.addEvents
+          events: Array.from(new Set([...currentWebhook.data.events, ...(params.addEvents ?? [])]))
         });
         return result.data;
       },
