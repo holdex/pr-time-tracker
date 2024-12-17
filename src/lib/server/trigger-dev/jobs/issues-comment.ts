@@ -72,14 +72,14 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         bugReportRegex.test(payload.changes.body?.from ?? '');
 
       if (isChangedToOrFromBugReport) {
-        await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
+        await runPrFixCheckRun(payload, io);
       }
       break;
     }
     case 'deleted': {
       const isBugReport = bugReportRegex.test(payload.comment.body);
       if (isBugReport) {
-        await runPrFixCheckRun({ ...payload, pull_request: payload.issue }, io);
+        await runPrFixCheckRun(payload, io);
       }
       break;
     }
