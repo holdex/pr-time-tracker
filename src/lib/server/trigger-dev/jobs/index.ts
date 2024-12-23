@@ -12,6 +12,7 @@ import { createJob as createIssueJob } from './issues';
 import { createJob as createIssueCreationJob } from './issues-creation';
 import { createJob as createIssueCommentJob } from './issues-comment';
 import { createJob as createCheckRunJob, createEventJob as createCheckEventJob } from './check-run';
+import { getInstallationId, githubApp } from '../utils';
 
 config.integrationsList.forEach((org) => {
   client.defineJob({
@@ -143,11 +144,64 @@ if (!isDev) {
     }
   });
 
+  client.defineJob({
+    id: 'github-create-bug-report-issue',
+    name: 'Create Github bug report issue',
+    version: '0.0.1',
+    trigger: eventTrigger({
+      name: 'github-create-bug-report-issue',
+      schema: zod.object({
+        content: zod.string(),
+        title: zod.string()
+      })
+    }),
+    run: async (payload, io) => {
+      const { content, title } = payload;
+
+      const targetIssueRepo = 'pr-time-tracker';
+      const targetIssueOwner = 'holdex';
+
+      const orgDetails = await io.runTask(
+        'get org installation',
+        async () => {
+          const { data } = await getInstallationId(targetIssueOwner);
+          return data;
+        },
+        { name: 'Get Organization installation' },
+        (err: any, _, _io) => {
+          _io.logger.error(err);
+        }
+      );
+
+      await io.runTask('create bug report issue', async () => {
+        const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
+        const res = await octokit.rest.issues.create({
+          owner: targetIssueOwner,
+          repo: targetIssueRepo,
+          title,
+          body: content,
+          labels: ['bug']
+        });
+        return res.data;
+      });
+    }
+  });
+
   client.on('runFailed', (notification) => {
+    const content = `${notification.job.id} failed to run. More info on https://cloud.trigger.dev/orgs/${notification.organization.slug}/projects/${notification.project.slug}/jobs/${notification.job.id}/runs/${notification.id}/trigger`;
+
     client.sendEvent({
       name: 'discord-send-message',
       payload: {
-        content: `${notification.job.id} failed to run. More info on https://cloud.trigger.dev/orgs/${notification.organization.slug}/projects/${notification.project.slug}/jobs/${notification.job.id}/runs/${notification.id}/trigger`
+        content
+      }
+    });
+    client.sendEvent({
+      name: 'github-create-bug-report-issue',
+      payload: {
+        notification,
+        title: `Job ${notification.job.id} failed to run`,
+        content
       }
     });
   });
