@@ -28,8 +28,8 @@
     "@prettier/plugin-pug": "^3.0.0",
     "@sentry/sveltekit": "^7.109.0",
     "@steeze-ui/heroicons": "^2.2.3",
-    "@trigger.dev/sdk": "^2.3.18",
-    "@trigger.dev/sveltekit": "^2.3.18",
+    "@trigger.dev/sdk": "^3.3.7",
+    "@trigger.dev/sveltekit": "^3.3.7",
     "@types/cookie": "^0.5.1",
     "autoprefixer": "^10.4.14",
     "axios": "^1.4.0",
@@ -83,6 +83,6 @@
     ]
   },
   "trigger.dev": {
-    "endpointId": "autoinvoicing-hCPJ"
+    "endpointId": "test-T_cT"
   }
 }

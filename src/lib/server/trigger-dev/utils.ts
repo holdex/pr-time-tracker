@@ -1,4 +1,5 @@
 import { App, Octokit } from 'octokit';
+import { logger } from '@trigger.dev/sdk/v3';
 
 import type {
   User,
@@ -193,11 +194,10 @@ const deleteCheckRun = async (
   org: { name: string; installationId: number; repo: string },
   sender: { login: string; id: number },
   pull_request: PullRequest | SimplePullRequest,
-  checkName: (s: string) => string,
-  io: any
+  checkName: (s: string) => string
 ) => {
-  return await io.runTask('delete-check-run', async () => {
-    const checkRunId = await io.runTask('get-check-run-id', async () => {
+  return await logger.trace('delete-check-run', async () => {
+    const checkRunId = await logger.trace('get-check-run-id', async () => {
       const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
       const { data } = await octokit.rest.checks
@@ -221,49 +221,37 @@ const deleteCheckRun = async (
     });
 
     if (checkRunId) {
-      const repoDetails = await io.runTask(
-        'get-repo-id',
-        async () => {
-          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+      const repoDetails = await logger.trace('get-repo-id', async () => {
+        const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
-          return octokit.rest.repos.get({ owner: org.name, repo: org.repo });
-        },
-        { name: 'Get Repo Details' }
-      );
+        return octokit.rest.repos.get({ owner: org.name, repo: org.repo });
+      });
 
-      const checkDetails = await io.runTask(
-        'get-check-id',
-        async () => {
-          const octokit = await githubApp.getInstallationOctokit(org.installationId);
-          return octokit.rest.checks.get({
-            owner: org.name,
-            repo: org.repo,
-            check_run_id: checkRunId
-          });
-        },
-        { name: 'Get Check Details' }
-      );
+      const checkDetails = await logger.trace('get-check-id', async () => {
+        const octokit = await githubApp.getInstallationOctokit(org.installationId);
+        return octokit.rest.checks.get({
+          owner: org.name,
+          repo: org.repo,
+          check_run_id: checkRunId
+        });
+      });
 
-      await io.runTask(
-        'update-check-run-to-completed',
-        async () => {
-          const octokit = await githubApp.getInstallationOctokit(org.installationId);
+      await logger.trace('update-check-run-to-completed', async () => {
+        const octokit = await githubApp.getInstallationOctokit(org.installationId);
 
-          return updateCheckRun(octokit, {
-            repositoryId: repoDetails.data.node_id,
-            checkRunId: checkDetails.data.node_id,
-            status: 'COMPLETED',
-            conclusion: 'NEUTRAL',
-            completedAt: new Date().toISOString(),
-            detailsUrl: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoDetails.data.name}/${pull_request.id}`,
-            output: {
-              title: '⚪ bug info check cancelled',
-              summary: 'Pull request title no longer includes `fix:`. No further actions required'
-            }
-          }).then((r) => r.updateCheckRun);
-        },
-        { name: 'Update check run' }
-      );
+        return updateCheckRun(octokit, {
+          repositoryId: repoDetails.data.node_id,
+          checkRunId: checkDetails.data.node_id,
+          status: 'COMPLETED',
+          conclusion: 'NEUTRAL',
+          completedAt: new Date().toISOString(),
+          detailsUrl: `https://pr-time-tracker.vercel.app/prs/${org.name}/${repoDetails.data.name}/${pull_request.id}`,
+          output: {
+            title: '⚪ bug info check cancelled',
+            summary: 'Pull request title no longer includes `fix:`. No further actions required'
+          }
+        }).then((r) => r.updateCheckRun);
+      });
     }
   });
 };
@@ -339,28 +327,23 @@ async function deleteComment(
   orgID: number,
   orgName: string,
   repositoryName: string,
-  previousComment: any,
-  io: any
+  previousComment: any
 ): Promise<boolean> {
   if (previousComment.databaseId) {
-    return await io.runTask(
-      `delete-comment-${previousComment.databaseId ?? ''}`,
-      async () => {
-        try {
-          const octokit = await githubApp.getInstallationOctokit(orgID);
-          await octokit.rest.issues.deleteComment({
-            owner: orgName,
-            repo: repositoryName,
-            comment_id: previousComment.databaseId
-          });
-          return true;
-        } catch (err) {
-          await io.logger.error('delete comment', { err });
-          return false;
-        }
-      },
-      { name: 'Delete comment' }
-    );
+    return await logger.trace(`delete-comment-${previousComment.databaseId ?? ''}`, async () => {
+      try {
+        const octokit = await githubApp.getInstallationOctokit(orgID);
+        await octokit.rest.issues.deleteComment({
+          owner: orgName,
+          repo: repositoryName,
+          comment_id: previousComment.databaseId
+        });
+        return true;
+      } catch (err) {
+        logger.error('delete comment', { err });
+        return false;
+      }
+    });
   } else {
     return false;
   }
@@ -447,10 +430,9 @@ async function getPreviousComment(
   header: string | RegExp,
   issueNumber: number,
   category: PreviousCommentCategory,
-  senderFilter: PreviousCommentSenderFilter,
-  io: any
+  senderFilter: PreviousCommentSenderFilter
 ): Promise<IssueComment | undefined> {
-  const previousComment = await io.runTask(
+  const previousComment = await logger.trace(
     `get-previous-comment-${issueNumber}-${category}-${header}-${senderFilter}`,
     async () => {
       try {
@@ -465,11 +447,10 @@ async function getPreviousComment(
         );
         return previous;
       } catch (error) {
-        await io.logger.error('get previous comment', { error });
+        logger.error('get previous comment', { error });
         return undefined;
       }
-    },
-    { name: 'Get Previous Comment' }
+    }
   );
 
   return previousComment;
@@ -480,8 +461,7 @@ async function createComment(
   orgName: string,
   repositoryName: string,
   comment: string,
-  issueNumber: number,
-  io: any
+  issueNumber: number
 ): Promise<void> {
   try {
     const octokit = await githubApp.getInstallationOctokit(orgID);
@@ -492,7 +472,7 @@ async function createComment(
       issue_number: issueNumber
     });
   } catch (error) {
-    await io.logger.error('add issue comment', { error });
+    logger.error('add issue comment', { error });
   }
 }
 
@@ -500,10 +480,9 @@ async function getPullRequestByIssue(
   issue: Issue,
   orgID: number,
   orgName: string,
-  repositoryName: string,
-  io: any
+  repositoryName: string
 ): Promise<PullRequest | undefined> {
-  const previousComment = await io.runTask(
+  const previousComment = await logger.trace(
     `get-pull-request-by-issue-${issue.number}`,
     async () => {
       try {
@@ -513,9 +492,9 @@ async function getPullRequestByIssue(
           repo: repositoryName,
           pull_number: issue.number
         });
-        return data.data;
+        return data.data as PullRequest;
       } catch (error) {
-        await io.logger.error('get pull request id by issue id', { error });
+        logger.error('get pull request id by issue id', { error });
         return undefined;
       }
     }
@@ -524,15 +503,14 @@ async function getPullRequestByIssue(
   return previousComment;
 }
 
-async function reinsertComment<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
+async function reinsertComment(
   orgID: number,
   orgName: string,
   repositoryName: string,
   header: string,
-  prOrIssueNumber: number,
-  io: T
+  prOrIssueNumber: number
 ) {
-  const { comment, isDeleted } = await io.runTask('delete-previous-comment', async () => {
+  const { comment, isDeleted } = await logger.trace('delete-previous-comment', async () => {
     const previousComment = await getPreviousComment(
       orgID,
       orgName,
@@ -540,21 +518,20 @@ async function reinsertComment<T extends IOWithIntegrations<{ github: Autoinvoic
       header,
       prOrIssueNumber,
       'pullRequest',
-      'bot',
-      io
+      'bot'
     );
 
     let hasBeenDeleted = false;
     if (previousComment) {
-      hasBeenDeleted = await deleteComment(orgID, orgName, repositoryName, previousComment, io);
+      hasBeenDeleted = await deleteComment(orgID, orgName, repositoryName, previousComment);
     }
 
     return { comment: previousComment, isDeleted: hasBeenDeleted };
   });
 
   if (isDeleted && comment) {
-    await io.runTask('reinsert-comment', async () => {
-      await createComment(orgID, orgName, repositoryName, comment.body, prOrIssueNumber, io);
+    await logger.trace('reinsert-comment', async () => {
+      await createComment(orgID, orgName, repositoryName, comment.body, prOrIssueNumber);
     });
   }
 }

@@ -1,3 +1,5 @@
+import { logger } from '@trigger.dev/sdk/v3';
+
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { IssueCommentEvent } from '@octokit/webhooks-types';
@@ -11,58 +13,44 @@ import {
 } from '../utils';
 import { bugReportRegex, runPrFixCheckRun } from '../fix-pr';
 
-export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
-  payload: IssueCommentEvent,
-  io: T,
-  ctx: TriggerContext,
-  org: { nodeId: string; name: string }
-) {
+export async function createJob(payload: IssueCommentEvent) {
   const { action, organization, repository, issue } = payload;
   const orgName = organization?.login || 'holdex';
 
   const isPullRequest = !!issue.pull_request;
   if (!isPullRequest) {
-    io.logger.log('comment creation in issue is not in the parse candidate', payload);
+    logger.log('comment creation in issue is not in the parse candidate', payload as any);
     return;
   }
 
-  const orgDetails = await io.runTask(
-    'get-org-installation',
-    async () => {
-      const { data } = await getInstallationId(orgName);
-      return data;
-    },
-    { name: 'Get Organization installation' }
-  );
+  const orgDetails = await logger.trace('get-org-installation', async () => {
+    const { data } = await getInstallationId(orgName);
+    return data;
+  });
 
   switch (action) {
     case 'created': {
       if (excludedAccounts.includes(payload.sender.login)) {
-        io.logger.log(`current sender ${payload.sender.login} for issue comment is excluded`);
+        logger.log(`current sender ${payload.sender.login} for issue comment is excluded`);
         return;
       }
 
-      const pr = await getPullRequestByIssue(issue, orgDetails.id, org.name, repository.name, io);
+      const pr = await getPullRequestByIssue(issue, orgDetails.id, orgName, repository.name);
       if (!pr) {
         return;
       }
 
-      await io.runTask(
-        'reinsert-sticky-comment',
-        async () => {
-          return reinsertComment(
-            orgDetails.id,
-            org.name,
-            repository.name,
-            submissionHeaderComment('Pull Request', pr.id.toString()),
-            issue.number,
-            io
-          );
-        },
-        { name: 'Reinsert sticky comment' }
-      );
+      await logger.trace('reinsert-sticky-comment', async () => {
+        return reinsertComment(
+          orgDetails.id,
+          orgName,
+          repository.name,
+          submissionHeaderComment('Pull Request', pr.id.toString()),
+          issue.number
+        );
+      });
 
-      await runPrFixCheckRun({ ...payload, pull_request: pr }, io);
+      await runPrFixCheckRun({ ...payload, pull_request: pr });
 
       break;
     }
@@ -72,19 +60,19 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
         bugReportRegex.test(payload.changes.body?.from ?? '');
 
       if (isChangedToOrFromBugReport) {
-        await runPrFixCheckRun(payload, io);
+        await runPrFixCheckRun(payload);
       }
       break;
     }
     case 'deleted': {
       const isBugReport = bugReportRegex.test(payload.comment.body);
       if (isBugReport) {
-        await runPrFixCheckRun(payload, io);
+        await runPrFixCheckRun(payload);
       }
       break;
     }
     default: {
-      io.logger.log('current action for issue comment is not in the parse candidate', payload);
+      logger.log('current action for issue comment is not in the parse candidate', payload);
     }
   }
 }
