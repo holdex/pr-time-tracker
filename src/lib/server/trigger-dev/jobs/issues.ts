@@ -1,3 +1,5 @@
+import { logger } from '@trigger.dev/sdk/v3';
+
 import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type { IssuesLabeledEvent } from '@octokit/webhooks-types';
@@ -8,20 +10,17 @@ import type {
   UpdateProjectV2ItemFieldValuePayload
 } from '@octokit/graphql-schema';
 
-export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
-  payload: IssuesLabeledEvent,
-  io: T,
-  ctx: TriggerContext,
-  org: { nodeId: string; name: string }
-) {
-  const { action, issue } = payload;
+import { github } from '../client';
+
+export async function createJob(payload: IssuesLabeledEvent) {
+  const { action, issue, organization } = payload;
 
   switch (action) {
     case 'labeled': {
       const { label } = payload;
 
       if (label && regexExp.test(label.name)) {
-        const projectItem = await io.github.runTask(
+        const projectItem = await github.runTask(
           `add-issue-to-the-board-${issue.id}`,
           async (octokit) => {
             return octokit.graphql<{ addProjectV2ItemById: AddProjectV2ItemByIdPayload }>(
@@ -46,7 +45,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           { name: "Add Issue to the Oracle's Board" }
         );
 
-        const updateProjectItem = await io.github.runTask(
+        const updateProjectItem = await github.runTask(
           `update-project-fields-${issue.id}`,
           async (octokit) => {
             return octokit.graphql<{
@@ -67,7 +66,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
                   itemId: projectItem.addProjectV2ItemById.item?.id,
                   fieldId: teamOracleProjectNodeId,
                   value: {
-                    singleSelectOptionId: org.nodeId
+                    singleSelectOptionId: organization?.node_id
                   }
                 } as UpdateProjectV2ItemFieldValueInput
               }
@@ -79,7 +78,7 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
       }
     }
     default: {
-      io.logger.log('current action for issue is not in the parse candidate', payload);
+      logger.log('current action for issue is not in the parse candidate', payload as any);
     }
   }
 }

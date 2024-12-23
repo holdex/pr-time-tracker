@@ -1,5 +1,5 @@
-import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
-import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import { logger, wait } from '@trigger.dev/sdk/v3';
+
 import type { PullRequestEvent } from '@octokit/webhooks-types';
 
 import { insertEvent } from '$lib/server/gcloud';
@@ -17,11 +17,7 @@ import { runPrFixCheckRun } from '../fix-pr';
 
 import { EventType, type ItemSchema } from '$lib/@types';
 
-export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
-  payload: PullRequestEvent,
-  io: T,
-  ctx: TriggerContext
-) {
+export async function createJob(payload: PullRequestEvent) {
   const { action, pull_request, repository, organization, sender } = payload;
 
   switch (action) {
@@ -30,122 +26,32 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
     case 'synchronize':
     case 'closed': {
       if (action === 'opened' || action === 'closed') {
-        await insertPrEvent(payload, io);
+        await insertPrEvent(payload);
       }
 
-      const prInfo = await updatePrInfo(payload, io, (s) => s);
+      const prInfo = await updatePrInfo(payload, (s) => s);
 
       if (
         action === 'synchronize' &&
         (pull_request.requested_reviewers.length > 0 || pull_request.requested_teams.length > 0)
       ) {
-        const orgDetails = await io.runTask(
-          'get org installation',
-          async () => {
-            const { data } = await getInstallationId(organization?.login as string);
-            return data;
-          },
-          { name: 'Get Organization installation' },
-          (err: any, _, _io) => {
-            _io.logger.error(err);
-          }
-        );
+        const orgDetails = await logger.trace('get org installation', async () => {
+          const { data } = await getInstallationId(organization?.login as string);
+          return data;
+        });
 
-        const contributorList = await io.runTask<any>(
-          'get contributors list',
-          async () => {
-            const data = await contributors.getManyBy({
-              id: { $in: prInfo.contributor_ids }
-            });
-            return data;
-          },
-          { name: 'Get contributors list' },
-          (err: any, _, _io) => {
-            _io.logger.error(err);
-          }
-        );
+        const contributorList = await logger.trace('get contributors list', async () => {
+          const data = await contributors.getManyBy({
+            id: { $in: prInfo.contributor_ids }
+          });
+          return data;
+        });
 
         const taskChecks = [];
         for (const c of contributorList) {
           if (excludedAccounts.includes(c.login)) continue;
           taskChecks.push(
-            io.runTask(
-              `create-check-run-for-contributor_${c.login}`,
-              async () => {
-                const result = await createCheckRunIfNotExists(
-                  {
-                    name: organization?.login as string,
-                    installationId: orgDetails.id,
-                    repo: repository.name
-                  },
-                  c,
-                  pull_request,
-                  (_c) => submissionCheckName(_c),
-                  'submission'
-                );
-                await io.logger.info(`check result`, { result });
-                return Promise.resolve();
-              },
-              { name: `check run for ${c.login}` },
-              (err: any, _, _io) => {
-                _io.logger.error(err);
-              }
-            )
-          );
-        }
-        await Promise.allSettled(taskChecks);
-      }
-
-      await runPrFixCheckRun(payload, io);
-      break;
-    }
-    case 'ready_for_review': {
-      await runPrFixCheckRun(payload, io);
-      break;
-    }
-    case 'reopened': {
-      await updatePrInfo(payload, io, (s) => ({ ...s, closed_at: '' }));
-      break;
-    }
-    case 'review_requested': {
-      const orgDetails = await io.runTask(
-        'get org installation',
-        async () => {
-          const { data } = await getInstallationId(organization?.login as string);
-          return data;
-        },
-        { name: 'Get Organization installation' },
-        (err: any, _, _io) => {
-          _io.logger.error(err);
-        }
-      );
-
-      const contributorList = await io.runTask<any>(
-        'map contributors',
-        async () => {
-          const contributor = await contributors.update(getContributorInfo(pull_request.user));
-          const prInfo = await getPrInfo(
-            pull_request,
-            repository,
-            organization,
-            sender,
-            contributor
-          );
-          return contributors.getManyBy({ id: { $in: prInfo.contributor_ids || [] } });
-        },
-        { name: 'Map contributors list' },
-        (err: any, _, _io) => {
-          _io.logger.error(err);
-        }
-      );
-
-      const taskChecks = [];
-      for (const c of contributorList) {
-        if (excludedAccounts.includes(c.login)) continue;
-        taskChecks.push(
-          io.runTask(
-            `create-check-run-for-contributor_${c.login}`,
-            async () => {
+            logger.trace(`create-check-run-for-contributor_${c.login}`, async () => {
               const result = await createCheckRunIfNotExists(
                 {
                   name: organization?.login as string,
@@ -154,32 +60,71 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
                 },
                 c,
                 pull_request,
-                (s) => submissionCheckName(s),
+                (_c) => submissionCheckName(_c),
                 'submission'
               );
-              await io.logger.info(`check result`, { result });
+              logger.info(`check result`, { result });
               return Promise.resolve();
-            },
-            { name: `check run for ${c.login}` },
-            (err: any, _, _io) => {
-              _io.logger.error(err);
-            }
-          )
+            })
+          );
+        }
+        await Promise.allSettled(taskChecks);
+      }
+
+      await runPrFixCheckRun(payload);
+      break;
+    }
+    case 'ready_for_review': {
+      await runPrFixCheckRun(payload);
+      break;
+    }
+    case 'reopened': {
+      await updatePrInfo(payload, (s) => ({ ...s, closed_at: '' }));
+      break;
+    }
+    case 'review_requested': {
+      const orgDetails = await logger.trace('get org installation', async () => {
+        const { data } = await getInstallationId(organization?.login as string);
+        return data;
+      });
+
+      const contributorList = await logger.trace('map contributors', async () => {
+        const contributor = await contributors.update(getContributorInfo(pull_request.user));
+        const prInfo = await getPrInfo(pull_request, repository, organization, sender, contributor);
+        return contributors.getManyBy({ id: { $in: prInfo.contributor_ids || [] } });
+      });
+
+      const taskChecks = [];
+      for (const c of contributorList) {
+        if (excludedAccounts.includes(c.login)) continue;
+        taskChecks.push(
+          logger.trace(`create-check-run-for-contributor_${c.login}`, async () => {
+            const result = await createCheckRunIfNotExists(
+              {
+                name: organization?.login as string,
+                installationId: orgDetails.id,
+                repo: repository.name
+              },
+              c,
+              pull_request,
+              (s) => submissionCheckName(s),
+              'submission'
+            );
+            logger.info(`check result`, { result });
+            return Promise.resolve();
+          })
         );
       }
       await Promise.allSettled(taskChecks);
-      return runPrFixCheckRun(payload, io);
+      return runPrFixCheckRun(payload);
     }
     default: {
-      io.logger.log('current action for pull request is not in the parse candidate', payload);
+      logger.log('current action for pull request is not in the parse candidate', payload as any);
     }
   }
 }
 
-async function insertPrEvent<
-  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
-  E extends PullRequestEvent = PullRequestEvent
->(payload: E, io: T) {
+async function insertPrEvent<E extends PullRequestEvent = PullRequestEvent>(payload: E) {
   const { action, pull_request, repository, organization } = payload;
 
   const event = {
@@ -201,23 +146,16 @@ async function insertPrEvent<
   };
 
   const eventId = `${event.organization}/${event.repository}@${event.id}_${event.action}`;
-  await io.runTask(
-    `insert event: ${eventId}`,
-    async () => {
-      const data = await insertEvent(event, eventId);
-      return data;
-    },
-    { name: 'Insert Bigquery event' },
-    (err: any, _, _io) => {
-      _io.logger.error(err);
-    }
-  );
+  await logger.trace(`insert event: ${eventId}`, async () => {
+    const data = await insertEvent(event, eventId);
+    return data;
+  });
 }
 
-async function updatePrInfo<
-  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
-  E extends PullRequestEvent = PullRequestEvent
->(payload: E, io: T, prepareInfo: (s: ItemSchema) => ItemSchema) {
+async function updatePrInfo<E extends PullRequestEvent = PullRequestEvent>(
+  payload: E,
+  prepareInfo: (s: ItemSchema) => ItemSchema
+) {
   const { action, pull_request, repository, organization, sender } = payload;
   let contributorInfo = getContributorInfo(sender);
 
@@ -225,41 +163,21 @@ async function updatePrInfo<
     contributorInfo = getContributorInfo(pull_request.user);
   }
 
-  const contributor = await io.runTask<any>(
-    `update contributor: ${contributorInfo.id}`,
-    async () => {
-      const data = await contributors.update(contributorInfo);
-      return data;
-    },
-    { name: 'Update Contributor schema' },
-    (err: any, _, _io) => {
-      _io.logger.error(err);
-    }
-  );
+  const contributor = await logger.trace(`update contributor: ${contributorInfo.id}`, async () => {
+    const data = await contributors.update(contributorInfo);
+    return data;
+  });
 
-  await io.wait('wait for first call', 5);
+  logger.info('wait for first call');
+  await wait.for({ seconds: 5 });
 
-  const prInfo = await io.runTask<any>(
-    `get pr info: ${pull_request.node_id}`,
-    async () => {
-      const data = await getPrInfo(pull_request, repository, organization, sender, contributor);
-      return data;
-    },
-    { name: 'Get Item schema' },
-    (err: any, _, _io) => {
-      _io.logger.error(err);
-    }
-  );
+  const prInfo = await logger.trace(`get pr info: ${pull_request.node_id}`, async () => {
+    const data = await getPrInfo(pull_request, repository, organization, sender, contributor);
+    return data;
+  });
 
-  return io.runTask<any>(
-    `update pr info: ${pull_request.node_id}`,
-    async () => {
-      const data = await items.update(prepareInfo(prInfo), { onCreateIfNotExist: true });
-      return data;
-    },
-    { name: 'Update Item schema' },
-    (err: any, _, _io) => {
-      _io.logger.error(err);
-    }
-  );
+  return logger.trace(`update pr info: ${pull_request.node_id}`, async () => {
+    const data = await items.update(prepareInfo(prInfo), { onCreateIfNotExist: true });
+    return data;
+  });
 }

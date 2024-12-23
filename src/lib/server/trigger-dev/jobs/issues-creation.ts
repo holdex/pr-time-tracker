@@ -1,5 +1,5 @@
-import type { TriggerContext, IOWithIntegrations } from '@trigger.dev/sdk';
-import type { Autoinvoicing } from '@holdex/autoinvoicing';
+import { logger } from '@trigger.dev/sdk/v3';
+
 import type { IssuesEvent } from '@octokit/webhooks-types';
 
 import {
@@ -11,28 +11,19 @@ import {
   getInstallationId
 } from '../utils';
 
-export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoicing }>>(
-  payload: IssuesEvent,
-  io: T,
-  ctx: TriggerContext,
-  org: { nodeId: string; name: string }
-) {
+export async function createJob(payload: IssuesEvent) {
   const { action, organization, repository, issue } = payload;
   const MAX_TITLE_LENGTH = 65;
   const orgName = organization?.login || 'holdex';
-  const orgDetails = await io.runTask(
-    'get-org-installation',
-    async () => {
-      const { data } = await getInstallationId(orgName);
-      return data;
-    },
-    { name: 'Get Organization installation' }
-  );
+  const orgDetails = await logger.trace('get-org-installation', async () => {
+    const { data } = await getInstallationId(orgName);
+    return data;
+  });
 
   switch (action) {
     case 'opened':
     case 'edited': {
-      await io.runTask('delete-previous-comment', async () => {
+      await logger.trace('delete-previous-comment', async () => {
         const previousComment = await getPreviousComment(
           orgDetails.id,
           orgName,
@@ -40,17 +31,16 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
           submissionHeaderComment('Issue', payload.issue.id.toString()),
           issue.number,
           'issue',
-          'bot',
-          io
+          'bot'
         );
 
         if (previousComment) {
-          await deleteComment(orgDetails.id, orgName, repository.name, previousComment, io);
+          await deleteComment(orgDetails.id, orgName, repository.name, previousComment);
         }
       });
 
       if (issue.title.length > MAX_TITLE_LENGTH) {
-        await io.runTask('add-issue-title-comment', async () => {
+        await logger.trace('add-issue-title-comment', async () => {
           const commentBody = bodyWithHeader(
             'Issue',
             `@` +
@@ -61,20 +51,13 @@ export async function createJob<T extends IOWithIntegrations<{ github: Autoinvoi
             payload.issue.id.toString()
           );
 
-          await createComment(
-            orgDetails.id,
-            orgName,
-            repository.name,
-            commentBody,
-            issue.number,
-            io
-          );
+          await createComment(orgDetails.id, orgName, repository.name, commentBody, issue.number);
         });
       }
       break;
     }
     default: {
-      io.logger.log('current action for issue is not in the parse candidate', payload);
+      logger.log('current action for issue is not in the parse candidate', payload as any);
     }
   }
 }

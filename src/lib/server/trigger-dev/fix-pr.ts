@@ -1,3 +1,5 @@
+import { logger } from '@trigger.dev/sdk/v3';
+
 import type { IOWithIntegrations } from '@trigger.dev/sdk';
 import type { Autoinvoicing } from '@holdex/autoinvoicing';
 import type {
@@ -33,12 +35,11 @@ export function getBugReportWarningTemplate(sender: string) {
 
 const fixPrRegex = /^fix(\(.+\))?:/;
 export async function runPrFixCheckRun<
-  T extends IOWithIntegrations<{ github: Autoinvoicing }>,
   E extends PullRequestEvent | PullRequestReviewEvent | IssueCommentEvent =
     | PullRequestEvent
     | PullRequestReviewEvent
     | IssueCommentEvent
->(payload: E, io: T) {
+>(payload: E) {
   const { repository, organization, sender } = payload;
   let title;
   let isPullRequestEvent = false;
@@ -73,7 +74,7 @@ export async function runPrFixCheckRun<
     return;
   }
   if (!organization) {
-    return io.logger.log('organization not found');
+    return logger.log('organization not found');
   }
 
   let pullRequest: SimplePullRequest | PullRequest;
@@ -84,53 +85,44 @@ export async function runPrFixCheckRun<
       payload.issue,
       organization.id,
       organization.login,
-      payload.repository.name,
-      io
+      payload.repository.name
     );
     if (!pr) {
-      return io.logger.log('pull request from issue not found');
+      return logger.log('pull request from issue not found');
     }
     pullRequest = pr;
   }
 
-  const orgDetails = await io.runTask(
-    'fix-pr-get-org-installation',
-    async () => {
-      const { data } = await getInstallationId(organization?.login as string);
-      return data;
-    },
-    { name: 'Get Organization installation' }
-  );
+  const orgDetails = await logger.trace('fix-pr-get-org-installation', async () => {
+    const { data } = await getInstallationId(organization?.login as string);
+    return data;
+  });
 
   if (shouldRunFixPrCheck) {
     const { user } = pullRequest;
 
     if (pullRequest.draft) {
-      return io.logger.log('skipped draft pull request');
+      return logger.log('skipped draft pull request');
     }
 
     if (payload.action !== 'closed') {
-      await io.runTask(
-        `create-check-run-for-fix-pr`,
-        async () => {
-          const result = await createCheckRunIfNotExists(
-            {
-              name: organization.login as string,
-              installationId: orgDetails.id,
-              repo: repository.name
-            },
-            user,
-            pullRequest,
-            (b) => bugCheckName(b),
-            'bug_report'
-          );
-          await io.logger.info(`check result`, { result });
-          return Promise.resolve();
-        },
-        { name: `check run for fix PR` }
-      );
+      await logger.trace(`create-check-run-for-fix-pr`, async () => {
+        const result = await createCheckRunIfNotExists(
+          {
+            name: organization.login as string,
+            installationId: orgDetails.id,
+            repo: repository.name
+          },
+          user,
+          pullRequest,
+          (b) => bugCheckName(b),
+          'bug_report'
+        );
+        await logger.info(`check result`, { result });
+        return Promise.resolve();
+      });
     } else if (payload.action === 'closed' && payload.pull_request.merged) {
-      await processBugReport(orgDetails.id, organization.login, repository.name, pullRequest, io);
+      await processBugReport(orgDetails.id, organization.login, repository.name, pullRequest);
     }
   } else if (shouldDeleteFixPrCheck) {
     await deleteFixPrReportAndResolveCheckRun(
@@ -138,8 +130,7 @@ export async function runPrFixCheckRun<
       organization.login,
       repository.name,
       pullRequest,
-      sender,
-      io
+      sender
     );
   }
 }
@@ -148,8 +139,7 @@ async function processBugReport(
   orgID: number,
   orgName: string,
   repositoryName: string,
-  pullRequest: SimplePullRequest | PullRequest,
-  io: any
+  pullRequest: SimplePullRequest | PullRequest
 ) {
   const bugReportComment = await getPreviousComment(
     orgID,
@@ -158,42 +148,37 @@ async function processBugReport(
     bugReportRegex,
     pullRequest.number,
     'pullRequest',
-    'others',
-    io
+    'others'
   );
   if (!bugReportComment) {
-    return io.logger.log('Bug report not found');
+    return logger.log('Bug report not found');
   }
 
-  await io.runTask(
-    `send-bug-report-event`,
-    async () => {
-      const bugReportMatch = bugReportRegex.exec(bugReportComment.body);
-      if (!bugReportMatch) {
-        return io.logger.log('Bug report regex does not match!');
-      }
+  await logger.trace(`send-bug-report-event`, async () => {
+    const bugReportMatch = bugReportRegex.exec(bugReportComment.body);
+    if (!bugReportMatch) {
+      return logger.log('Bug report regex does not match!');
+    }
 
-      const [, commitLinkOrLinkMd, bugAuthor] = bugReportMatch;
-      const markdownLinkRegex = /\[[^\]]*\]\(([^)]+)\)/;
+    const [, commitLinkOrLinkMd, bugAuthor] = bugReportMatch;
+    const markdownLinkRegex = /\[[^\]]*\]\(([^)]+)\)/;
 
-      let commitLink = commitLinkOrLinkMd;
-      const regexMatch = markdownLinkRegex.exec(commitLinkOrLinkMd);
-      if (regexMatch) {
-        [, commitLink] = regexMatch;
-      }
+    let commitLink = commitLinkOrLinkMd;
+    const regexMatch = markdownLinkRegex.exec(commitLinkOrLinkMd);
+    if (regexMatch) {
+      [, commitLink] = regexMatch;
+    }
 
-      const reporter = bugReportComment.author;
-      const reporterUsername = reporter?.login ?? 'unknown';
+    const reporter = bugReportComment.author;
+    const reporterUsername = reporter?.login ?? 'unknown';
 
-      const bugReport: BugReport = {
-        commitLink,
-        bugAuthorUsername: bugAuthor,
-        reporterUsername: reporterUsername
-      };
-      await sendBugReportEvent(bugReport, io);
-    },
-    { name: 'send bug report event' }
-  );
+    const bugReport: BugReport = {
+      commitLink,
+      bugAuthorUsername: bugAuthor,
+      reporterUsername: reporterUsername
+    };
+    await sendBugReportEvent(bugReport);
+  });
 }
 
 type BugReport = {
@@ -201,14 +186,14 @@ type BugReport = {
   bugAuthorUsername: string;
   reporterUsername: string;
 };
-async function sendBugReportEvent(bugReport: BugReport, io: any) {
+async function sendBugReportEvent(bugReport: BugReport) {
   const commitLinkRegex = /https:\/\/github.com\/([^/]+)\/([^/]+)\/pull\/([^/]+)\/commits\/([^/]+)/;
   const regexRes = commitLinkRegex.exec(bugReport.commitLink);
   if (!regexRes) {
-    return io.logger.log('commit link regex does not match');
+    return logger.log('commit link regex does not match');
   }
   const [, org, repo, prNumber] = commitLinkRegex.exec(bugReport.commitLink) ?? [];
-  const pullRequest: ItemSchema | null = await io.runTask(
+  const pullRequest: ItemSchema | null = await logger.trace(
     `fix-pr-get-pull-request-${prNumber}`,
     async () => {
       return items.getOne({
@@ -216,8 +201,7 @@ async function sendBugReportEvent(bugReport: BugReport, io: any) {
         repo: { $eq: repo },
         org: { $eq: org }
       });
-    },
-    { name: 'get pull request' }
+    }
   );
 
   const event: EventsSchema = {
@@ -238,14 +222,10 @@ async function sendBugReportEvent(bugReport: BugReport, io: any) {
   };
 
   const eventId = `${event.organization}/${event.repository}@${event.id}_${event.action}`;
-  await io.runTask(
-    `insert event: ${eventId}`,
-    async () => {
-      const data = await insertEvent(event, eventId);
-      return data;
-    },
-    { name: 'Insert Bigquery event' }
-  );
+  await logger.trace(`insert event: ${eventId}`, async () => {
+    const data = await insertEvent(event, eventId);
+    return data;
+  });
 }
 
 async function deleteFixPrReportAndResolveCheckRun(
@@ -253,34 +233,27 @@ async function deleteFixPrReportAndResolveCheckRun(
   orgName: string,
   repositoryName: string,
   pullRequest: SimplePullRequest | PullRequest,
-  sender: { login: string; id: number },
-  io: any
+  sender: { login: string; id: number }
 ) {
-  await io.runTask(
-    `delete-fix-pr-warning-and-resolve-check-run`,
-    async () => {
-      const previousBugReportWarning = await getPreviousComment(
-        orgID,
-        orgName,
-        repositoryName,
-        submissionHeaderComment('Bug Report', pullRequest.number.toString()),
-        pullRequest.number,
-        'pullRequest',
-        'bot',
-        io
-      );
-      if (previousBugReportWarning) {
-        await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning, io);
-      }
+  await logger.trace(`delete-fix-pr-warning-and-resolve-check-run`, async () => {
+    const previousBugReportWarning = await getPreviousComment(
+      orgID,
+      orgName,
+      repositoryName,
+      submissionHeaderComment('Bug Report', pullRequest.number.toString()),
+      pullRequest.number,
+      'pullRequest',
+      'bot'
+    );
+    if (previousBugReportWarning) {
+      await deleteComment(orgID, orgName, repositoryName, previousBugReportWarning);
+    }
 
-      await deleteCheckRun(
-        { name: orgName, installationId: orgID, repo: repositoryName },
-        sender,
-        pullRequest,
-        (s) => bugCheckName(s),
-        io
-      );
-    },
-    { name: `delete fix pr warning and resolve check run` }
-  );
+    await deleteCheckRun(
+      { name: orgName, installationId: orgID, repo: repositoryName },
+      sender,
+      pullRequest,
+      (s) => bugCheckName(s)
+    );
+  });
 }
