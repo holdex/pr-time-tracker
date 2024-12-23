@@ -145,11 +145,11 @@ if (!isDev) {
   });
 
   client.defineJob({
-    id: 'github-create-issue',
-    name: 'Create Github issue',
+    id: 'github-create-bug-report-issue',
+    name: 'Create Github bug report issue',
     version: '0.0.1',
     trigger: eventTrigger({
-      name: 'github-create-issue',
+      name: 'github-create-bug-report-issue',
       schema: zod.object({
         content: zod.string(),
         title: zod.string()
@@ -157,8 +157,6 @@ if (!isDev) {
     }),
     run: async (payload, io) => {
       const { content, title } = payload;
-
-      io.logger.info('Create Github issue', { content, title });
 
       const targetIssueRepo = 'pr-time-tracker';
       const targetIssueOwner = 'holdex';
@@ -175,7 +173,7 @@ if (!isDev) {
         }
       );
 
-      await io.runTask('Create Github issue', async () => {
+      await io.runTask('create bug report issue', async () => {
         const octokit = await githubApp.getInstallationOctokit(orgDetails.id);
         const res = await octokit.rest.issues.create({
           owner: targetIssueOwner,
@@ -199,7 +197,7 @@ if (!isDev) {
       }
     });
     client.sendEvent({
-      name: 'github-create-issue',
+      name: 'github-create-bug-report-issue',
       payload: {
         notification,
         title: `Job ${notification.job.id} failed to run`,
