@@ -9,6 +9,7 @@ import type {
   PullRequestEvent,
   PullRequestReviewEvent
 } from '@octokit/webhooks-types';
+import type { NotificationEvents } from '@trigger.dev/sdk';
 
 import { isDev } from '$lib/config';
 import config from '$lib/server/config';
@@ -26,7 +27,7 @@ import {
 } from './check-run';
 import { getInstallationId, githubApp } from '../utils';
 
-config.integrationsList.forEach((org) => {
+function createOrgJob(org: { id: string; name: string }) {
   const issueCreationJob = task({
     id: `issue-creation-streaming_${org.id}${isDev ? '_dev' : ''}`,
     run: async (payload: IssuesEvent) => createIssueCreationJob(payload)
@@ -65,6 +66,21 @@ config.integrationsList.forEach((org) => {
     id: `check_run_streaming_${org.id}${isDev ? '_dev' : ''}`,
     run: async (payload: CheckRunEvent) => createCheckRunJob(payload)
   });
+
+  return {
+    issueCreationJob,
+    issueCommentJob,
+    issueLabelJob,
+    pullRequestJob,
+    pullRequestReviewJob,
+    customEventJob,
+    checkRunJob
+  };
+}
+
+const orgJobs: Record<string, ReturnType<typeof createOrgJob>> = {};
+config.integrationsList.forEach((org) => {
+  orgJobs[org.name] = createOrgJob(org);
 });
 
 if (!isDev) {
@@ -82,7 +98,11 @@ if (!isDev) {
 
   const githubBugReportJob = task({
     id: 'github-create-bug-report-issue',
-    run: async (payload: { content: string; title: string }) => {
+    run: async (payload: {
+      content: string;
+      title: string;
+      notification: Parameters<NotificationEvents['runFailed']>[0];
+    }) => {
       const { content, title } = payload;
 
       const targetIssueRepo = 'pr-time-tracker';
@@ -110,19 +130,19 @@ if (!isDev) {
   client.on('runFailed', (notification) => {
     const content = `${notification.job.id} failed to run. More info on https://cloud.trigger.dev/orgs/${notification.organization.slug}/projects/${notification.project.slug}/jobs/${notification.job.id}/runs/${notification.id}/trigger`;
 
-    client.sendEvent({
-      name: 'discord-send-message',
-      payload: {
-        content
-      }
-    });
-    client.sendEvent({
-      name: 'github-create-bug-report-issue',
-      payload: {
-        notification,
-        title: `Job ${notification.job.id} failed to run`,
-        content
-      }
+    discordJob.trigger({ content });
+    githubBugReportJob.trigger({
+      notification,
+      title: `Job ${notification.job.id} failed to run`,
+      content
     });
   });
+}
+
+export function getOrgJob(org: string) {
+  const orgJob = orgJobs[org];
+  if (!orgJob) {
+    throw new Error(`Org job not found for ${org}`);
+  }
+  return orgJob;
 }

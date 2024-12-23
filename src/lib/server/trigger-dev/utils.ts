@@ -17,13 +17,12 @@ import type {
   UpdateCheckRunPayload
 } from '@octokit/graphql-schema';
 import type { ContributorSchema, ItemSchema } from '$lib/@types';
-import type { IOWithIntegrations } from '@trigger.dev/sdk';
 
 import config from '$lib/server/config';
 import { ItemType } from '$lib/constants';
 import { items, submissions } from '$lib/server/mongo/collections';
 
-import { client, type Autoinvoicing } from './client';
+import { getOrgJob } from './jobs';
 
 const githubApp = new App({
   appId: config.github.appId,
@@ -155,18 +154,15 @@ const createCheckRunIfNotExists = async (
       })
       .catch((err) => ({ error: err }));
   } else {
-    return client.sendEvent({
-      name: `${org.name}_custom_event`,
-      payload: {
-        type: runType,
-        organization: org.name,
-        repo: org.repo,
-        prId: pull_request.id,
-        senderLogin: sender.login,
-        senderId: sender.id,
-        prNumber: pull_request.number,
-        checkRunId: data.check_runs[data.total_count - 1].id
-      }
+    return getOrgJob(org.name).customEventJob.trigger({
+      type: runType,
+      organization: org.name,
+      repo: org.repo,
+      prId: pull_request.id,
+      senderLogin: sender.login,
+      senderId: sender.id,
+      prNumber: pull_request.number,
+      checkRunId: data.check_runs[data.total_count - 1].id
     });
   }
 };
@@ -286,18 +282,15 @@ const reRequestCheckRun = async (
     }));
 
   if (data.total_count > 0) {
-    return client.sendEvent({
-      name: `${org.name}_custom_event`,
-      payload: {
-        type: 'submission',
-        organization: org.name,
-        repo: repoName,
-        prId: prInfo.data.id,
-        senderLogin: senderLogin,
-        prNumber: prNumber,
-        senderId: senderId,
-        checkRunId: data.check_runs[data.total_count - 1].id
-      }
+    return getOrgJob(org.name).customEventJob.trigger({
+      type: 'submission',
+      organization: org.name,
+      repo: repoName,
+      prId: prInfo.data.id,
+      senderLogin: senderLogin,
+      prNumber: prNumber,
+      senderId: senderId,
+      checkRunId: data.check_runs[data.total_count - 1].id
     });
   }
   return Promise.resolve();
