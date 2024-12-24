@@ -154,7 +154,7 @@ const createCheckRunIfNotExists = async (
       })
       .catch((err) => ({ error: err }));
   } else {
-    return getOrgJob(org.name).customEventJob.trigger({
+    return getOrgJob(org.name).customEventJob.task.trigger({
       type: runType,
       organization: org.name,
       repo: org.repo,
@@ -282,7 +282,7 @@ const reRequestCheckRun = async (
     }));
 
   if (data.total_count > 0) {
-    return getOrgJob(org.name).customEventJob.trigger({
+    return getOrgJob(org.name).customEventJob.task.trigger({
       type: 'submission',
       organization: org.name,
       repo: repoName,

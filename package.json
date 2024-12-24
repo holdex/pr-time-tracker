@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "trigger-dev:proxy": "~/telebit http 3030",
+    "webhook:register": "tsx --env-file=.env scripts/register-github-webhook.ts",
     "format": "npx prettier . --write --ignore-path .gitignore --plugin prettier-plugin-svelte --plugin @prettier/plugin-pug",
     "lint": "npx eslint --ext js,ts,cjs,svelte --ignore-path .eslintignore > eslint-debug.log --fix .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -46,6 +47,7 @@
     "@sveltejs/adapter-auto": "^2.1.0",
     "@sveltejs/kit": "^1.22.4",
     "@types/cookie": "^0.5.1",
+    "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
     "@typescript-eslint/parser": "^6.2.1",
     "autoprefixer": "^10.4.14",
@@ -70,6 +72,7 @@
     "svelte-preprocess": "^5.0.4",
     "tailwindcss": "^3.3.3",
     "tslib": "^2.6.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.1.6",
     "vite": "^4.4.8"
   },

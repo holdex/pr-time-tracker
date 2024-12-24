@@ -23,3 +23,12 @@ export enum ItemType {
   PULL_REQUEST = 'pull_request',
   ISSUES = 'issue'
 }
+
+export const SUPPORTED_GITHUB_EVENTS = [
+  'issues',
+  'issue_comment',
+  'pull_request',
+  'pull_request_review',
+  'check_run'
+] as const;
+export type SupportedGitHubEvent = (typeof SUPPORTED_GITHUB_EVENTS)[number];

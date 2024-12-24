@@ -1,5 +1,5 @@
 // import all your job files here
-import { logger, task } from '@trigger.dev/sdk/v3';
+import { logger, type Task, task } from '@trigger.dev/sdk/v3';
 
 import type {
   CheckRunEvent,
@@ -13,6 +13,7 @@ import type { NotificationEvents } from '@trigger.dev/sdk';
 
 import { isDev } from '$lib/config';
 import config from '$lib/server/config';
+import type { SupportedGitHubEvent } from '$lib/constants';
 
 import { client, discordApi } from '../client';
 import { createJob as createPrJob } from './pull-requests';
@@ -27,44 +28,71 @@ import {
 } from './check-run';
 import { getInstallationId, githubApp } from '../utils';
 
+function defineJob<TIdentifier extends string, TInput = void, TOutput = unknown>(args: {
+  task: Task<TIdentifier, TInput, TOutput>;
+  triggerOnEvent: SupportedGitHubEvent | null;
+  triggerOnActions?: string[];
+}) {
+  return args;
+}
+
 function createOrgJob(org: { id: string; name: string }) {
-  const issueCreationJob = task({
-    id: `issue-creation-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: IssuesEvent) => createIssueCreationJob(payload)
+  const issueCreationJob = defineJob({
+    task: task({
+      id: `issue-creation-streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: IssuesEvent) => createIssueCreationJob(payload)
+    }),
+    triggerOnEvent: 'issues'
   });
 
-  const issueCommentJob = task({
-    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `issue-comment-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: IssueCommentEvent) => createIssueCommentJob(payload)
+  const issueCommentJob = defineJob({
+    task: task({
+      id: `issue-comment-streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: IssueCommentEvent) => createIssueCommentJob(payload)
+    }),
+    triggerOnEvent: 'issue_comment',
+    triggerOnActions: ['created', 'edited', 'deleted']
   });
 
-  const issueLabelJob = task({
-    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `issue-label-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: IssuesLabeledEvent) => createIssueJob(payload)
+  const issueLabelJob = defineJob({
+    task: task({
+      id: `issue-label-streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: IssuesLabeledEvent) => createIssueJob(payload)
+    }),
+    triggerOnEvent: 'issues',
+    triggerOnActions: ['labeled']
   });
 
-  const pullRequestJob = task({
-    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `pull-requests-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: PullRequestEvent) => createPrJob(payload)
+  const pullRequestJob = defineJob({
+    task: task({
+      id: `pull-requests-streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: PullRequestEvent) => createPrJob(payload)
+    }),
+    triggerOnEvent: 'pull_request'
   });
 
-  const pullRequestReviewJob = task({
-    // This is the unique identifier for your Job, it must be unique across all Jobs in your project
-    id: `pull-requests-review-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: PullRequestReviewEvent) => createPrReviewJob(payload)
+  const pullRequestReviewJob = defineJob({
+    task: task({
+      id: `pull-requests-review-streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: PullRequestReviewEvent) => createPrReviewJob(payload)
+    }),
+    triggerOnEvent: 'pull_request_review'
   });
 
-  const customEventJob = task({
-    id: `custom-event-streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: EventSchema) => createCheckEventJob(payload)
+  const customEventJob = defineJob({
+    task: task({
+      id: `custom-event-streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: EventSchema) => createCheckEventJob(payload)
+    }),
+    triggerOnEvent: null
   });
 
-  const checkRunJob = task({
-    id: `check_run_streaming_${org.id}${isDev ? '_dev' : ''}`,
-    run: async (payload: CheckRunEvent) => createCheckRunJob(payload)
+  const checkRunJob = defineJob({
+    task: task({
+      id: `check_run_streaming_${org.id}${isDev ? '_dev' : ''}`,
+      run: async (payload: CheckRunEvent) => createCheckRunJob(payload)
+    }),
+    triggerOnEvent: 'check_run'
   });
 
   return {
@@ -73,8 +101,8 @@ function createOrgJob(org: { id: string; name: string }) {
     issueLabelJob,
     pullRequestJob,
     pullRequestReviewJob,
-    customEventJob,
-    checkRunJob
+    checkRunJob,
+    customEventJob
   };
 }
 
