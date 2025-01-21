@@ -39,6 +39,7 @@ config.integrationsList.forEach((org) => {
       event: events.onIssueComment,
       org: org.name
     }),
+    enabled: false,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createIssueCommentJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx, org)
@@ -118,6 +119,7 @@ config.integrationsList.forEach((org) => {
       event: events.onCheckRun,
       org: org.name
     }),
+    enabled: false,
     concurrencyLimit: 1,
     integrations: { github },
     run: async (payload, io, ctx) =>
