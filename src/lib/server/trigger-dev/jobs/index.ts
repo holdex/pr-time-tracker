@@ -107,7 +107,6 @@ config.integrationsList.forEach((org) => {
         senderLogin: zod.string()
       })
     }),
-    enabled: false,
     concurrencyLimit: 1,
     integrations: { github },
     run: async (payload, io, ctx) =>
@@ -141,7 +140,6 @@ if (!isDev) {
         content: zod.string()
       })
     }),
-    enabled: false,
     run: async (payload, io) => {
       const { content } = payload;
 
@@ -156,7 +154,6 @@ if (!isDev) {
     id: 'github-create-bug-report-issue',
     name: 'Create Github bug report issue',
     version: '0.0.1',
-    enabled: false,
     trigger: eventTrigger({
       name: 'github-create-bug-report-issue',
       schema: zod.object({
