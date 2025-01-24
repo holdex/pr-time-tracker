@@ -69,6 +69,7 @@ config.integrationsList.forEach((org) => {
       event: events.onPullRequest,
       org: org.name
     }),
+    enabled: false,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createPrJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
@@ -83,6 +84,7 @@ config.integrationsList.forEach((org) => {
       event: events.onPullRequestReview,
       org: org.name
     }),
+    enabled: false,
     integrations: { github },
     run: async (payload, io, ctx) =>
       createPrReviewJob<IOWithIntegrations<{ github: Autoinvoicing }>>(payload, io, ctx)
