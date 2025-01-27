@@ -1,6 +1,8 @@
 import { json } from '@sveltejs/kit';
+import axios from 'axios';
 
 import { dev } from '$app/environment';
+import { TRIGGER_SERVER_SECRET, TRIGGER_SERVER_URL } from '$env/static/private';
 
 import type { RequestHandler } from '@sveltejs/kit';
 
@@ -61,14 +63,15 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
       );
 
       // get last commit
-      await checkRunFromEvent(
-        pr.org,
-        pr.repo,
-        contributor.id!,
-        contributor.login!,
-        pr.number as number
-      );
+      await triggerRequestCheckRun({
+        org: pr.org,
+        repoName: pr.repo,
+        senderId: contributor.id!,
+        senderLogin: contributor.login!,
+        prNumber: pr.number as number
+      });
     }
+
     return json({
       data: await submissions.create(body!)
     });
@@ -136,7 +139,13 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
 
       if (body!.approval === 'pending') {
         // get last commit
-        await checkRunFromEvent(pr.org, pr.repo, body!.owner_id, user!.login, pr.number as number);
+        await triggerRequestCheckRun({
+          org: pr.org,
+          repoName: pr.repo,
+          senderId: body!.owner_id,
+          senderLogin: user!.login,
+          prNumber: pr.number as number
+        });
       }
     }
 
@@ -157,3 +166,28 @@ const validateDate = (dateStr: string | null | undefined): Date => {
   const date = new Date(dateStr);
   return Number.isNaN(date.getTime()) ? new Date() : date;
 };
+
+async function triggerRequestCheckRun(data: {
+  org: string;
+  repoName: string;
+  senderId: number;
+  senderLogin: string;
+  prNumber: number;
+}) {
+  try {
+    const url = TRIGGER_SERVER_URL;
+    const secret = TRIGGER_SERVER_SECRET;
+
+    if (!url || !secret) throw new Error('Trigger server not configured');
+
+    const res = await axios.post(`${url}/api/submission-event`, data, {
+      headers: {
+        'x-trigger-server-secret': secret
+      }
+    });
+
+    if (res.status !== 200) throw new Error(res.data.message);
+  } catch (e) {
+    throw new Error((e as any)?.response?.data || 'Failed to trigger check run');
+  }
+}
