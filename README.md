@@ -19,6 +19,8 @@ If you want to contribute, please follow Holdex [Developer Guidelines](https://g
 
 ## Connect the installed organization with the Tracker flow
 
+test
+
 1. Add a record of your organization info in the Vercel env `APP_INTEGRATIONS_LIST`
 
 ```javascript
