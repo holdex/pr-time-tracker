@@ -187,6 +187,7 @@ async function triggerRequestCheckRun(data: {
 
     if (res.status !== 200) throw new Error(res.data.message);
   } catch (e) {
-    throw new Error((e as any)?.response?.data || 'Failed to trigger check run');
+    const resData = (e as any)?.response?.data;
+    throw new Error(resData ? JSON.stringify(resData) : 'Failed to trigger check run');
   }
 }
