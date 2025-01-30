@@ -12,7 +12,6 @@ import { items, submissions } from '$lib/server/mongo/collections';
 import { verifyAuth } from '$lib/server/github';
 import { cookieNames } from '$lib/server/cookie';
 import { insertEvent } from '$lib/server/gcloud';
-import { checkRunFromEvent } from '$lib/server/trigger-dev/utils';
 
 import { UserRole, type SubmissionSchema, type ContributorSchema, EventType } from '$lib/@types';
 
@@ -188,6 +187,7 @@ async function triggerRequestCheckRun(data: {
 
     if (res.status !== 200) throw new Error(res.data.message);
   } catch (e) {
-    throw new Error((e as any)?.response?.data || 'Failed to trigger check run');
+    const resData = (e as any)?.response?.data;
+    throw new Error(resData ? JSON.stringify(resData) : 'Failed to trigger check run');
   }
 }
