@@ -41,6 +41,8 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
 
     // get pr item
     const pr = await items.getOne({ id: body?.item_id });
+    const submission = await submissions.create(body!);
+
     if (pr) {
       // store these events in gcloud
       const event = {
@@ -61,7 +63,6 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         `${body?.item_id}_${contributor.login!}_${event.created_at}_${event.action}`
       );
 
-      // get last commit
       await triggerRequestCheckRun({
         org: pr.org,
         repoName: pr.repo,
@@ -72,7 +73,7 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
     }
 
     return json({
-      data: await submissions.create(body!)
+      data: submission
     });
   } catch (e) {
     return jsonError(e, '/api/submissions', 'POST');
