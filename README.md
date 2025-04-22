@@ -17,6 +17,8 @@ If you want to contribute, please follow the Holdex [Developer Guidelines](https
 3. Invite @pr-time-tracker to your organization and grant owner permissions
 4. To manage repository access, go to "Settings" -> "GitHub Apps"
 
+> **Important**: pr-time-tracker requires installation in a GitHub organization account to function properly. If installed in a personal account, the app will not process any data. Please ensure you install it in your organization instead.
+
 ## Connecting Your Organization
 
 To connect your organization with the Time Tracker, contact the Holdex Team to add your project's information to the [pr-time-tracker-webhooks](https://github.com/holdex/pr-time-tracker-webhooks) repository configuration:
