@@ -73,8 +73,8 @@ importers:
         version: 3.22.4
     devDependencies:
       '@sveltejs/adapter-auto':
-        specifier: ^2.1.0
-        version: 2.1.0(@sveltejs/kit@1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2)))
+        specifier: ^6.0.2
+        version: 6.0.2(@sveltejs/kit@1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2)))
       '@sveltejs/kit':
         specifier: ^1.22.4
         version: 1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2))
@@ -690,10 +690,10 @@ packages:
   '@steeze-ui/heroicons@2.2.3':
     resolution: {integrity: sha512-bv4YK375U9TDS50SmJ5VdFy2UmMhgKbJCCbo6IUU3qs2luEj2VX6sQoDy96j8AIKttxMd62ih1j0lZj7CTjIfA==}
 
-  '@sveltejs/adapter-auto@2.1.0':
-    resolution: {integrity: sha512-o2pZCfATFtA/Gw/BB0Xm7k4EYaekXxaPGER3xGSY3FvzFJGTlJlZjBseaXwYSM94lZ0HniOjTokN3cWaLX6fow==}
+  '@sveltejs/adapter-auto@6.0.2':
+    resolution: {integrity: sha512-SEyhlW5dMcsAZBONGCKUlK3+Ywr+8I2OupJh7OJR0URqsGzvkcWKRkBXqWifWVJnehjCGVLaqD/94aZ3xpj1jQ==}
     peerDependencies:
-      '@sveltejs/kit': ^1.0.0
+      '@sveltejs/kit': ^2.0.0
 
   '@sveltejs/kit@1.22.4':
     resolution: {integrity: sha512-Opkqw1QXk4Cc25b/heJP2D7mX+OUBFAq4MXKfET58svTTxdeiHFKzmnuRsSF3nmxESqrLjqPAgHpib+knNGzRw==}
@@ -1728,9 +1728,6 @@ packages:
   import-fresh@3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
     engines: {node: '>=6'}
-
-  import-meta-resolve@3.0.0:
-    resolution: {integrity: sha512-4IwhLhNNA8yy445rPjD/lWh++7hMDOml2eHtd58eG7h+qK3EryMuuRbsHGPikCoAgIkkDnckKfWSk2iDla/ejg==}
 
   imurmurhash@0.1.4:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
@@ -3662,10 +3659,9 @@ snapshots:
 
   '@steeze-ui/heroicons@2.2.3': {}
 
-  '@sveltejs/adapter-auto@2.1.0(@sveltejs/kit@1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2)))':
+  '@sveltejs/adapter-auto@6.0.2(@sveltejs/kit@1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2)))':
     dependencies:
       '@sveltejs/kit': 1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2))
-      import-meta-resolve: 3.0.0
 
   '@sveltejs/kit@1.22.4(svelte@4.1.2)(vite@4.4.8(@types/node@20.4.6)(sass@1.64.2))':
     dependencies:
@@ -4907,8 +4903,6 @@ snapshots:
     dependencies:
       parent-module: 1.0.1
       resolve-from: 4.0.0
-
-  import-meta-resolve@3.0.0: {}
 
   imurmurhash@0.1.4: {}
 
