@@ -35,6 +35,39 @@ Configuration parameters:
 - `name`: Your GitHub organization slug
 - `nodeId`: Holdex Oracle project ID (use `337c06eb` for HX project column if no specific project is defined)
 
+## User Guide
+
+Prerequisites:
+
+- PR Time Tracker is installed in the target repository.
+
+### Triggering a PR time submission notice
+
+Steps:
+
+1. Mark the PR as Ready for review (not Draft).
+2. Assign at least one reviewer.
+
+Result:
+
+- A PR time submission notice appears shortly after for the PR author.
+- Reviewers are added to the notice after they submit a review.
+
+### Triggering a bug submission notice
+
+Steps:
+
+1. Ensure the PR title starts with `fix:` (optionally with a scope like `fix(ui):`).
+2. Mark the PR as Ready for review (not Draft).
+
+Result:
+
+- A bug submission notice appears shortly after.
+
+Notes:
+
+- Draft PRs do not trigger notices.
+
 ## Available Scripts
 
 - `postinstall`: Sets up Husky for Git hooks
