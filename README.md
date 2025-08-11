@@ -17,7 +17,12 @@ If you want to contribute, please follow the Holdex [Developer Guidelines](https
 
 > **Important**: pr-time-tracker requires installation in a GitHub organization account to function properly. If installed in a personal account, the app will not process any data. Please ensure you install it in your organization instead.
 
-> Optional: If you would like to have a custom tag for your organization's issues in the Holdex Project tracker, you need to add your organization's slug to the [pr-time-tracker-webhooks](https://github.com/holdex/pr-time-tracker-webhooks) repository configuration.
+#### Optional: Holdex Board Integration
+
+To have your organization's issues tagged in the Holdex Project tracker:
+
+1. Add your organization slug to the [pr-time-tracker-webhooks](https://github.com/holdex/pr-time-tracker-webhooks) repository configuration
+2. If you don't have repository access, contact the Holdex Team for assistance
 
 ### Tracking PR Time
 
