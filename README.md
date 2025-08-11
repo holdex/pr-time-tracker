@@ -19,21 +19,7 @@ If you want to contribute, please follow the Holdex [Developer Guidelines](https
 
 > **Important**: pr-time-tracker requires installation in a GitHub organization account to function properly. If installed in a personal account, the app will not process any data. Please ensure you install it in your organization instead.
 
-## Connecting Your Organization
-
-To connect your organization with the Time Tracker, contact the Holdex Team to add your project's information to the [pr-time-tracker-webhooks](https://github.com/holdex/pr-time-tracker-webhooks) repository configuration:
-
-```javascript
-{
-  "name": "org_slug",
-  "nodeId": "oracle_project_id"
-}
-```
-
-Configuration parameters:
-
-- `name`: Your GitHub organization slug
-- `nodeId`: Holdex Oracle project ID (use `337c06eb` for HX project column if no specific project is defined)
+> Optional: If you would like to have a custom tag for your organization's issues in the Holdex Project tracker, you need to add your organization's slug to the [pr-time-tracker-webhooks](https://github.com/holdex/pr-time-tracker-webhooks) repository configuration.
 
 ## User Guide
 
