@@ -5,7 +5,7 @@ import rollbar from '$lib/rollbar';
 
 export const handleError: HandleClientError = async ({ error, event }) => {
   if (!isDev) {
-    rollbar.error(error as string, event);
+    rollbar.error(error as string, { event });
   }
 
   return {

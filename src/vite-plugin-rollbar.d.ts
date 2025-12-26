@@ -5,9 +5,7 @@ declare module 'vite-plugin-rollbar' {
     accessToken: string;
     version?: string;
     baseUrl?: string;
-    sourceMaps?: boolean;
     silent?: boolean;
-    enabled?: boolean;
     ignoreUploadErrors?: boolean;
   }
 

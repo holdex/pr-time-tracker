@@ -6,7 +6,7 @@
     "postinstall": "npx husky install",
     "pull-env": "node pull-env.js",
     "dev": "vite dev --port 3000",
-    "build": "export VITE_LATEST_SHA=`git rev-parse HEAD` && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "format": "npx prettier . --write --ignore-path .gitignore --plugin prettier-plugin-svelte --plugin @prettier/plugin-pug",
     "lint": "npx eslint --ext js,ts,cjs,svelte --ignore-path .eslintignore > eslint-debug.log --fix .",

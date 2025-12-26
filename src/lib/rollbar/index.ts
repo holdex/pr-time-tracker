@@ -2,7 +2,7 @@ import Rollbar from 'rollbar';
 
 import config, { isDev } from '$lib/config';
 
-const codeVersion = import.meta.env.VITE_LATEST_SHA || '1.0.0';
+const codeVersion = import.meta.env.VERCEL_GIT_COMMIT_SHA || '1.0.0';
 
 const rollbar = new Rollbar({
   accessToken: config.rollbarClientToken,
