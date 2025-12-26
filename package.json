@@ -6,7 +6,7 @@
     "postinstall": "npx husky install",
     "pull-env": "node pull-env.js",
     "dev": "vite dev --port 3000",
-    "build": "vite build",
+    "build": "export VITE_LATEST_SHA=`git rev-parse HEAD` && vite build",
     "preview": "vite preview",
     "format": "npx prettier . --write --ignore-path .gitignore --plugin prettier-plugin-svelte --plugin @prettier/plugin-pug",
     "lint": "npx eslint --ext js,ts,cjs,svelte --ignore-path .eslintignore > eslint-debug.log --fix .",
@@ -23,7 +23,6 @@
     "@octokit/oauth-methods": "^4.1.0",
     "@octokit/webhooks-types": "^7.5.0",
     "@prettier/plugin-pug": "^3.0.0",
-    "@sentry/sveltekit": "^7.109.0",
     "@steeze-ui/heroicons": "^2.2.3",
     "@trigger.dev/sdk": "^2.3.18",
     "@trigger.dev/sveltekit": "^2.3.18",
@@ -69,7 +68,8 @@
     "tailwindcss": "^3.3.3",
     "tslib": "^2.6.1",
     "typescript": "^5.1.6",
-    "vite": "^4.4.8"
+    "vite": "^4.4.8",
+    "vite-plugin-rollbar": "^0.0.14"
   },
   "type": "module",
   "lint-staged": {
