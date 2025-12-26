@@ -1,24 +1,14 @@
-import { handleErrorWithSentry, replayIntegration } from '@sentry/sveltekit';
-import * as Sentry from '@sentry/sveltekit';
+import type { HandleClientError } from '@sveltejs/kit';
 
 import { isDev } from '$lib/config';
+import rollbar from '$lib/rollbar';
 
-Sentry.init({
-  enabled: !isDev,
-  dsn: 'https://52551ee6b0eec4cb55371599d3e77a1f@o4507062375481344.ingest.us.sentry.io/4507062377512960',
-  tracesSampleRate: 1.0,
+export const handleError: HandleClientError = async ({ error, event }) => {
+  if (!isDev) {
+    rollbar.error(error as string, { event });
+  }
 
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
-
-  // If the entire session is not sampled, use the below sample rate to sample
-  // sessions when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
-
-  // If you don't want to use Session Replay, just remove the line below:
-  integrations: [replayIntegration()]
-});
-
-// If you have a custom error handler, pass it to `handleErrorWithSentry`
-export const handleError = handleErrorWithSentry();
+  return {
+    message: 'An internal client error occurred'
+  };
+};

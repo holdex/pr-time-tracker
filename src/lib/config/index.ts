@@ -1,4 +1,8 @@
-import { PUB_GITHUB_CLIENT_ID, PUB_SUBMISSION_DURATION } from '$env/static/public';
+import {
+  PUB_GITHUB_CLIENT_ID,
+  PUB_SUBMISSION_DURATION,
+  PUB_ROLLBAR_POST_CLIENT_ITEM_ACCESS_TOKEN
+} from '$env/static/public';
 import { dev } from '$app/environment';
 
 type Config = {
@@ -8,6 +12,7 @@ type Config = {
     clientId: string;
     authorizeRedirectUrl: string;
   };
+  rollbarClientToken: string;
   submissionDuration: string;
 };
 
@@ -20,6 +25,7 @@ const config: Config = {
       ? `https://alert-seemingly-moccasin.ngrok-free.app/api/github/auth/authorize`
       : ''
   },
+  rollbarClientToken: PUB_ROLLBAR_POST_CLIENT_ITEM_ACCESS_TOKEN,
   submissionDuration: PUB_SUBMISSION_DURATION
 };
 

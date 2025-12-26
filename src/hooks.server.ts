@@ -1,20 +1,21 @@
-import { sequence } from '@sveltejs/kit/hooks';
-import { handleErrorWithSentry, sentryHandle } from '@sentry/sveltekit';
-import * as Sentry from '@sentry/sveltekit';
+import type { HandleServerError } from '@sveltejs/kit';
 
 import { isDev } from '$lib/config';
+import rollbar from '$lib/server/rollbar';
 
-Sentry.init({
-  enabled: !isDev,
-  dsn: 'https://52551ee6b0eec4cb55371599d3e77a1f@o4507062375481344.ingest.us.sentry.io/4507062377512960',
-  tracesSampleRate: 1.0
+export const handleError: HandleServerError = async ({ error, event }) => {
+  const headers: Record<string, string> = {};
+  event.request.headers.forEach((v: string, k: string) => (headers[k] = v));
 
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: import.meta.env.DEV,
-});
+  if (!isDev) {
+    rollbar.error(error as string, {
+      headers: headers,
+      url: event.url,
+      method: event.request.method
+    });
+  }
 
-// If you have custom handlers, make sure to place them after `sentryHandle()` in the `sequence` function.
-export const handle = sequence(sentryHandle());
-
-// If you have a custom error handler, pass it to `handleErrorWithSentry`
-export const handleError = handleErrorWithSentry();
+  return {
+    message: 'An internal server error occurred'
+  };
+};

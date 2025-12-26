@@ -15,7 +15,8 @@ import {
   GCLOUD_DATASET,
   GCLOUD_TABLE,
   GCLOUD_PRIVATE_KEY,
-  APP_INTEGRATIONS_LIST
+  APP_INTEGRATIONS_LIST,
+  ROLLBAR_POST_SERVER_ITEM_ACCESS_TOKEN
 } from '$env/static/private';
 
 type Config = {
@@ -44,6 +45,7 @@ type Config = {
     apiKey: string;
     apiUrl: string;
   };
+  rollbarServerToken: string;
   integrationsList: Array<{ id: string; name: string; nodeId: string }>;
 };
 
@@ -73,6 +75,7 @@ const config: Config = {
     apiKey: TRIGGER_API_KEY,
     apiUrl: TRIGGER_API_URL
   },
+  rollbarServerToken: ROLLBAR_POST_SERVER_ITEM_ACCESS_TOKEN,
   integrationsList: JSON.parse(APP_INTEGRATIONS_LIST)
 };
 
