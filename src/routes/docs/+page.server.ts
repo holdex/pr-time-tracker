@@ -10,7 +10,6 @@ import { UserRole } from '$lib/@types';
 export const load: PageServerLoad = async ({ parent }) => {
   const data = await parent();
 
-  console.log(data.user?.role, data.user?.login);
   if (data.user?.role === UserRole.MANAGER || data.user?.login === 'teodorus-nathaniel') {
     throw redirect(REDIRECT_TEMP, routes.managerCommandsDocs.path);
   }
