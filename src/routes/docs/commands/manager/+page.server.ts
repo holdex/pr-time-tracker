@@ -10,7 +10,7 @@ import { UserRole } from '$lib/@types';
 export const load: PageServerLoad = async ({ parent }) => {
   const data = await parent();
 
-  if (data.user?.role === UserRole.MANAGER || data.user?.email === 'tnathanielk@gmail.com') {
+  if (data.user?.role === UserRole.MANAGER || data.user?.login === 'teodorus-nathaniel') {
     return data;
   }
 
