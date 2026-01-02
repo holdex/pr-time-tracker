@@ -16,7 +16,7 @@
 </script>
 
 <div
-  class="{$page.url.pathname.includes('login') ? 'h-full' : ''} ${$page.url.pathname.startsWith(
+  class="{$page.url.pathname.includes('login') ? 'h-full' : ''} {$page.url.pathname.startsWith(
     '/docs'
   )
     ? 'max-w-none'
