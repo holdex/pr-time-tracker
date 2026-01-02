@@ -7,6 +7,8 @@
   import { snackbar } from '$lib/components/Snackbar/index';
   import { appIsReady } from '$lib/utils';
 
+  import css from './layout.scss?inline';
+
   onMount(() => {
     $appIsReady = true;
     $snackbar.open = false;
@@ -14,13 +16,16 @@
 </script>
 
 <div
-  class="{$page.url.pathname.includes('login')
-    ? 'h-full'
-    : ''} p-4 py-8 max-w-container mx-auto md:py-12">
+  class="{$page.url.pathname.includes('login') ? 'h-full' : ''} ${$page.url.pathname.startsWith(
+    '/docs'
+  )
+    ? 'max-w-none'
+    : 'max-w-container'} p-4 py-8 mx-auto md:py-12">
   <slot />
 
   <Snackbar />
 </div>
 
-<style lang="scss" global src="./layout.scss">
-</style>
+<svelte:element this="style">
+  {css}
+</svelte:element>
