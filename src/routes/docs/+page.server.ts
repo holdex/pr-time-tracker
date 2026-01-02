@@ -8,11 +8,9 @@ import { REDIRECT_TEMP } from '$lib/constants';
 import { UserRole } from '$lib/@types';
 
 export const load: PageServerLoad = async ({ parent }) => {
-  const data = await parent();
-
-  if (data.user?.role === UserRole.MANAGER || data.user?.login === 'teodorus-nathaniel') {
-    throw redirect(REDIRECT_TEMP, routes.managerCommandsDocs.path);
-  }
-
-  throw redirect(REDIRECT_TEMP, routes.prs.path);
+  // const data = await parent();
+  // if (data.user?.role === UserRole.MANAGER) {
+  //   throw redirect(REDIRECT_TEMP, routes.managerCommandsDocs.path);
+  // }
+  // throw redirect(REDIRECT_TEMP, routes.prs.path);
 };
