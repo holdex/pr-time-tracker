@@ -2,7 +2,12 @@
 title: Manager Commands
 
 ---
-# GitHub Commands Documentation
+
+<script>
+  import PageTitle from '$lib/components/PageTitle/index.svelte';
+</script>
+
+<PageTitle title={title} />
 
 This document describes available commands for the manager role that can be executed via GitHub issue comments using the `@holdex` bot.
 

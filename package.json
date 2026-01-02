@@ -42,6 +42,7 @@
     "@prettier/plugin-pug": "^3.0.0",
     "@sveltejs/adapter-auto": "^3.2.1",
     "@sveltejs/kit": "^1.22.4",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/cookie": "^0.5.1",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
     "@typescript-eslint/parser": "^6.2.1",
