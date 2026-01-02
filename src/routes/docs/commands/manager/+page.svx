@@ -15,7 +15,7 @@ This document describes available commands for the manager role that can be exec
 
 All commands follow the pattern:
 
-```
+```bash
 @holdex <object> <action> [arguments...]
 ```
 
@@ -32,7 +32,7 @@ Onboards a new employee to the GitHub HR system. Creates a repository, README, i
 
 **Command:**
 
-```
+```bash
 @holdex member onboard --firstname=<firstname> --lastname=<lastname> --githubUsername=<username>
 ```
 
@@ -44,7 +44,7 @@ Onboards a new employee to the GitHub HR system. Creates a repository, README, i
 
 **Example:**
 
-```
+```bash
 @holdex member onboard --firstname=John --lastname=Doe --githubUsername=johndoe
 ```
 
@@ -56,7 +56,7 @@ Adds a user to a GitHub organization with a specified role.
 
 **Command:**
 
-```
+```bash
 @holdex user add --username=<username> --role=<role> [--org=<org>]
 ```
 
@@ -68,7 +68,7 @@ Adds a user to a GitHub organization with a specified role.
 
 **Example:**
 
-```
+```bash
 @holdex user add --username=johndoe --role=member
 @holdex user add --username=johndoe --role=admin --org=holdex
 ```
@@ -81,7 +81,7 @@ Deletes a GitHub repository.
 
 **Command:**
 
-```
+```bash
 @holdex repo delete [--repoNameOrUrl=<repo>]
 @holdex repo delete <repo>  (positional argument)
 ```
@@ -93,7 +93,7 @@ Deletes a GitHub repository.
 
 **Example:**
 
-```
+```bash
 @holdex repo delete --repoNameOrUrl=my-repo
 @holdex repo delete my-repo
 @holdex repo delete https://github.com/org/my-repo
@@ -107,7 +107,7 @@ Applies repository settings including visibility, branch protection, and merge s
 
 **Command:**
 
-```
+```bash
 @holdex repo settings --repoInput=<repo> --visibility=<visibility> [--deleteBranchOnMerge=<true|false>] [--allowUpdateBranch=<true|false>]
 @holdex repo settings <repo> --visibility=<visibility>  (positional argument for repoInput)
 ```
@@ -123,7 +123,7 @@ Applies repository settings including visibility, branch protection, and merge s
 
 **Example:**
 
-```
+```bash
 @holdex repo settings --repoInput=owner/my-repo --visibility=private
 @holdex repo settings owner/my-repo --visibility=public --deleteBranchOnMerge=false
 ```
@@ -136,7 +136,7 @@ Synchronizes issue types and labels for a repository according to the ledger con
 
 **Command:**
 
-```
+```bash
 @holdex labels sync [--owner=<owner>] [--repo=<repo>]
 @holdex labels sync <repo>  (positional argument for repo)
 ```
@@ -148,7 +148,7 @@ Synchronizes issue types and labels for a repository according to the ledger con
 
 **Example:**
 
-```
+```bash
 @holdex labels sync --repo=my-repo
 @holdex labels sync my-repo
 @holdex labels sync --owner=holdex --repo=my-repo
@@ -162,7 +162,7 @@ Attaches a Google Doc agreement to a GitHub issue. Duplicates a template documen
 
 **Command:**
 
-```
+```bash
 @holdex agreement attach --firstName=<firstName> --lastName=<lastName> [--issueUrl=<url>] [--assigneeUsername=<username>] [replacement flags...]
 @holdex agreement attach <issueUrl> --firstName=<firstName> --lastName=<lastName>  (positional argument for issueUrl)
 ```
@@ -191,7 +191,7 @@ These flags are used to replace placeholders in the Google Doc template:
 
 **Example:**
 
-```
+```bash
 @holdex agreement attach --firstName=John --lastName=Doe --roleTitle="Software Developer" --gmailEmail=john@example.com --commencementDate=2024-01-01
 
 @holdex agreement attach https://github.com/org/repo/issues/123 --firstName=Jane --lastName=Smith --assigneeUsername=janesmith --ratePerHour=50
