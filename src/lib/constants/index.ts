@@ -11,6 +11,8 @@ export const REDIRECT_TEMP = 307;
 export const SUCCESS_OK = 200;
 export const BAD_REQUEST = 400;
 
+export const INTERNAL_SERVER_ERROR = 500;
+
 export enum GitHubEventName {
   INSTALATION = 'installation',
   PULL_REQUEST = 'pull_request',

@@ -70,3 +70,24 @@ body {
     border: 1px solid red;
   }
 }
+
+/* Shiki code block styles */
+:global(.prose) {
+  :global(pre.shiki) {
+    @apply bg-l3 rounded-lg p-4 overflow-x-auto mb-4 border border-l4;
+    position: relative;
+    font-size: 0.875rem;
+    line-height: 1.5;
+
+    code {
+      @apply bg-transparent p-0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: inherit;
+      color: inherit;
+    }
+  }
+
+  :global(code:not(pre code)) {
+    @apply bg-l3 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+}

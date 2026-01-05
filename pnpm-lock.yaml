@@ -53,6 +53,9 @@ importers:
       fs-extra:
         specifier: ^11.1.1
         version: 11.1.1
+      marked:
+        specifier: ^17.0.1
+        version: 17.0.1
       mongodb:
         specifier: ^5.7.0
         version: 5.7.0
@@ -1980,6 +1983,11 @@ packages:
   magic-string@0.30.2:
     resolution: {integrity: sha512-lNZdu7pewtq/ZvWUp9Wpf/x7WzMTsR26TWV03BRZrXFsv+BI6dy8RAiKgm1uM/kyR0rCfUcqvOlXKG66KhIGug==}
     engines: {node: '>=12'}
+
+  marked@17.0.1:
+    resolution: {integrity: sha512-boeBdiS0ghpWcSwoNm/jJBwdpFaMnZWRzjA6SkUMYb40SVaN1x7mmfGKp0jvexGcx+7y2La5zRZsYFZI6Qpypg==}
+    engines: {node: '>= 20'}
+    hasBin: true
 
   mdast-util-to-hast@13.2.1:
     resolution: {integrity: sha512-cctsq2wp5vTsLIcaymblUriiTcZd0CwWtCbLvrOzYCDZoWyMNV8sZ7krj09FSnsiJi3WVsHLM4k6Dq/yaPyCXA==}
@@ -5158,6 +5166,8 @@ snapshots:
   magic-string@0.30.2:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+
+  marked@17.0.1: {}
 
   mdast-util-to-hast@13.2.1:
     dependencies:

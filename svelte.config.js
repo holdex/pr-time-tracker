@@ -79,7 +79,7 @@ const config = {
     env: { publicPrefix: 'PUB_' }
   },
 
-  extensions: ['.svelte', '.svx']
+  extensions: ['.svelte']
 };
 
 export default config;
