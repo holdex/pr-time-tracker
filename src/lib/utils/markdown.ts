@@ -33,7 +33,6 @@ const getHighlighter = async () => {
 export const renderMarkdown = async (markdown: string): Promise<string> => {
   const shiki = await getHighlighter();
 
-  // Configure marked options
   marked.setOptions({
     breaks: true,
     gfm: true
