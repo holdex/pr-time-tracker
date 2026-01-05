@@ -22,9 +22,7 @@ const config = {
     adapter: adapter(),
 
     env: { publicPrefix: 'PUB_' }
-  },
-
-  extensions: ['.svelte']
+  }
 };
 
 export default config;
