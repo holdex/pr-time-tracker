@@ -1,37 +1,5 @@
-import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-auto';
-import { vitePreprocess } from '@sveltejs/kit/vite';
 import sveltePreprocess from 'svelte-preprocess';
-import { createHighlighter } from 'shiki';
-
-let highlighter;
-
-const getHighlighter = async () => {
-  if (!highlighter) {
-    highlighter = await createHighlighter({
-      themes: ['github-dark'],
-      langs: [
-        'javascript',
-        'typescript',
-        'json',
-        'bash',
-        'shell',
-        'sh',
-        'text',
-        'markdown',
-        'html',
-        'css',
-        'scss',
-        'svelte',
-        'yaml',
-        'yml',
-        'toml',
-        'xml'
-      ]
-    });
-  }
-  return highlighter;
-};
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -44,29 +12,6 @@ const config = {
       sourceMap: true,
       scss: true,
       sass: true
-    }),
-
-    mdsvex({
-      highlight: {
-        highlighter: async (code, lang = 'text') => {
-          const shiki = await getHighlighter();
-
-          try {
-            const html = shiki.codeToHtml(code, {
-              lang: lang === 'sh' ? 'bash' : lang,
-              theme: 'github-dark'
-            });
-            // Escape backticks and wrap in Svelte's html directive
-            return `{@html \`${html.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`}`;
-          } catch {
-            const html = shiki.codeToHtml(code, {
-              lang: 'text',
-              theme: 'github-dark'
-            });
-            return `{@html \`${html.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`}`;
-          }
-        }
-      }
     })
   ],
 
