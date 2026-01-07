@@ -2,11 +2,11 @@ import { marked, type Tokens } from 'marked';
 import { createHighlighter } from 'shiki';
 import DOMPurify from 'isomorphic-dompurify';
 
-let highlighter: Awaited<ReturnType<typeof createHighlighter>> | null = null;
+let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
 
-const getHighlighter = async () => {
-  if (!highlighter) {
-    highlighter = await createHighlighter({
+function getHighlighter() {
+  if (!highlighterPromise) {
+    highlighterPromise = createHighlighter({
       themes: ['github-dark'],
       langs: [
         'javascript',
@@ -28,8 +28,8 @@ const getHighlighter = async () => {
       ]
     });
   }
-  return highlighter;
-};
+  return highlighterPromise;
+}
 
 export const renderMarkdown = async (markdown: string): Promise<string> => {
   const shiki = await getHighlighter();
