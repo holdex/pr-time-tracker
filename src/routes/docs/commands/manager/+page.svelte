@@ -23,10 +23,9 @@
       const encoded = button.dataset.code;
       if (!encoded) return;
 
-      const text = decodeURIComponent(encoded);
-
       const DELAY = 1500;
       try {
+        const text = decodeURIComponent(encoded);
         await navigator.clipboard.writeText(text);
         const originalLabel = button.textContent ?? 'Copy';
         button.textContent = 'Copied!';
