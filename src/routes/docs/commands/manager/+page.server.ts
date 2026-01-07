@@ -15,11 +15,21 @@ const DOCS_API_URL = `${API_BASE_URL}/api/docs?name=MANAGER_COMMANDS`;
 /**
  * In-memory cache for documentation markdown and rendered HTML.
  * Cache persists only within a single warm serverless container instance.
+ * TTL: 1 hour
  */
-let docsPromise: Promise<{ markdown: string; html: string }> | null = null;
+const CACHE_TTL_MS = 3600_000; // 1h
+
+let docsPromise: Promise<{ markdown: string; html: string; timestamp: number }> | null = null;
+
 const getDocs = async () => {
+  const now = Date.now();
+
   if (docsPromise) {
-    return docsPromise;
+    const cached = await docsPromise;
+    if (now - cached.timestamp < CACHE_TTL_MS) {
+      return { markdown: cached.markdown, html: cached.html };
+    }
+    docsPromise = null;
   }
 
   docsPromise = (async () => {
@@ -36,11 +46,11 @@ const getDocs = async () => {
     const markdown = await response.text();
     const html = await renderMarkdown(markdown);
 
-    const result = { markdown, html };
-    return result;
+    return { markdown, html, timestamp: now };
   })();
 
-  return docsPromise;
+  const result = await docsPromise;
+  return { markdown: result.markdown, html: result.html };
 };
 
 export const load: PageServerLoad = async ({ parent }) => {
