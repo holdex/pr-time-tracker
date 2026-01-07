@@ -42,17 +42,37 @@ export const renderMarkdown = async (markdown: string): Promise<string> => {
   marked.use({
     renderer: {
       code(token: Tokens.Code) {
+        const rawCode = token.text;
+        const language = token.lang === 'sh' ? 'bash' : token.lang || 'text';
+
+        let highlightedHtml: string;
+
         try {
-          return shiki.codeToHtml(token.text, {
-            lang: token.lang === 'sh' ? 'bash' : token.lang || 'text',
+          highlightedHtml = shiki.codeToHtml(rawCode, {
+            lang: language,
             theme: 'github-dark'
           });
         } catch {
-          return shiki.codeToHtml(token.text, {
+          highlightedHtml = shiki.codeToHtml(rawCode, {
             lang: 'text',
             theme: 'github-dark'
           });
         }
+
+        const encoded = encodeURIComponent(rawCode);
+
+        return `
+<div class="code-block">
+  <button
+    class="code-block__copy"
+    type="button"
+    data-code="${encoded}"
+  >
+    Copy
+  </button>
+  ${highlightedHtml}
+</div>
+`.trim();
       }
     }
   });

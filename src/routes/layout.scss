@@ -72,8 +72,44 @@ body {
 }
 
 /* Shiki code block styles */
-:global(.prose) {
-  :global(pre.shiki) {
+.markdown-content {
+  .code-block {
+    position: relative;
+    margin-bottom: 1rem;
+
+    &:hover .code-block__copy,
+    &:focus-within .code-block__copy {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .code-block__copy {
+    @apply bg-l2 text-t3 border border-l4 rounded-md px-2 py-1 text-xs font-medium;
+    @apply hover:bg-l3 transition-colors;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition:
+      opacity 120ms ease-out,
+      transform 120ms ease-out,
+      background-color 120ms ease-out,
+      border-color 120ms ease-out;
+
+    &::before {
+      content: '📋';
+      font-size: 0.75rem;
+    }
+  }
+
+  pre.shiki {
     @apply bg-l3 rounded-lg p-4 overflow-x-auto mb-4 border border-l4;
     position: relative;
     font-size: 0.875rem;
@@ -87,7 +123,7 @@ body {
     }
   }
 
-  :global(code:not(pre code)) {
+  code:not(pre code) {
     @apply bg-l3 px-1.5 py-0.5 rounded text-sm font-mono;
   }
 }
