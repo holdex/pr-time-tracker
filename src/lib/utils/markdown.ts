@@ -87,6 +87,11 @@ export const renderMarkdown = async (markdown: string): Promise<string> => {
       pre: ['class'],
       code: ['class'],
       span: ['style']
+    },
+    allowedStyles: {
+      span: {
+        color: [/^#(0x)?[0-9a-f]+$/i, /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/]
+      }
     }
   });
 };
