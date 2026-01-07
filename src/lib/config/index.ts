@@ -38,7 +38,10 @@ interface Route {
   title: string;
 }
 
-export const routes: Record<'contributors' | 'index' | 'login' | 'prs' | 'prsArchive', Route> = {
+export const routes: Record<
+  'contributors' | 'index' | 'login' | 'prs' | 'prsArchive' | 'managerCommandsDocs',
+  Route
+> = {
   contributors: {
     path: '/contributors',
     title: 'Contributors'
@@ -52,6 +55,10 @@ export const routes: Record<'contributors' | 'index' | 'login' | 'prs' | 'prsArc
   prsArchive: {
     path: '/prs/archive',
     title: 'Your Closed Pull Requests Archive'
+  },
+  managerCommandsDocs: {
+    path: '/docs/commands/manager',
+    title: 'Manager Commands Documentation'
   }
 };
 
