@@ -13,11 +13,11 @@ import { UserRole } from '$lib/@types';
 const DOCS_API_URL = `${API_BASE_URL}/api/docs?name=MANAGER_COMMANDS`;
 
 export const load: PageServerLoad = async ({ parent, fetch }) => {
-  const data = await parent();
+  // const data = await parent();
 
-  if (data.user?.role !== UserRole.MANAGER) {
-    throw redirect(REDIRECT_TEMP, routes.prs.path);
-  }
+  // if (data.user?.role !== UserRole.MANAGER) {
+  //   throw redirect(REDIRECT_TEMP, routes.prs.path);
+  // }
 
   try {
     const response = await fetch(DOCS_API_URL, {
@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
     const html = await renderMarkdown(markdown);
 
     return {
-      ...data,
+      // ...data,
       content: html,
       title
     };
