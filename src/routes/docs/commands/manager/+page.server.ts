@@ -12,49 +12,50 @@ import { UserRole } from '$lib/@types';
 
 const DOCS_API_URL = `${API_BASE_URL}/api/docs?name=MANAGER_COMMANDS`;
 
+/**
+ * In-memory cache for documentation markdown and rendered HTML.
+ * Cache persists only within a single warm serverless container instance.
+ */
 let docsPromise: Promise<{ markdown: string; html: string }> | null = null;
 const getDocs = async () => {
   if (docsPromise) {
-    console.log('returning cached docs');
     return docsPromise;
   }
 
-  if (!docsPromise) {
-    docsPromise = (async () => {
-      const response = await fetch(DOCS_API_URL, {
-        headers: {
-          Accept: 'text/plain'
-        }
-      });
-
-      if (!response.ok) {
-        throw error(response.status, `Failed to fetch documentation: ${response.statusText}`);
+  docsPromise = (async () => {
+    const response = await fetch(DOCS_API_URL, {
+      headers: {
+        Accept: 'text/plain'
       }
+    });
 
-      const markdown = await response.text();
-      const html = await renderMarkdown(markdown);
+    if (!response.ok) {
+      throw error(response.status, `Failed to fetch documentation: ${response.statusText}`);
+    }
 
-      const result = { markdown, html };
-      return result;
-    })();
-  }
+    const markdown = await response.text();
+    const html = await renderMarkdown(markdown);
+
+    const result = { markdown, html };
+    return result;
+  })();
 
   return docsPromise;
 };
 
-export const load: PageServerLoad = async ({ parent, fetch }) => {
-  // const data = await parent();
+export const load: PageServerLoad = async ({ parent }) => {
+  const data = await parent();
 
-  // if (data.user?.role !== UserRole.MANAGER) {
-  //   throw redirect(REDIRECT_TEMP, routes.prs.path);
-  // }
+  if (data.user?.role !== UserRole.MANAGER) {
+    throw redirect(REDIRECT_TEMP, routes.prs.path);
+  }
 
   try {
     const { html } = await getDocs();
     const title = 'Manager Commands';
 
     return {
-      // ...data,
+      ...data,
       content: html,
       title
     };
