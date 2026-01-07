@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, redirect, type HttpError } from '@sveltejs/kit';
 
 import { API_BASE_URL } from '$env/static/private';
 
@@ -41,6 +41,11 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
       title
     };
   } catch (err) {
+    const httpError = err as HttpError;
+    if (httpError.status) {
+      throw httpError;
+    }
+
     throw error(
       INTERNAL_SERVER_ERROR,
       `Failed to load documentation: ${err instanceof Error ? err.message : 'Unknown error'}`
