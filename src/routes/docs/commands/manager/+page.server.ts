@@ -42,6 +42,7 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
     };
   } catch (err) {
     const httpError = err as HttpError;
+    console.error(err);
     if (httpError.status) {
       throw httpError;
     }
