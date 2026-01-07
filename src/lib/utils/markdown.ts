@@ -1,5 +1,6 @@
 import { marked, type Tokens } from 'marked';
 import { createHighlighter } from 'shiki';
+import sanitizeHtml from 'sanitize-html';
 
 let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
 
@@ -77,6 +78,15 @@ export const renderMarkdown = async (markdown: string): Promise<string> => {
   });
 
   const dirtyHtml = marked.parse(markdown) as string;
-  const DOMPurify = await import('isomorphic-dompurify');
-  return DOMPurify.sanitize(dirtyHtml, { USE_PROFILES: { html: true } });
+  return sanitizeHtml(dirtyHtml, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['button']),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      button: ['class', 'data-code', 'type'],
+      div: ['class'],
+      pre: ['class'],
+      code: ['class'],
+      span: ['style']
+    }
+  });
 };
