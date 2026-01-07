@@ -25,13 +25,17 @@
 
       const text = decodeURIComponent(encoded);
 
-      await navigator.clipboard.writeText(text);
-      const originalLabel = button.textContent ?? 'Copy';
-      button.textContent = 'Copied!';
-      const DELAY = 1500;
-      setTimeout(() => {
-        button.textContent = originalLabel;
-      }, DELAY);
+      try {
+        await navigator.clipboard.writeText(text);
+        const originalLabel = button.textContent ?? 'Copy';
+        button.textContent = 'Copied!';
+        const DELAY = 1500;
+        setTimeout(() => {
+          button.textContent = originalLabel;
+        }, DELAY);
+      } catch (error) {
+        console.error('Failed to copy code:', error);
+      }
     };
 
     element.addEventListener('click', handleClick);
