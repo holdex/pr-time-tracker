@@ -20,7 +20,6 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
   }
 
   try {
-    // Fetch markdown content from external API
     const response = await fetch(DOCS_API_URL, {
       headers: {
         Accept: 'text/plain'
