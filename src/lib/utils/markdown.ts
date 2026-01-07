@@ -1,5 +1,6 @@
 import { marked, type Tokens } from 'marked';
 import { createHighlighter } from 'shiki';
+import DOMPurify from 'isomorphic-dompurify';
 
 let highlighter: Awaited<ReturnType<typeof createHighlighter>> | null = null;
 
@@ -38,26 +39,24 @@ export const renderMarkdown = async (markdown: string): Promise<string> => {
     gfm: true
   });
 
-  // Use custom renderer for code blocks
   marked.use({
     renderer: {
       code(token: Tokens.Code) {
         try {
-          const html = shiki.codeToHtml(token.text, {
+          return shiki.codeToHtml(token.text, {
             lang: token.lang === 'sh' ? 'bash' : token.lang || 'text',
             theme: 'github-dark'
           });
-          return html;
         } catch {
-          const html = shiki.codeToHtml(token.text, {
+          return shiki.codeToHtml(token.text, {
             lang: 'text',
             theme: 'github-dark'
           });
-          return html;
         }
       }
     }
   });
 
-  return marked.parse(markdown) as string;
+  const dirtyHtml = marked.parse(markdown) as string;
+  return DOMPurify.sanitize(dirtyHtml, { USE_PROFILES: { html: true } });
 };
