@@ -27,7 +27,7 @@ const getDocs = async () => {
   if (docsPromise) {
     const cached = await docsPromise;
     if (now - cached.timestamp < CACHE_TTL_MS) {
-      return { markdown: cached.markdown, html: cached.html };
+      return cached;
     }
     docsPromise = null;
   }
@@ -46,11 +46,10 @@ const getDocs = async () => {
     const markdown = await response.text();
     const html = await renderMarkdown(markdown);
 
-    return { markdown, html, timestamp: now };
+    return { markdown, html, timestamp: Date.now() };
   })();
 
-  const result = await docsPromise;
-  return { markdown: result.markdown, html: result.html };
+  return docsPromise;
 };
 
 export const load: PageServerLoad = async ({ parent }) => {
