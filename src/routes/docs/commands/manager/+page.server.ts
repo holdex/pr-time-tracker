@@ -12,6 +12,36 @@ import { UserRole } from '$lib/@types';
 
 const DOCS_API_URL = `${API_BASE_URL}/api/docs?name=MANAGER_COMMANDS`;
 
+let docsPromise: Promise<{ markdown: string; html: string }> | null = null;
+const getDocs = async () => {
+  if (docsPromise) {
+    console.log('returning cached docs');
+    return docsPromise;
+  }
+
+  if (!docsPromise) {
+    docsPromise = (async () => {
+      const response = await fetch(DOCS_API_URL, {
+        headers: {
+          Accept: 'text/plain'
+        }
+      });
+
+      if (!response.ok) {
+        throw error(response.status, `Failed to fetch documentation: ${response.statusText}`);
+      }
+
+      const markdown = await response.text();
+      const html = await renderMarkdown(markdown);
+
+      const result = { markdown, html };
+      return result;
+    })();
+  }
+
+  return docsPromise;
+};
+
 export const load: PageServerLoad = async ({ parent, fetch }) => {
   // const data = await parent();
 
@@ -20,20 +50,8 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
   // }
 
   try {
-    const response = await fetch(DOCS_API_URL, {
-      headers: {
-        Accept: 'text/plain'
-      }
-    });
-
-    if (!response.ok) {
-      throw error(response.status, `Failed to fetch documentation: ${response.statusText}`);
-    }
-
-    const markdown = await response.text();
+    const { html } = await getDocs();
     const title = 'Manager Commands';
-
-    const html = await renderMarkdown(markdown);
 
     return {
       // ...data,
