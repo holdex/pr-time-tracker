@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-
   import CommonDocsPage from '$routes/docs/common-docs-page.svelte';
+
+  import { PageData } from './$types';
 
   export let data: PageData;
 </script>
