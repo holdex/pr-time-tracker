@@ -17,14 +17,14 @@
     <div class="border border-l4 rounded-lg p-6 bg-l2">
       <h2 class="mt-0 mb-2">User Commands</h2>
       <p class="text-t3 mb-4">Learn how to use the available commands and features.</p>
-      <Button href="/docs/commands" variant="primary" size="medium">View Commands</Button>
+      <Button href="/docs/commands" variant="secondary" size="medium">View Commands</Button>
     </div>
 
     {#if data.isManager}
       <div class="border border-l4 rounded-lg p-6 bg-l2">
         <h2 class="mt-0 mb-2">Manager Commands</h2>
         <p class="text-t3 mb-4">Manager-specific commands and administrative features.</p>
-        <Button href="/docs/commands/manager" variant="primary" size="medium">
+        <Button href="/docs/commands/manager" variant="secondary" size="medium">
           View Manager Commands
         </Button>
       </div>
