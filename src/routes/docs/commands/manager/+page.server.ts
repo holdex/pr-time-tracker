@@ -12,14 +12,27 @@ import { UserRole } from '$lib/@types';
 
 const DOCS_API_URL = `${API_BASE_URL}/api/docs?name=MANAGER_COMMANDS`;
 
-export const load: PageServerLoad = async ({ parent, fetch }) => {
-  const data = await parent();
+/**
+ * In-memory cache for documentation markdown and rendered HTML.
+ * Cache persists only within a single warm serverless container instance.
+ * TTL: 1 hour
+ */
+const CACHE_TTL_MS = 3600_000; // 1h
 
-  if (data.user?.role !== UserRole.MANAGER) {
-    throw redirect(REDIRECT_TEMP, routes.prs.path);
+let docsPromise: Promise<{ markdown: string; html: string; timestamp: number }> | null = null;
+
+const getDocs = async () => {
+  const now = Date.now();
+
+  if (docsPromise) {
+    const cached = await docsPromise;
+    if (now - cached.timestamp < CACHE_TTL_MS) {
+      return cached;
+    }
+    docsPromise = null;
   }
 
-  try {
+  docsPromise = (async () => {
     const response = await fetch(DOCS_API_URL, {
       headers: {
         Accept: 'text/plain'
@@ -31,9 +44,24 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
     }
 
     const markdown = await response.text();
-    const title = 'Manager Commands';
-
     const html = await renderMarkdown(markdown);
+
+    return { markdown, html, timestamp: Date.now() };
+  })();
+
+  return docsPromise;
+};
+
+export const load: PageServerLoad = async ({ parent }) => {
+  const data = await parent();
+
+  if (data.user?.role !== UserRole.MANAGER) {
+    throw redirect(REDIRECT_TEMP, routes.prs.path);
+  }
+
+  try {
+    const { html } = await getDocs();
+    const title = 'Manager Commands';
 
     return {
       ...data,
@@ -42,6 +70,7 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
     };
   } catch (err) {
     const httpError = err as HttpError;
+    console.error(err);
     if (httpError.status) {
       throw httpError;
     }

@@ -7,7 +7,7 @@
   import { snackbar } from '$lib/components/Snackbar/index';
   import { appIsReady } from '$lib/utils';
 
-  import css from './layout.scss?inline';
+  import './layout.scss';
 
   onMount(() => {
     $appIsReady = true;
@@ -25,7 +25,3 @@
 
   <Snackbar />
 </div>
-
-<svelte:element this="style">
-  {css}
-</svelte:element>
