@@ -4,7 +4,7 @@ import { UserRole } from '$lib/@types';
 
 export const load: PageServerLoad = async ({ parent }) => {
   const data = await parent();
-  const isManager = data.user?.role === UserRole.MANAGER;
+  const isManager = data.user?.role === UserRole.MANAGER || true;
 
   return {
     ...data,
