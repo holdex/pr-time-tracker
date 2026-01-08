@@ -4,7 +4,8 @@ import type { PageServerLoad } from './$types';
 
 import { INTERNAL_SERVER_ERROR, REDIRECT_TEMP } from '$lib/constants';
 import { routes } from '$lib/config';
-import { getDocs } from '$routes/docs/utils';
+
+import { getDocs } from '../../utils';
 
 import { UserRole } from '$lib/@types';
 

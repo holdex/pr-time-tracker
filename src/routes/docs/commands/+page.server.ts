@@ -3,7 +3,8 @@ import { error, type HttpError } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 import { INTERNAL_SERVER_ERROR } from '$lib/constants';
-import { getDocs } from '$routes/docs/utils';
+
+import { getDocs } from '../utils';
 
 export const load: PageServerLoad = async ({ parent }) => {
   const data = await parent();
