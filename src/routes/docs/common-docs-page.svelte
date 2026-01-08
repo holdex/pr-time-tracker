@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
 
   import PageTitle from '$lib/components/PageTitle/index.svelte';
+  import Button from '$lib/components/Button/index.svelte';
 
   export let data: { title: string; content: string };
 
@@ -47,6 +48,10 @@
     };
   });
 </script>
+
+<div class="mb-6 flex">
+  <Button href="/docs" variant="secondary" size="small" text="View All Documentation" />
+</div>
 
 <PageTitle title={data.title || 'Manager Commands'} showHeading={false} />
 
