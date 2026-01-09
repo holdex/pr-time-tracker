@@ -53,7 +53,7 @@
   <Button href="/docs" variant="secondary" size="small" text="View All Documentation" />
 </div>
 
-<PageTitle title={data.title || 'Manager Commands'} showHeading={false} />
+<PageTitle title={data.title || 'Documentation'} showHeading={false} />
 
 <div bind:this={contentElement} class="markdown-content">
   {@html data.content}
