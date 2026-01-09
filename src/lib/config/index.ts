@@ -39,7 +39,7 @@ interface Route {
 }
 
 export const routes: Record<
-  'contributors' | 'index' | 'login' | 'prs' | 'prsArchive' | 'managerCommandsDocs',
+  'contributors' | 'index' | 'login' | 'prs' | 'prsArchive' | 'docsCommands',
   Route
 > = {
   contributors: {
@@ -56,9 +56,9 @@ export const routes: Record<
     path: '/prs/archive',
     title: 'Your Closed Pull Requests Archive'
   },
-  managerCommandsDocs: {
-    path: '/docs/commands/manager',
-    title: 'Manager Commands Documentation'
+  docsCommands: {
+    path: '/docs/commands',
+    title: 'Commands Documentation'
   }
 };
 
