@@ -2,8 +2,6 @@ import { MongoClient, type MongoClientOptions } from 'mongodb';
 
 import config from '$lib/server/config';
 
-let clientPromise: Promise<MongoClient>;
-
 declare const global: typeof globalThis & {
   _mongoClientPromise?: Promise<MongoClient>;
 };
@@ -43,19 +41,40 @@ async function createMongoClient(): Promise<MongoClient> {
   return client;
 }
 
-console.log('[Mongo] Initializing MongoClient...');
+/**
+ * Gets or creates the MongoDB client promise.
+ * This getter pattern ensures that if the connection fails, subsequent calls
+ * can recover by creating a new connection attempt instead of returning a
+ * poisoned rejected promise.
+ */
+export function getClientPromise(): Promise<MongoClient> {
+  if (!global._mongoClientPromise) {
+    console.log('[Mongo] Initializing MongoClient...');
+    global._mongoClientPromise = createMongoClient().catch((err) => {
+      console.error('[Mongo] Connection failed, clearing cache for retry:', err);
 
-if (!global._mongoClientPromise) {
-  global._mongoClientPromise = createMongoClient().catch((err) => {
-    console.error('[Mongo] Initial connection failed, clearing cache', err);
+      // Allow future retries instead of poisoning the process
+      global._mongoClientPromise = undefined;
 
-    // allow future retries instead of poisoning the process
-    global._mongoClientPromise = undefined;
+      throw err;
+    });
+  }
 
-    throw err;
-  });
+  return global._mongoClientPromise;
 }
 
-clientPromise = global._mongoClientPromise;
+/**
+ * Clears the cached client promise, allowing for a fresh connection attempt.
+ * Useful for testing or recovering from persistent connection failures.
+ */
+export function clearClientCache(): void {
+  if (global._mongoClientPromise) {
+    console.log('[Mongo] Clearing client cache');
+    global._mongoClientPromise = undefined;
+  }
+}
 
-export default clientPromise;
+// Export default as getter result for backward compatibility
+// Note: This still captures the promise at module load time.
+// For full recovery, use getClientPromise() directly.
+export default getClientPromise();

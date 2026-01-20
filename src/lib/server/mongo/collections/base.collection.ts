@@ -21,7 +21,7 @@ import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import config from '../../config';
-import clientPromise from '..';
+import { getClientPromise } from '..';
 
 export abstract class BaseCollection<
   CollectionType extends TimeStamps & { _id?: ObjectId; id?: string | number }
@@ -45,41 +45,47 @@ export abstract class BaseCollection<
 
   /**
    * Initialize the collection asynchronously. Must be called before using the collection.
+   * Uses getClientPromise() to ensure recovery from connection failures.
    * @returns Promise that resolves when initialization is complete
    */
   protected async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    if (!clientPromise) {
-      throw new Error('MongoDB client promise is not initialized');
-    }
+    try {
+      // Use getClientPromise() to get a fresh promise if previous connection failed
+      const client = await getClientPromise();
+      (this as { client: MongoClient }).client = client;
+      (this as { db: Db }).db = client.db(config.mongoDBName);
+      (this as { context: Collection<CollectionType> }).context =
+        this.db.collection<CollectionType>(this.collectionName);
+      (this as { properties: Array<keyof CollectionType> }).properties = Object.keys(
+        this.validationSchema.properties
+      ) as Array<keyof CollectionType>;
 
-    const client = await clientPromise;
-    (this as { client: MongoClient }).client = client;
-    (this as { db: Db }).db = client.db(config.mongoDBName);
-    (this as { context: Collection<CollectionType> }).context = this.db.collection<CollectionType>(
-      this.collectionName
-    );
-    (this as { properties: Array<keyof CollectionType> }).properties = Object.keys(
-      this.validationSchema.properties
-    ) as Array<keyof CollectionType>;
-
-    // Apply validation schema
-    await this.db
-      .command({
-        collMod: this.collectionName,
-        validator: {
-          $jsonSchema: {
-            bsonType: 'object',
-            ...this.validationSchema
+      // Apply validation schema
+      await this.db
+        .command({
+          collMod: this.collectionName,
+          validator: {
+            $jsonSchema: {
+              bsonType: 'object',
+              ...this.validationSchema
+            }
           }
-        }
-      })
-      .catch((e) => {
-        console.error(`[BaseCollection#initialize] ${e}`);
-      });
+        })
+        .catch((e) => {
+          console.error(`[BaseCollection#initialize] ${e}`);
+        });
 
-    this.initialized = true;
+      this.initialized = true;
+    } catch (error) {
+      // Don't mark as initialized on failure, allowing retry on next call
+      console.error(
+        `[BaseCollection#initialize] Failed to initialize collection ${this.collectionName}:`,
+        error
+      );
+      throw error;
+    }
   }
 
   /**
