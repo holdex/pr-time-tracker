@@ -75,8 +75,10 @@ export abstract class BaseCollection<
       ) as Array<keyof CollectionType>;
 
       // Apply validation schema
-      await this.db
-        .command({
+      // Note: collMod will fail if collection doesn't exist yet - that's okay, it will be
+      // created on first insert. We only log the error for other cases but don't fail initialization.
+      try {
+        await this.db.command({
           collMod: this.collectionName,
           validator: {
             $jsonSchema: {
@@ -84,10 +86,23 @@ export abstract class BaseCollection<
               ...this.validationSchema
             }
           }
-        })
-        .catch((e) => {
-          console.error(`[BaseCollection#initialize] ${e}`);
         });
+      } catch (schemaError: any) {
+        // Log but don't fail if collection doesn't exist (code 26)
+        // or namespace not found (code 11600/11602)
+        const code = schemaError?.code;
+        if (code === 26 || code === 11600 || code === 11602) {
+          console.log(
+            `[BaseCollection#initialize] Collection ${this.collectionName} does not exist yet, will create on first insert`
+          );
+        } else {
+          // For other errors, log and continue (validation will apply on next restart after collection exists)
+          console.warn(
+            `[BaseCollection#initialize] Failed to apply validation schema for ${this.collectionName}:`,
+            schemaError
+          );
+        }
+      }
 
       this.initialized = true;
     } catch (error) {

@@ -14,18 +14,19 @@ if (!config.mongoDBUri || !config.mongoDBName) {
 }
 
 // Serverless-safe Mongo options
+// Timeout settings: matched at 5s for fast-fail behavior
 const mongoOptions: MongoClientOptions = {
   minPoolSize: 0,
   maxPoolSize: 1,
 
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 10000,
+  serverSelectionTimeoutMS: 5000, // How long to find a MongoDB server
+  connectTimeoutMS: 5000, // How long to establish connection
 
   retryWrites: true,
   retryReads: true,
 
-  maxIdleTimeMS: 10000,
-  waitQueueTimeoutMS: 5000,
+  maxIdleTimeMS: 10000, // Close idle connections after 10s
+  waitQueueTimeoutMS: 5000, // Max wait time to get connection from pool
 
   compressors: ['zlib']
 };
