@@ -21,86 +21,74 @@ import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import config from '../../config';
-import { getClient } from '..';
+import clientPromise from '..';
 
 export abstract class BaseCollection<
   CollectionType extends TimeStamps & { _id?: ObjectId; id?: string | number }
 > {
-  private _context: Collection<CollectionType> | null = null;
-  private _db: Db | null = null;
-  private _client: MongoClient | null = null;
-  private _initPromise: Promise<void> | null = null;
-
-  readonly properties: Array<keyof CollectionType>;
+  readonly context!: Collection<CollectionType>;
+  readonly db!: Db;
+  readonly client!: MongoClient;
+  readonly properties!: Array<keyof CollectionType>;
   private static readonly queryFields: Array<keyof QueryProps> = [
     'count',
     'skip',
     'sort_by',
     'sort_order'
   ];
+  private initialized = false;
 
   constructor(
     private collectionName: CollectionNames,
     private validationSchema: JSONSchema<CollectionType>
-  ) {
-    this.properties = Object.keys(this.validationSchema.properties) as Array<keyof CollectionType>;
-    // Initialize async resources lazily - don't block constructor
-    this._initPromise = this.initialize();
-  }
+  ) {}
 
-  private async initialize(): Promise<void> {
-    try {
-      const client = await getClient();
-      this._client = client;
-      this._db = client.db(config.mongoDBName);
-      this._context = this._db.collection<CollectionType>(this.collectionName);
+  /**
+   * Initialize the collection asynchronously. Must be called before using the collection.
+   * @returns Promise that resolves when initialization is complete
+   */
+  protected async initialize(): Promise<void> {
+    if (this.initialized) return;
 
-      // Set up schema validation (non-blocking)
-      this._db
-        .command({
-          collMod: this.collectionName,
-          validator: {
-            $jsonSchema: {
-              bsonType: 'object',
-              ...this.validationSchema
-            }
+    if (!clientPromise) {
+      throw new Error('MongoDB client promise is not initialized');
+    }
+
+    const client = await clientPromise;
+    (this as { client: MongoClient }).client = client;
+    (this as { db: Db }).db = client.db(config.mongoDBName);
+    (this as { context: Collection<CollectionType> }).context = this.db.collection<CollectionType>(
+      this.collectionName
+    );
+    (this as { properties: Array<keyof CollectionType> }).properties = Object.keys(
+      this.validationSchema.properties
+    ) as Array<keyof CollectionType>;
+
+    // Apply validation schema
+    await this.db
+      .command({
+        collMod: this.collectionName,
+        validator: {
+          $jsonSchema: {
+            bsonType: 'object',
+            ...this.validationSchema
           }
-        })
-        .catch((e) => {
-          console.error(`[BaseCollection#initialize] ${e}`);
-        });
-    } catch (error) {
-      console.error(`[BaseCollection#initialize] Failed to initialize collection:`, error);
-      throw error;
-    }
+        }
+      })
+      .catch((e) => {
+        console.error(`[BaseCollection#initialize] ${e}`);
+      });
+
+    this.initialized = true;
   }
 
-  // Lazy getters that ensure initialization is complete
+  /**
+   * Ensures the collection is initialized before performing operations
+   */
   protected async ensureInitialized(): Promise<void> {
-    if (this._initPromise) {
-      await this._initPromise;
+    if (!this.initialized) {
+      await this.initialize();
     }
-  }
-
-  get context(): Collection<CollectionType> {
-    if (!this._context) {
-      throw new Error(`[BaseCollection] Collection not initialized. Await async methods first.`);
-    }
-    return this._context;
-  }
-
-  get db(): Db {
-    if (!this._db) {
-      throw new Error(`[BaseCollection] Database not initialized. Await async methods first.`);
-    }
-    return this._db;
-  }
-
-  get client(): MongoClient {
-    if (!this._client) {
-      throw new Error(`[BaseCollection] Client not initialized. Await async methods first.`);
-    }
-    return this._client;
   }
 
   async create(
@@ -146,6 +134,7 @@ export abstract class BaseCollection<
 
   async getMany(params?: GetManyParams<CollectionType>) {
     await this.ensureInitialized();
+
     const searchParams = BaseCollection.makeParams(params);
     const [filter, { count, skip, sort, sort_by, sort_order }] = [
       this.makeFilter(searchParams),

@@ -15,6 +15,8 @@ import {
 
 export class ItemsCollection extends BaseCollection<ItemSchema> {
   getMany = async (params?: GetManyParams<ItemSchema>) => {
+    await this.ensureInitialized();
+
     const searchParams = ItemsCollection.makeParams(params);
     const contributor_id = transform<string>(searchParams.get('contributor_id'));
 
@@ -109,6 +111,8 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
   }
 
   getOneWithSubmission = async (params: Filter<ItemSchema>, contributorId: number | undefined) => {
+    await this.ensureInitialized();
+
     return this.context
       .aggregate<WithId<ItemSchema>>([
         { $match: params } as Document,

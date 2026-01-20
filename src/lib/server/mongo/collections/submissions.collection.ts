@@ -1,4 +1,4 @@
-import { ObjectId, type OptionalId, type OptionalUnlessRequiredId, type WithId } from 'mongodb';
+import { ObjectId, type OptionalId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
