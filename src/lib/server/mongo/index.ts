@@ -22,38 +22,41 @@ const requireTls =
 // Serverless-optimized connection options
 const mongoOptions: MongoClientOptions = {
   // Connection pool settings for serverless (CRITICAL for avoiding pool cleared errors)
-  minPoolSize: 1, // Keep 1 connection warm (with health checks to ensure it's valid)
-  maxPoolSize: 5, // Allow up to 5 connections for concurrent requests (better throughput)
+  minPoolSize: 0, // Don't keep connections warm - they become stale in serverless
+  maxPoolSize: 1, // Single connection to avoid pool issues
 
-  // Timeout settings optimized for serverless (15s function timeout)
-  serverSelectionTimeoutMS: 5000, // 5s to find a server (critical for 15s budget)
-  socketTimeoutMS: 45000, // 45s socket timeout (must be > serverSelectionTimeout)
-  connectTimeoutMS: 10000, // 10s connection timeout (allows time for TLS handshake)
+  // CRITICAL: Short timeouts for serverless (these MUST be respected)
+  serverSelectionTimeoutMS: 10000, // 10s to find a server (was 5s, increase for reliability)
+  socketTimeoutMS: 10000, // 10s socket timeout (shorter to fail faster)
+  connectTimeoutMS: 10000, // 10s connection timeout
 
-  // Heartbeat and monitoring for stale connection detection
-  heartbeatFrequencyMS: 30000, // Check every 30s (less aggressive for serverless)
+  // Heartbeat and monitoring
+  heartbeatFrequencyMS: 10000, // More frequent checks
 
-  // Retry settings (let MongoDB driver handle retries internally)
+  // Retry settings
   retryWrites: true,
   retryReads: true,
 
   // Connection management
-  maxIdleTimeMS: 10000, // Close idle connections after 10s (aggressive for serverless)
-  waitQueueTimeoutMS: 5000, // Don't wait long for connection from pool
+  maxIdleTimeMS: 5000, // Close idle connections very quickly
+  waitQueueTimeoutMS: 5000,
 
-  // SSL/TLS settings (configurable so local dev without TLS still works)
+  // SSL/TLS settings
   tls: requireTls,
   tlsAllowInvalidCertificates: process.env.MONGO_TLS_ALLOW_INVALID === 'true',
-  tlsAllowInvalidHostnames: false, // Keep hostname validation unless explicitly disabled
+  tlsAllowInvalidHostnames: false,
 
-  // Compression (reduces network overhead, helps with TLS)
+  // Compression
   compressors: ['zlib'],
 
-  // Direct connection (bypasses server selection for faster connection)
-  directConnection: false, // Use replica set connection (required for Atlas)
+  // CRITICAL: Force direct connection mode to bypass slow server selection
+  directConnection: false,
 
-  // Important: Limit concurrent connection attempts to prevent overwhelming the pool
-  maxConnecting: 2
+  // Limit concurrent connection attempts
+  maxConnecting: 1, // Only 1 at a time
+
+  // CRITICAL: Add family option to force IPv4 (sometimes IPv6 hangs)
+  family: 4
 };
 
 console.log('[Mongo] Initializing MongoClient with serverless-optimized settings...');
@@ -112,24 +115,25 @@ async function connectWithRetry(retries = DEFAULT_RETRY_ATTEMPTS): Promise<Mongo
 
       const sanitizedUri = config.mongoDBUri.replace(/\/\/.*@/, '//<credentials>@');
       console.log(`[Mongo] Creating MongoClient with URI: ${sanitizedUri}`);
+
+      // CRITICAL: Detect mongodb+srv:// which can hang on DNS lookup
+      if (config.mongoDBUri.startsWith('mongodb+srv://')) {
+        console.warn('[Mongo] WARNING: Using mongodb+srv:// in serverless can cause DNS hangs!');
+        console.warn('[Mongo] Consider using standard mongodb:// connection string');
+      }
+
+      const timeoutMs = mongoOptions.connectTimeoutMS || DEFAULT_CONNECT_TIMEOUT_MS;
+      console.log(`[Mongo] Creating client, will timeout after ${timeoutMs}ms`);
+
       const newClient = new MongoClient(config.mongoDBUri, mongoOptions);
       lastClient = newClient;
 
-      // Attempt connection with manual timeout wrapper (in case driver timeout doesn't work)
-      const timeoutMs = mongoOptions.connectTimeoutMS;
-      console.log(`[Mongo] Attempting to connect (timeout: ${timeoutMs}ms)...`);
-      const connectPromise = newClient.connect();
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error('Connection timeout exceeded')),
-          mongoOptions.connectTimeoutMS || DEFAULT_CONNECT_TIMEOUT_MS
-        )
-      );
-
-      await Promise.race([connectPromise, timeoutPromise]);
-      console.log('[Mongo] Connection established, verifying with ping...');
+      console.log(`[Mongo] Calling newClient.connect()...`);
+      await newClient.connect();
+      console.log('[Mongo] connect() returned successfully!');
 
       // Verify connection with ping (also with timeout)
+      console.log('[Mongo] Verifying connection with ping...');
       const pingPromise = newClient.db('admin').command({ ping: 1 });
       const pingTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Ping timeout exceeded')), PING_TIMEOUT_MS)
@@ -137,12 +141,8 @@ async function connectWithRetry(retries = DEFAULT_RETRY_ATTEMPTS): Promise<Mongo
 
       await Promise.race([pingPromise, pingTimeoutPromise]);
 
-      console.log(
-        `[Mongo] MongoClient connected and verified @ "${config.mongoDBUri.replace(
-          /.*@(.*)\/.*/,
-          '$1'
-        )}".`
-      );
+      const dbHost = config.mongoDBUri.replace(/.*@(.*)\/.*/, '$1');
+      console.log(`[Mongo] MongoClient connected and verified @ "${dbHost}".`);
 
       return newClient;
     } catch (error) {
