@@ -63,6 +63,8 @@ const RETRY_BASE_DELAY_MS = 500; // Increased from 100ms - TLS handshake needs m
 const RETRY_BACKOFF_MULTIPLIER = 2;
 const RETRY_ATTEMPT_OFFSET = 1;
 const DEFAULT_RETRY_ATTEMPTS = 3; // Increased from 2 - SSL errors can be transient
+const DEFAULT_CONNECT_TIMEOUT_MS = 10000; // Default connection timeout
+const PING_TIMEOUT_MS = 5000; // Ping command timeout
 
 // Helper to check if error is SSL/TLS related
 function isSSLError(error: unknown): boolean {
@@ -108,17 +110,38 @@ async function connectWithRetry(retries = DEFAULT_RETRY_ATTEMPTS): Promise<Mongo
         lastClient = undefined;
       }
 
+      const sanitizedUri = config.mongoDBUri.replace(/\/\/.*@/, '//<credentials>@');
+      console.log(`[Mongo] Creating MongoClient with URI: ${sanitizedUri}`);
       const newClient = new MongoClient(config.mongoDBUri, mongoOptions);
       lastClient = newClient;
 
-      // Attempt connection with timeout
-      await newClient.connect();
+      // Attempt connection with manual timeout wrapper (in case driver timeout doesn't work)
+      const timeoutMs = mongoOptions.connectTimeoutMS;
+      console.log(`[Mongo] Attempting to connect (timeout: ${timeoutMs}ms)...`);
+      const connectPromise = newClient.connect();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Connection timeout exceeded')),
+          mongoOptions.connectTimeoutMS || DEFAULT_CONNECT_TIMEOUT_MS
+        )
+      );
 
-      // Verify connection with ping
-      await newClient.db('admin').command({ ping: 1 });
+      await Promise.race([connectPromise, timeoutPromise]);
+      console.log('[Mongo] Connection established, verifying with ping...');
+
+      // Verify connection with ping (also with timeout)
+      const pingPromise = newClient.db('admin').command({ ping: 1 });
+      const pingTimeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Ping timeout exceeded')), PING_TIMEOUT_MS)
+      );
+
+      await Promise.race([pingPromise, pingTimeoutPromise]);
 
       console.log(
-        `[Mongo] MongoClient connected to DB @ "${config.mongoDBUri.replace(/.*@(.*)\/.*/, '$1')}".`
+        `[Mongo] MongoClient connected and verified @ "${config.mongoDBUri.replace(
+          /.*@(.*)\/.*/,
+          '$1'
+        )}".`
       );
 
       return newClient;
@@ -164,59 +187,57 @@ async function connectWithRetry(retries = DEFAULT_RETRY_ATTEMPTS): Promise<Mongo
 }
 /* eslint-enable no-await-in-loop */
 
-// Initialize connection based on environment
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  if (!global._mongoClientPromise) {
-    global._mongoClientPromise = connectWithRetry();
-  }
-  clientPromise = global._mongoClientPromise;
-} else {
-  // In production (serverless), reuse connection across invocations
-  if (!global._mongoClientPromise) {
-    global._mongoClientPromise = connectWithRetry();
-  }
-  clientPromise = global._mongoClientPromise;
-}
-
-// Lazy getter function - don't block module initialization with top-level await
+// Truly lazy connection - only connects on first getMongoClient() call
 async function getMongoClient(): Promise<MongoClient> {
+  // Initialize connection promise on first access (not at module load!)
+  if (!global._mongoClientPromise && !clientPromise) {
+    console.log('[Mongo] First access detected, starting connection...');
+    global._mongoClientPromise = connectWithRetry();
+    clientPromise = global._mongoClientPromise;
+  }
+
+  // Sync clientPromise with global (for cross-invocation reuse in serverless)
+  if (!clientPromise && global._mongoClientPromise) {
+    clientPromise = global._mongoClientPromise;
+  }
+
   if (!clientPromise) {
     throw new Error('[Mongo] Client promise not initialized');
   }
 
   try {
-    return await clientPromise;
-  } catch (error) {
-    console.error('[Mongo] Connection health check failed, reconnecting...', error);
+    const client = await clientPromise;
 
-    // Clear failed connection
+    // Verify connection is still alive with a quick ping
+    console.log('[Mongo] Verifying connection health...');
+    await client.db('admin').command({ ping: 1 });
+    console.log('[Mongo] Connection healthy, ready to use.');
+
+    return client;
+  } catch (error) {
+    console.error('[Mongo] Connection failed or health check failed:', error);
+
+    // Clear failed connection from both local and global
     global._mongoClientPromise = undefined;
     clientPromise = undefined;
 
     // Reconnect
-    if (process.env.NODE_ENV === 'development') {
-      if (!global._mongoClientPromise) {
-        global._mongoClientPromise = connectWithRetry();
-      }
-      clientPromise = global._mongoClientPromise;
-    } else {
-      global._mongoClientPromise = connectWithRetry();
-      clientPromise = global._mongoClientPromise;
-    }
+    console.log('[Mongo] Attempting reconnection...');
+    global._mongoClientPromise = connectWithRetry();
+    clientPromise = global._mongoClientPromise;
 
     return await clientPromise;
   }
 }
-
-export default clientPromise;
 
 // Primary export - always use this for accessing MongoDB client
 export async function getClient(): Promise<MongoClient> {
   return getMongoClient();
 }
 
-// Deprecated: Use getClient() instead. This promise is exported for legacy code only.
-// TODO: Refactor BaseCollection to use getClient() and remove this export
-export const mongoClientPromise = getMongoClient();
+// Deprecated: For legacy code that expects a promise. Use getClient() instead.
+// This creates a promise on first import (lazy), not eagerly at module load.
+export const mongoClientPromise = getClient();
+
+// Default export for backward compatibility
+export default mongoClientPromise;
