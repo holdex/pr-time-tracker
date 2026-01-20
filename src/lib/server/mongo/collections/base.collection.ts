@@ -37,6 +37,7 @@ export abstract class BaseCollection<
     'sort_order'
   ];
   private initialized = false;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor(
     private collectionName: CollectionNames,
@@ -46,11 +47,22 @@ export abstract class BaseCollection<
   /**
    * Initialize the collection asynchronously. Must be called before using the collection.
    * Uses getClientPromise() to ensure recovery from connection failures.
+   * Prevents concurrent initialization by caching the initialization promise.
    * @returns Promise that resolves when initialization is complete
    */
   protected async initialize(): Promise<void> {
     if (this.initialized) return;
+    if (this.initializationPromise) return this.initializationPromise;
 
+    this.initializationPromise = this._doInitialize();
+    return this.initializationPromise;
+  }
+
+  /**
+   * Performs the actual initialization logic.
+   * Should not be called directly - use initialize() instead.
+   */
+  private async _doInitialize(): Promise<void> {
     try {
       // Use getClientPromise() to get a fresh promise if previous connection failed
       const client = await getClientPromise();
@@ -79,7 +91,8 @@ export abstract class BaseCollection<
 
       this.initialized = true;
     } catch (error) {
-      // Don't mark as initialized on failure, allowing retry on next call
+      // Clear initialization promise on failure to allow retry on next call
+      this.initializationPromise = null;
       console.error(
         `[BaseCollection#initialize] Failed to initialize collection ${this.collectionName}:`,
         error
