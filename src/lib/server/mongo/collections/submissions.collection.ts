@@ -1,4 +1,4 @@
-import { ObjectId, type OptionalId, type OptionalUnlessRequiredId, type WithId } from 'mongodb';
+import { ObjectId, type OptionalId } from 'mongodb';
 
 import { BaseCollection } from './base.collection';
 import { items } from './items.collection';
@@ -20,6 +20,8 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     hours,
     experience
   }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
+    await this.ensureInitialized();
+
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);
