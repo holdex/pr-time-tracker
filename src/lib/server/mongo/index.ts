@@ -35,11 +35,23 @@ const mongoOptions: MongoClientOptions = {
 async function createMongoClient(): Promise<MongoClient> {
   const client = new MongoClient(config.mongoDBUri, mongoOptions);
 
-  await client.connect();
+  try {
+    await client.connect();
 
-  await client.db('admin').command({ ping: 1 });
+    // Verify connection is actually working
+    await client.db('admin').command({ ping: 1 });
 
-  return client;
+    return client;
+  } catch (error) {
+    // Clean up the client if connection or ping fails
+    // to prevent dangling connections
+    try {
+      await client.close();
+    } catch (closeError) {
+      console.error('[Mongo] Error closing failed client:', closeError);
+    }
+    throw error;
+  }
 }
 
 /**
