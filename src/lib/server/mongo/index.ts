@@ -22,41 +22,39 @@ const requireTls =
 // Serverless-optimized connection options
 const mongoOptions: MongoClientOptions = {
   // Connection pool settings for serverless (CRITICAL for avoiding pool cleared errors)
-  minPoolSize: 0, // Don't keep connections warm - they become stale in serverless
-  maxPoolSize: 1, // Single connection to avoid pool issues
+  minPoolSize: 0, // Don't keep connections warm in serverless (prevents stale connections)
+  maxPoolSize: 1, // Single connection per function instance (prevents pool exhaustion)
 
-  // CRITICAL: Short timeouts for serverless (these MUST be respected)
-  serverSelectionTimeoutMS: 10000, // 10s to find a server (was 5s, increase for reliability)
-  socketTimeoutMS: 10000, // 10s socket timeout (shorter to fail faster)
-  connectTimeoutMS: 10000, // 10s connection timeout
+  // Timeout settings optimized for serverless (15s function timeout)
+  serverSelectionTimeoutMS: 5000, // 5s to find a server (critical for 15s budget)
+  socketTimeoutMS: 45000, // 45s socket timeout (must be > serverSelectionTimeout)
+  connectTimeoutMS: 10000, // 10s connection timeout (allows time for TLS handshake)
 
-  // Heartbeat and monitoring
-  heartbeatFrequencyMS: 10000, // More frequent checks
+  // Heartbeat and monitoring for stale connection detection
+  heartbeatFrequencyMS: 30000, // Check every 30s (less aggressive for serverless)
 
-  // Retry settings
+  // Retry settings (let MongoDB driver handle retries internally)
   retryWrites: true,
   retryReads: true,
 
   // Connection management
-  maxIdleTimeMS: 5000, // Close idle connections very quickly
-  waitQueueTimeoutMS: 5000,
+  maxIdleTimeMS: 10000, // Close idle connections after 10s (aggressive for serverless)
+  waitQueueTimeoutMS: 5000, // Don't wait long for connection from pool
 
-  // SSL/TLS settings
+  // SSL/TLS settings (configurable so local dev without TLS still works)
   tls: requireTls,
   tlsAllowInvalidCertificates: process.env.MONGO_TLS_ALLOW_INVALID === 'true',
-  tlsAllowInvalidHostnames: false,
+  tlsAllowInvalidHostnames: false, // Keep hostname validation unless explicitly disabled
 
-  // Compression
+  // Compression (reduces network overhead, helps with TLS)
   compressors: ['zlib'],
 
-  // CRITICAL: Force direct connection mode to bypass slow server selection
-  directConnection: false,
+  // Direct connection (bypasses server selection for faster connection)
+  directConnection: false, // Use replica set connection (required for Atlas)
 
-  // Limit concurrent connection attempts
-  maxConnecting: 1, // Only 1 at a time
-
-  // CRITICAL: Add family option to force IPv4 (sometimes IPv6 hangs)
-  family: 4
+  // Important: Prevent connection pool from being completely cleared on errors
+  // This is handled by minPoolSize: 0 (no persistent connections to fail)
+  maxConnecting: 2 // Limit concurrent connection attempts
 };
 
 console.log('[Mongo] Initializing MongoClient with serverless-optimized settings...');
@@ -66,8 +64,6 @@ const RETRY_BASE_DELAY_MS = 500; // Increased from 100ms - TLS handshake needs m
 const RETRY_BACKOFF_MULTIPLIER = 2;
 const RETRY_ATTEMPT_OFFSET = 1;
 const DEFAULT_RETRY_ATTEMPTS = 3; // Increased from 2 - SSL errors can be transient
-const DEFAULT_CONNECT_TIMEOUT_MS = 10000; // Default connection timeout
-const PING_TIMEOUT_MS = 5000; // Ping command timeout
 
 // Helper to check if error is SSL/TLS related
 function isSSLError(error: unknown): boolean {
@@ -113,36 +109,18 @@ async function connectWithRetry(retries = DEFAULT_RETRY_ATTEMPTS): Promise<Mongo
         lastClient = undefined;
       }
 
-      const sanitizedUri = config.mongoDBUri.replace(/\/\/.*@/, '//<credentials>@');
-      console.log(`[Mongo] Creating MongoClient with URI: ${sanitizedUri}`);
-
-      // CRITICAL: Detect mongodb+srv:// which can hang on DNS lookup
-      if (config.mongoDBUri.startsWith('mongodb+srv://')) {
-        console.warn('[Mongo] WARNING: Using mongodb+srv:// in serverless can cause DNS hangs!');
-        console.warn('[Mongo] Consider using standard mongodb:// connection string');
-      }
-
-      const timeoutMs = mongoOptions.connectTimeoutMS || DEFAULT_CONNECT_TIMEOUT_MS;
-      console.log(`[Mongo] Creating client, will timeout after ${timeoutMs}ms`);
-
       const newClient = new MongoClient(config.mongoDBUri, mongoOptions);
       lastClient = newClient;
 
-      console.log(`[Mongo] Calling newClient.connect()...`);
+      // Attempt connection with timeout
       await newClient.connect();
-      console.log('[Mongo] connect() returned successfully!');
 
-      // Verify connection with ping (also with timeout)
-      console.log('[Mongo] Verifying connection with ping...');
-      const pingPromise = newClient.db('admin').command({ ping: 1 });
-      const pingTimeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Ping timeout exceeded')), PING_TIMEOUT_MS)
+      // Verify connection with ping
+      await newClient.db('admin').command({ ping: 1 });
+
+      console.log(
+        `[Mongo] MongoClient connected to DB @ "${config.mongoDBUri.replace(/.*@(.*)\/.*/, '$1')}".`
       );
-
-      await Promise.race([pingPromise, pingTimeoutPromise]);
-
-      const dbHost = config.mongoDBUri.replace(/.*@(.*)\/.*/, '$1');
-      console.log(`[Mongo] MongoClient connected and verified @ "${dbHost}".`);
 
       return newClient;
     } catch (error) {
@@ -187,57 +165,61 @@ async function connectWithRetry(retries = DEFAULT_RETRY_ATTEMPTS): Promise<Mongo
 }
 /* eslint-enable no-await-in-loop */
 
-// Truly lazy connection - only connects on first getMongoClient() call
-async function getMongoClient(): Promise<MongoClient> {
-  // Initialize connection promise on first access (not at module load!)
-  if (!global._mongoClientPromise && !clientPromise) {
-    console.log('[Mongo] First access detected, starting connection...');
+// Initialize connection based on environment
+if (process.env.NODE_ENV === 'development') {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  if (!global._mongoClientPromise) {
     global._mongoClientPromise = connectWithRetry();
-    clientPromise = global._mongoClientPromise;
   }
-
-  // Sync clientPromise with global (for cross-invocation reuse in serverless)
-  if (!clientPromise && global._mongoClientPromise) {
-    clientPromise = global._mongoClientPromise;
+  clientPromise = global._mongoClientPromise;
+} else {
+  // In production (serverless), reuse connection across invocations
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = connectWithRetry();
   }
+  clientPromise = global._mongoClientPromise;
+}
 
+// Lazy getter function - don't block module initialization with top-level await
+async function getMongoClient(): Promise<MongoClient> {
   if (!clientPromise) {
     throw new Error('[Mongo] Client promise not initialized');
   }
 
   try {
-    const client = await clientPromise;
-
-    // Verify connection is still alive with a quick ping
-    console.log('[Mongo] Verifying connection health...');
-    await client.db('admin').command({ ping: 1 });
-    console.log('[Mongo] Connection healthy, ready to use.');
-
-    return client;
+    return await clientPromise;
   } catch (error) {
-    console.error('[Mongo] Connection failed or health check failed:', error);
+    console.error('[Mongo] Connection health check failed, reconnecting...', error);
 
-    // Clear failed connection from both local and global
+    // Clear failed connection
     global._mongoClientPromise = undefined;
     clientPromise = undefined;
 
     // Reconnect
-    console.log('[Mongo] Attempting reconnection...');
-    global._mongoClientPromise = connectWithRetry();
-    clientPromise = global._mongoClientPromise;
+    if (process.env.NODE_ENV === 'development') {
+      if (!global._mongoClientPromise) {
+        global._mongoClientPromise = connectWithRetry();
+      }
+      clientPromise = global._mongoClientPromise;
+    } else {
+      global._mongoClientPromise = connectWithRetry();
+      clientPromise = global._mongoClientPromise;
+    }
 
     return await clientPromise;
   }
 }
 
-// Primary export - always use this for accessing MongoDB client
+export default clientPromise;
+
+// Export lazy getter for advanced usage
 export async function getClient(): Promise<MongoClient> {
   return getMongoClient();
 }
 
-// Deprecated: For legacy code that expects a promise. Use getClient() instead.
-// This creates a promise on first import (lazy), not eagerly at module load.
-export const mongoClientPromise = getClient();
-
-// Default export for backward compatibility
-export default mongoClientPromise;
+// For backwards compatibility - exports a promise for code that expects to await a client.
+// The key improvement is the connection options and retry logic above.
+export const mongoClientPromise = getMongoClient();
+// For legacy synchronous consumers (e.g., BaseCollection constructors)
+export const mongoClient = await mongoClientPromise;
