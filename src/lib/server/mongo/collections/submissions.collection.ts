@@ -20,6 +20,8 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     hours,
     experience
   }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
+    await this.ensureInitialized();
+
     const item = await items.getOne({ id: item_id });
 
     if (!item) throw Error(`Item with ID, ${item_id}, not found. Submission declined.`);

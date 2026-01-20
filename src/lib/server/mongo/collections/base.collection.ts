@@ -21,14 +21,16 @@ import { DESCENDING, MAX_DATA_CHUNK } from '$lib/constants';
 import { transform } from '$lib/utils';
 
 import config from '../../config';
-import { mongoClient } from '..';
+import { getClient } from '..';
 
 export abstract class BaseCollection<
   CollectionType extends TimeStamps & { _id?: ObjectId; id?: string | number }
 > {
-  readonly context: Collection<CollectionType>;
-  readonly db: Db;
-  readonly client: MongoClient;
+  private _context: Collection<CollectionType> | null = null;
+  private _db: Db | null = null;
+  private _client: MongoClient | null = null;
+  private _initPromise: Promise<void> | null = null;
+
   readonly properties: Array<keyof CollectionType>;
   private static readonly queryFields: Array<keyof QueryProps> = [
     'count',
@@ -41,29 +43,72 @@ export abstract class BaseCollection<
     private collectionName: CollectionNames,
     private validationSchema: JSONSchema<CollectionType>
   ) {
-    this.client = mongoClient;
-    this.db = mongoClient.db(config.mongoDBName);
-    this.context = this.db.collection<CollectionType>(this.collectionName);
     this.properties = Object.keys(this.validationSchema.properties) as Array<keyof CollectionType>;
-    this.db
-      .command({
-        collMod: collectionName,
-        validator: {
-          $jsonSchema: {
-            bsonType: 'object',
-            ...this.validationSchema
+    // Initialize async resources lazily - don't block constructor
+    this._initPromise = this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    try {
+      const client = await getClient();
+      this._client = client;
+      this._db = client.db(config.mongoDBName);
+      this._context = this._db.collection<CollectionType>(this.collectionName);
+
+      // Set up schema validation (non-blocking)
+      this._db
+        .command({
+          collMod: this.collectionName,
+          validator: {
+            $jsonSchema: {
+              bsonType: 'object',
+              ...this.validationSchema
+            }
           }
-        }
-      })
-      .catch((e) => {
-        console.error(`[BaseCollection#constructor] ${e}`);
-      });
+        })
+        .catch((e) => {
+          console.error(`[BaseCollection#initialize] ${e}`);
+        });
+    } catch (error) {
+      console.error(`[BaseCollection#initialize] Failed to initialize collection:`, error);
+      throw error;
+    }
+  }
+
+  // Lazy getters that ensure initialization is complete
+  protected async ensureInitialized(): Promise<void> {
+    if (this._initPromise) {
+      await this._initPromise;
+    }
+  }
+
+  get context(): Collection<CollectionType> {
+    if (!this._context) {
+      throw new Error(`[BaseCollection] Collection not initialized. Await async methods first.`);
+    }
+    return this._context;
+  }
+
+  get db(): Db {
+    if (!this._db) {
+      throw new Error(`[BaseCollection] Database not initialized. Await async methods first.`);
+    }
+    return this._db;
+  }
+
+  get client(): MongoClient {
+    if (!this._client) {
+      throw new Error(`[BaseCollection] Client not initialized. Await async methods first.`);
+    }
+    return this._client;
   }
 
   async create(
     resource: OptionalUnlessRequiredId<CollectionType>,
     options?: InsertOneOptions | undefined
   ) {
+    await this.ensureInitialized();
+
     resource.created_at = resource.created_at || new Date().toISOString();
     resource.updated_at = resource.created_at;
 
@@ -77,6 +122,8 @@ export abstract class BaseCollection<
   }
 
   async getOne(_idOrFilter: string | Filter<CollectionType>) {
+    await this.ensureInitialized();
+
     return await this.context.findOne(
       (typeof _idOrFilter === 'string'
         ? { _id: new ObjectId(_idOrFilter) }
@@ -85,6 +132,8 @@ export abstract class BaseCollection<
   }
 
   async getOneOrCreate(options: any) {
+    await this.ensureInitialized();
+
     return await this.context.findOne({ id: options.id } as Filter<CollectionType>).then((res) => {
       if (!res) {
         return this.create(options as OptionalUnlessRequiredId<CollectionType>, {
@@ -96,6 +145,7 @@ export abstract class BaseCollection<
   }
 
   async getMany(params?: GetManyParams<CollectionType>) {
+    await this.ensureInitialized();
     const searchParams = BaseCollection.makeParams(params);
     const [filter, { count, skip, sort, sort_by, sort_order }] = [
       this.makeFilter(searchParams),
@@ -126,6 +176,8 @@ export abstract class BaseCollection<
       user?: ContributorSchema;
     }
   ) {
+    await this.ensureInitialized();
+
     const { onCreateIfNotExist, existing: _existing } = extra || {};
 
     payload.updated_at = new Date().toISOString();

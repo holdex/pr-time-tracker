@@ -22,8 +22,8 @@ const requireTls =
 // Serverless-optimized connection options
 const mongoOptions: MongoClientOptions = {
   // Connection pool settings for serverless (CRITICAL for avoiding pool cleared errors)
-  minPoolSize: 0, // Don't keep connections warm in serverless (prevents stale connections)
-  maxPoolSize: 1, // Single connection per function instance (prevents pool exhaustion)
+  minPoolSize: 1, // Keep 1 connection warm (with health checks to ensure it's valid)
+  maxPoolSize: 5, // Allow up to 5 connections for concurrent requests (better throughput)
 
   // Timeout settings optimized for serverless (15s function timeout)
   serverSelectionTimeoutMS: 5000, // 5s to find a server (critical for 15s budget)
@@ -52,9 +52,8 @@ const mongoOptions: MongoClientOptions = {
   // Direct connection (bypasses server selection for faster connection)
   directConnection: false, // Use replica set connection (required for Atlas)
 
-  // Important: Prevent connection pool from being completely cleared on errors
-  // This is handled by minPoolSize: 0 (no persistent connections to fail)
-  maxConnecting: 2 // Limit concurrent connection attempts
+  // Important: Limit concurrent connection attempts to prevent overwhelming the pool
+  maxConnecting: 2
 };
 
 console.log('[Mongo] Initializing MongoClient with serverless-optimized settings...');
@@ -213,13 +212,11 @@ async function getMongoClient(): Promise<MongoClient> {
 
 export default clientPromise;
 
-// Export lazy getter for advanced usage
+// Primary export - always use this for accessing MongoDB client
 export async function getClient(): Promise<MongoClient> {
   return getMongoClient();
 }
 
-// For backwards compatibility - exports a promise for code that expects to await a client.
-// The key improvement is the connection options and retry logic above.
+// Deprecated: Use getClient() instead. This promise is exported for legacy code only.
+// TODO: Refactor BaseCollection to use getClient() and remove this export
 export const mongoClientPromise = getMongoClient();
-// For legacy synchronous consumers (e.g., BaseCollection constructors)
-export const mongoClient = await mongoClientPromise;
