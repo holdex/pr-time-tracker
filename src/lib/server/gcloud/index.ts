@@ -13,13 +13,12 @@ const bigquery = new BigQuery({
 });
 
 export async function insertEvent(event: EventsSchema, id: string) {
-  const { dataset } = config.gcloud;
-  const { table } = config.gcloud;
+  const { dataset, table, projectId } = config.gcloud;
 
   // Use MERGE to prevent duplicate inserts (idempotent operation)
   // This ensures events with the same _id are not duplicated
   const query = `
-    MERGE \`${config.gcloud.projectId}.${dataset}.${table}\` AS target
+    MERGE \`${projectId}.${dataset}.${table}\` AS target
     USING (SELECT @id AS _id) AS source
     ON target._id = source._id
     WHEN NOT MATCHED THEN
@@ -30,19 +29,13 @@ export async function insertEvent(event: EventsSchema, id: string) {
   const options = {
     query,
     params: {
+      ...event,
       id,
       eventId: event.id,
-      organization: event.organization,
-      repository: event.repository,
-      action: event.action,
-      title: event.title,
-      owner: event.owner,
-      sender: event.sender,
       label: event.label ?? null,
       payload: event.payload ?? null,
-      index: event.index,
-      created_at: event.created_at?.toString() || null,
-      updated_at: event.updated_at?.toString() || null
+      created_at: event.created_at?.toString() ?? null,
+      updated_at: event.updated_at?.toString() ?? null
     }
   };
 
