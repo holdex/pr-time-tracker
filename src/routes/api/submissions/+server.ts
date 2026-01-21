@@ -58,10 +58,9 @@ export const POST: RequestHandler = async ({ url, request, cookies }) => {
         created_at: Math.round(new Date().getTime() / 1000).toFixed(0),
         updated_at: Math.round(new Date().getTime() / 1000).toFixed(0)
       };
-      await insertEvent(
-        event,
-        `${body?.item_id}_${contributor.login!}_${event.created_at}_${event.action}`
-      );
+
+      // Use submission._id for guaranteed uniqueness (MongoDB ObjectId)
+      await insertEvent(event, `${submission._id}_${event.action}`);
 
       await triggerRequestCheckRun({
         org: pr.org,
@@ -116,11 +115,18 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
       const updatedAtDate = validateDate(body!.updated_at as string);
 
       // store these events in gcloud
+      let eventAction: EventType;
+      if (body!.approval === 'approved') {
+        eventAction = EventType.PR_SUBMISSION_APPROVED;
+      } else if (body!.approval === 'rejected') {
+        eventAction = EventType.PR_SUBMISSION_REJECTED;
+      } else {
+        // Pending or any other status = just an update
+        eventAction = EventType.PR_SUBMISSION_UPDATED;
+      }
+
       const gcEvent = {
-        action:
-          user!.role === UserRole.MANAGER
-            ? EventType.PR_SUBMISSION_APPROVED
-            : EventType.PR_SUBMISSION_CREATED,
+        action: eventAction,
         id: pr.number as number,
         index: 1,
         organization: pr.org,
@@ -132,10 +138,9 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         created_at: Math.round(createdAtDate.getTime() / 1000).toFixed(0),
         updated_at: Math.round(updatedAtDate.getTime() / 1000).toFixed(0)
       };
-      await insertEvent(
-        gcEvent,
-        `${body!.item_id}_${user!.login}_${gcEvent.created_at}_${gcEvent.action}`
-      );
+
+      // Use submission _id + action + updated_at for unique tracking of each update event
+      await insertEvent(gcEvent, `${body!._id}_${gcEvent.action}_${gcEvent.updated_at}`);
 
       if (body!.approval === 'pending') {
         // get last commit
