@@ -59,14 +59,10 @@ async function createMongoClient(): Promise<MongoClient> {
  */
 async function isConnectionHealthy(client: MongoClient): Promise<boolean> {
   try {
-    // Quick ping with timeout to check if connection is alive
-    await Promise.race([
-      client.db('admin').command({ ping: 1 }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Health check timeout')), 2000))
-    ]);
+    await client.db('admin').command({ ping: 1 }, { maxTimeMS: 2000 });
     return true;
-  } catch (error) {
-    console.warn('[Mongo] Connection health check failed:', error);
+  } catch (err) {
+    console.warn('[Mongo] Connection health check failed:', err);
     return false;
   }
 }
