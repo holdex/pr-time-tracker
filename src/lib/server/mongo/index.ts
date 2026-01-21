@@ -17,7 +17,6 @@ if (!config.mongoDBUri || !config.mongoDBName) {
 // Timeout settings: matched at 5s for fast-fail behavior
 const mongoOptions: MongoClientOptions = {
   minPoolSize: 0,
-  maxPoolSize: 1,
 
   serverSelectionTimeoutMS: 5000, // How long to find a MongoDB server
   connectTimeoutMS: 5000, // How long to establish connection
