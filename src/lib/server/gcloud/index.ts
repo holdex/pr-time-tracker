@@ -38,16 +38,20 @@ export async function insertEvent(event: EventsSchema, id: string) {
       title: event.title,
       owner: event.owner,
       sender: event.sender,
-      label: event.label || null,
-      payload: event.payload || null,
+      label: event.label ?? null,
+      payload: event.payload ?? null,
       index: event.index,
       created_at: event.created_at?.toString() || null,
       updated_at: event.updated_at?.toString() || null
     }
   };
 
-  const [job] = await bigquery.createQueryJob(options);
-  await job.getQueryResults();
+  try {
+    const [job] = await bigquery.createQueryJob(options);
+    await job.getQueryResults();
+  } catch (reason) {
+    console.error('reason', JSON.stringify((reason as { errors?: unknown }).errors));
+  }
 }
 
 export async function getEvents() {

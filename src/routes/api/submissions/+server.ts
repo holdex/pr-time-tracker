@@ -116,14 +116,12 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
 
       // store these events in gcloud
       let eventAction: EventType;
-      if (user!.role === UserRole.MANAGER) {
-        // Manager is reviewing - use approved or rejected based on approval status
-        eventAction =
-          body!.approval === 'rejected'
-            ? EventType.PR_SUBMISSION_REJECTED
-            : EventType.PR_SUBMISSION_APPROVED;
+      if (body!.approval === 'approved') {
+        eventAction = EventType.PR_SUBMISSION_APPROVED;
+      } else if (body!.approval === 'rejected') {
+        eventAction = EventType.PR_SUBMISSION_REJECTED;
       } else {
-        // Contributor is updating their own submission
+        // Pending or any other status = just an update
         eventAction = EventType.PR_SUBMISSION_UPDATED;
       }
 
