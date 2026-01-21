@@ -152,12 +152,18 @@ export async function getClientPromise(): Promise<MongoClient> {
 }
 
 /**
- * Clears the cached client promise, allowing for a fresh connection attempt.
+ * Clears the cached client promise and closes the underlying connection.
  * Useful for testing or recovering from persistent connection failures.
+ * Prevents connection leaks by properly closing the client before clearing the cache.
  */
 export function clearClientCache(): void {
-  if (global._mongoClientPromise) {
+  const cachedPromise = global._mongoClientPromise;
+  if (cachedPromise) {
     console.log('[Mongo] Clearing client cache');
     global._mongoClientPromise = undefined;
+    // Close the underlying client to prevent connection leaks
+    cachedPromise
+      .then((client) => client.close())
+      .catch((err) => console.error('[Mongo] Error closing cached client:', err));
   }
 }
