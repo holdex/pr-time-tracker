@@ -21,11 +21,12 @@ const mongoOptions: MongoClientOptions = {
 
   serverSelectionTimeoutMS: 5000, // How long to find a MongoDB server
   connectTimeoutMS: 5000, // How long to establish connection
+  socketTimeoutMS: 5000, // Socket timeout for operations
 
   retryWrites: true,
   retryReads: true,
 
-  maxIdleTimeMS: 10000, // Close idle connections after 10s
+  maxIdleTimeMS: 5000, // Close idle connections after 5s
   waitQueueTimeoutMS: 5000, // Max wait time to get connection from pool
 
   compressors: ['zlib']
@@ -55,12 +56,58 @@ async function createMongoClient(): Promise<MongoClient> {
 }
 
 /**
+ * Validates if an existing client connection is still healthy
+ */
+async function isConnectionHealthy(client: MongoClient): Promise<boolean> {
+  try {
+    // Quick ping with timeout to check if connection is alive
+    await Promise.race([
+      client.db('admin').command({ ping: 1 }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Health check timeout')), 2000))
+    ]);
+    return true;
+  } catch (error) {
+    console.warn('[Mongo] Connection health check failed:', error);
+    return false;
+  }
+}
+
+/**
  * Gets or creates the MongoDB client promise.
  * This getter pattern ensures that if the connection fails, subsequent calls
  * can recover by creating a new connection attempt instead of returning a
  * poisoned rejected promise.
+ *
+ * For intermittent connection issues, this validates existing connections
+ * before reusing them to prevent stale connection errors.
  */
-export function getClientPromise(): Promise<MongoClient> {
+export async function getClientPromise(): Promise<MongoClient> {
+  // If we have a cached promise, validate the connection is still healthy
+  if (global._mongoClientPromise) {
+    try {
+      const client = await global._mongoClientPromise;
+      const isHealthy = await isConnectionHealthy(client);
+
+      if (isHealthy) {
+        return client;
+      }
+
+      // Connection is stale, clear cache and create new one
+      console.log('[Mongo] Stale connection detected, recreating...');
+      try {
+        await client.close();
+      } catch (closeError) {
+        console.error('[Mongo] Error closing stale client:', closeError);
+      }
+      global._mongoClientPromise = undefined;
+    } catch (error) {
+      // Promise rejected or health check failed, clear and retry
+      console.warn('[Mongo] Connection validation failed, clearing cache:', error);
+      global._mongoClientPromise = undefined;
+    }
+  }
+
+  // Create new connection
   if (!global._mongoClientPromise) {
     console.log('[Mongo] Initializing MongoClient...');
     global._mongoClientPromise = createMongoClient().catch((err) => {
