@@ -21,7 +21,6 @@ const mongoOptions: MongoClientOptions = {
 
   serverSelectionTimeoutMS: 5000, // How long to find a MongoDB server
   connectTimeoutMS: 5000, // How long to establish connection
-  socketTimeoutMS: 5000, // Socket timeout for operations
 
   retryWrites: true,
   retryReads: true,
