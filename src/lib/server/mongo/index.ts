@@ -79,12 +79,17 @@ async function isConnectionHealthy(client: MongoClient): Promise<boolean> {
  *
  * For intermittent connection issues, this validates existing connections
  * before reusing them to prevent stale connection errors.
+ *
+ * Uses compare-and-swap pattern to prevent race conditions where concurrent
+ * callers might accidentally clear a fresh connection created by another caller.
  */
 export async function getClientPromise(): Promise<MongoClient> {
+  const cachedPromise = global._mongoClientPromise;
+
   // If we have a cached promise, validate the connection is still healthy
-  if (global._mongoClientPromise) {
+  if (cachedPromise) {
     try {
-      const client = await global._mongoClientPromise;
+      const client = await cachedPromise;
       const isHealthy = await isConnectionHealthy(client);
 
       if (isHealthy) {
@@ -92,17 +97,23 @@ export async function getClientPromise(): Promise<MongoClient> {
       }
 
       // Connection is stale, clear cache and create new one
-      console.log('[Mongo] Stale connection detected, recreating...');
-      try {
-        await client.close();
-      } catch (closeError) {
-        console.error('[Mongo] Error closing stale client:', closeError);
+      // Only clear if cache hasn't changed (another caller may have already fixed it)
+      if (global._mongoClientPromise === cachedPromise) {
+        console.log('[Mongo] Stale connection detected, recreating...');
+        global._mongoClientPromise = undefined;
+        try {
+          await client.close();
+        } catch (closeError) {
+          console.error('[Mongo] Error closing stale client:', closeError);
+        }
       }
-      global._mongoClientPromise = undefined;
     } catch (error) {
       // Promise rejected or health check failed, clear and retry
-      console.warn('[Mongo] Connection validation failed, clearing cache:', error);
-      global._mongoClientPromise = undefined;
+      // Only clear if cache hasn't changed
+      if (global._mongoClientPromise === cachedPromise) {
+        console.warn('[Mongo] Connection validation failed, clearing cache:', error);
+        global._mongoClientPromise = undefined;
+      }
     }
   }
 
