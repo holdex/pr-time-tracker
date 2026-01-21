@@ -20,7 +20,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     hours,
     experience
   }: OptionalId<Omit<SubmissionSchema, 'approval'>>) {
-    await this.ensureInitialized();
+    const { client } = await this.getContext();
 
     const item = await items.getOne({ id: item_id });
 
@@ -33,7 +33,7 @@ export class SubmissionsCollection extends BaseCollection<SubmissionSchema> {
     }
 
     const created_at = new Date().toISOString();
-    const session = this.client.startSession();
+    const session = client.startSession();
 
     try {
       session.startTransaction();

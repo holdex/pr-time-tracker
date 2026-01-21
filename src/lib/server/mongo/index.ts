@@ -54,15 +54,27 @@ async function createMongoClient(): Promise<MongoClient> {
 }
 
 /**
- * Validates if an existing client connection is still healthy
+ * Validates if an existing client connection is still healthy.
+ * Uses client-side timeout with Promise.race to protect against network hangs,
+ * since maxTimeMS only controls server-side execution time.
  */
 async function isConnectionHealthy(client: MongoClient): Promise<boolean> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    await client.db('admin').command({ ping: 1 }, { maxTimeMS: 2000 });
+    // Use Promise.race for hard client-side timeout protection
+    // maxTimeMS would only protect against slow server queries, not network hangs
+    await Promise.race([
+      client.db('admin').command({ ping: 1 }),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Health check timeout')), 2000);
+      })
+    ]);
     return true;
-  } catch (err) {
-    console.warn('[Mongo] Connection health check failed:', err);
+  } catch (error) {
+    console.warn('[Mongo] Connection health check failed:', error);
     return false;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
@@ -95,12 +107,23 @@ export async function getClientPromise(): Promise<MongoClient> {
       // Only clear if cache hasn't changed (another caller may have already fixed it)
       if (global._mongoClientPromise === cachedPromise) {
         console.log('[Mongo] Stale connection detected, recreating...');
-        global._mongoClientPromise = undefined;
-        try {
-          await client.close();
-        } catch (closeError) {
+
+        // Immediately set cache to a new pending connection to prevent
+        // concurrent callers from creating multiple clients during cleanup
+        const newClientPromise = createMongoClient().catch((err) => {
+          console.error('[Mongo] Connection failed, clearing cache for retry:', err);
+          // Only clear if this is still the active promise
+          if (global._mongoClientPromise === newClientPromise) {
+            global._mongoClientPromise = undefined;
+          }
+          throw err;
+        });
+        global._mongoClientPromise = newClientPromise;
+
+        // Close old client asynchronously
+        client.close().catch((closeError) => {
           console.error('[Mongo] Error closing stale client:', closeError);
-        }
+        });
       }
     } catch (error) {
       // Promise rejected or health check failed, clear and retry

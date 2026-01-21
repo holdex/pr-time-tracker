@@ -27,8 +27,9 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
     }
 
     const contributorsMap: Record<number, ContributorSchema> = {};
+    const submissionsCollection = await submissions.getCollection();
     const [_submissions, _contributors] = await Promise.all([
-      submissions.context
+      submissionsCollection
         .find({
           created_at: { $lt: '2023-11-01T00:00:00.000Z' }
         })
@@ -36,7 +37,7 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
         .toArray(), //{ count: 5000 }),
       contributors.getMany({ count: 100 })
       // submissions.getMany({ count: 1000 })
-      // submissions.context.deleteMany()
+      // submissionsCollection.deleteMany()
     ]);
     const result = await Promise.all(
       _submissions.map(async (_submission) => {
@@ -46,7 +47,7 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
 
         if (contributor) contributorsMap[contributor.id] = contributor;
 
-        await submissions.context.updateOne(
+        await submissionsCollection.updateOne(
           { _id: _submission._id },
           {
             $set: {
@@ -81,7 +82,8 @@ export const POST: RequestHandler = async ({ url: { searchParams, pathname }, co
       //   }
 
       //   if (needUpdate) {
-      //     await items.context.updateOne(
+      //     const itemsCollection = await items.getCollection();
+      //     await itemsCollection.updateOne(
       //       { _id: item._id },
       //       {
       //         $set: item,
