@@ -161,8 +161,3 @@ export function clearClientCache(): void {
     global._mongoClientPromise = undefined;
   }
 }
-
-// Export default as getter result for backward compatibility
-// Note: This still captures the promise at module load time.
-// For full recovery, use getClientPromise() directly.
-export default getClientPromise();
