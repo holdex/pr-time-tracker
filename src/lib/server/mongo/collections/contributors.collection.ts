@@ -17,9 +17,9 @@ export class ContributorsCollection extends BaseCollection<ContributorSchema> {
   }
 
   async getManyBy(filter: Partial<Filter<ContributorSchema>>) {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
-    return await this.context.find(filter).toArray();
+    return await context.find(filter).toArray();
   }
 }
 

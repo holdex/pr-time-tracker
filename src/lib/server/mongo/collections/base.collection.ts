@@ -26,115 +26,62 @@ import { getClientPromise } from '..';
 export abstract class BaseCollection<
   CollectionType extends TimeStamps & { _id?: ObjectId; id?: string | number }
 > {
-  readonly context!: Collection<CollectionType>;
-  readonly db!: Db;
-  readonly client!: MongoClient;
-  readonly properties!: Array<keyof CollectionType>;
+  readonly properties: Array<keyof CollectionType>;
   private static readonly queryFields: Array<keyof QueryProps> = [
     'count',
     'skip',
     'sort_by',
     'sort_order'
   ];
-  private initialized = false;
-  private initializationPromise: Promise<void> | null = null;
 
   constructor(
     private collectionName: CollectionNames,
     private validationSchema: JSONSchema<CollectionType>
-  ) {}
-
-  /**
-   * Initialize the collection asynchronously. Must be called before using the collection.
-   * Uses getClientPromise() to ensure recovery from connection failures.
-   * Prevents concurrent initialization by caching the initialization promise.
-   * @returns Promise that resolves when initialization is complete
-   */
-  protected async initialize(): Promise<void> {
-    if (this.initialized) return;
-    if (this.initializationPromise) return this.initializationPromise;
-
-    this.initializationPromise = this._doInitialize();
-    return this.initializationPromise;
+  ) {
+    // Initialize properties immediately (no async needed)
+    this.properties = Object.keys(this.validationSchema.properties) as Array<keyof CollectionType>;
   }
 
   /**
-   * Performs the actual initialization logic.
-   * Should not be called directly - use initialize() instead.
+   * Gets the current MongoDB client and collection context.
+   * Always fetches fresh from getClientPromise() to ensure we have a healthy connection.
+   * This prevents stale connection issues when getClientPromise() detects and replaces
+   * unhealthy connections.
    */
-  private async _doInitialize(): Promise<void> {
-    try {
-      // Use getClientPromise() to get a fresh promise if previous connection failed
-      const client = await getClientPromise();
-      (this as { client: MongoClient }).client = client;
-      (this as { db: Db }).db = client.db(config.mongoDBName);
-      (this as { context: Collection<CollectionType> }).context =
-        this.db.collection<CollectionType>(this.collectionName);
-      (this as { properties: Array<keyof CollectionType> }).properties = Object.keys(
-        this.validationSchema.properties
-      ) as Array<keyof CollectionType>;
+  protected async getContext(): Promise<{
+    client: MongoClient;
+    db: Db;
+    context: Collection<CollectionType>;
+  }> {
+    const client = await getClientPromise();
+    const db = client.db(config.mongoDBName);
+    const context = db.collection<CollectionType>(this.collectionName);
 
-      // Apply validation schema
-      // Note: collMod will fail if collection doesn't exist yet - that's okay, it will be
-      // created on first insert. We only log the error for other cases but don't fail initialization.
-      try {
-        await this.db.command({
-          collMod: this.collectionName,
-          validator: {
-            $jsonSchema: {
-              bsonType: 'object',
-              ...this.validationSchema
-            }
-          }
-        });
-      } catch (schemaError: any) {
-        // Log but don't fail if collection doesn't exist (code 26)
-        // or namespace not found (code 11600/11602)
-        const code = schemaError?.code;
-        if (code === 26 || code === 11600 || code === 11602) {
-          console.log(
-            `[BaseCollection#initialize] Collection ${this.collectionName} does not exist yet, will create on first insert`
-          );
-        } else {
-          // For other errors, log and continue (validation will apply on next restart after collection exists)
-          console.warn(
-            `[BaseCollection#initialize] Failed to apply validation schema for ${this.collectionName}:`,
-            schemaError
-          );
-        }
-      }
-
-      this.initialized = true;
-    } catch (error) {
-      // Clear initialization promise on failure to allow retry on next call
-      this.initializationPromise = null;
-      console.error(
-        `[BaseCollection#initialize] Failed to initialize collection ${this.collectionName}:`,
-        error
-      );
-      throw error;
-    }
+    return { client, db, context };
   }
 
   /**
-   * Ensures the collection is initialized before performing operations
+   * Gets the MongoDB collection for direct access.
+   * Use this when you need to perform custom MongoDB operations not covered by
+   * the base collection methods.
+   *
+   * @returns MongoDB Collection instance with a fresh, healthy connection
    */
-  protected async ensureInitialized(): Promise<void> {
-    if (!this.initialized) {
-      await this.initialize();
-    }
+  async getCollection(): Promise<Collection<CollectionType>> {
+    const { context } = await this.getContext();
+    return context;
   }
 
   async create(
     resource: OptionalUnlessRequiredId<CollectionType>,
     options?: InsertOneOptions | undefined
   ) {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
     resource.created_at = resource.created_at || new Date().toISOString();
     resource.updated_at = resource.created_at;
 
-    const result = await this.context.insertOne(resource, options);
+    const result = await context.insertOne(resource, options);
 
     if (!result?.insertedId) {
       throw Error(`Could not create ${this.constructor.name.replace('sCollection', '')}.`);
@@ -144,9 +91,9 @@ export abstract class BaseCollection<
   }
 
   async getOne(_idOrFilter: string | Filter<CollectionType>) {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
-    return await this.context.findOne(
+    return await context.findOne(
       (typeof _idOrFilter === 'string'
         ? { _id: new ObjectId(_idOrFilter) }
         : _idOrFilter) as Filter<CollectionType>
@@ -154,9 +101,9 @@ export abstract class BaseCollection<
   }
 
   async getOneOrCreate(options: any) {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
-    return await this.context.findOne({ id: options.id } as Filter<CollectionType>).then((res) => {
+    return await context.findOne({ id: options.id } as Filter<CollectionType>).then((res) => {
       if (!res) {
         return this.create(options as OptionalUnlessRequiredId<CollectionType>, {
           bypassDocumentValidation: true
@@ -167,7 +114,7 @@ export abstract class BaseCollection<
   }
 
   async getMany(params?: GetManyParams<CollectionType>) {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
     const searchParams = BaseCollection.makeParams(params);
     const [filter, { count, skip, sort, sort_by, sort_order }] = [
@@ -175,7 +122,7 @@ export abstract class BaseCollection<
       params instanceof URLSearchParams ? BaseCollection.makeQuery(searchParams) : params || {}
     ];
 
-    return await this.context
+    return await context
       .find(filter)
       .sort(
         sort || {
@@ -199,7 +146,7 @@ export abstract class BaseCollection<
       user?: ContributorSchema;
     }
   ) {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
     const { onCreateIfNotExist, existing: _existing } = extra || {};
 
@@ -208,7 +155,7 @@ export abstract class BaseCollection<
     const existing = onCreateIfNotExist && (_existing || (await this.getOne(_id || { id: id! })));
     const result =
       existing || !onCreateIfNotExist
-        ? await this.context.updateOne(
+        ? await context.updateOne(
             (_id ? { _id: new ObjectId(_id) } : { id }) as Filter<CollectionType>,
             { $set: payload as Partial<CollectionType> }
           )

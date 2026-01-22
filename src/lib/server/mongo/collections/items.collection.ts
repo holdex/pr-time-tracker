@@ -15,7 +15,7 @@ import {
 
 export class ItemsCollection extends BaseCollection<ItemSchema> {
   getMany = async (params?: GetManyParams<ItemSchema>) => {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
     const searchParams = ItemsCollection.makeParams(params);
     const contributor_id = transform<string>(searchParams.get('contributor_id'));
@@ -29,7 +29,7 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
 
     if (filter.merged === undefined) delete filter.merged;
 
-    return await this.context
+    return await context
       .aggregate<WithId<ItemSchema>>(
         [
           { $match: filter } as Document,
@@ -111,9 +111,9 @@ export class ItemsCollection extends BaseCollection<ItemSchema> {
   }
 
   getOneWithSubmission = async (params: Filter<ItemSchema>, contributorId: number | undefined) => {
-    await this.ensureInitialized();
+    const { context } = await this.getContext();
 
-    return this.context
+    return context
       .aggregate<WithId<ItemSchema>>([
         { $match: params } as Document,
         {
