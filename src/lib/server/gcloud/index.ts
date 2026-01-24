@@ -36,6 +36,22 @@ export async function insertEvent(event: EventsSchema, id: string) {
       payload: event.payload ?? null,
       created_at: event.created_at?.toString() ?? null,
       updated_at: event.updated_at?.toString() ?? null
+    },
+    // BigQuery requires explicit types for null parameter values
+    types: {
+      id: 'STRING',
+      eventId: 'INT64',
+      organization: 'STRING',
+      repository: 'STRING',
+      action: 'STRING',
+      title: 'STRING',
+      owner: 'STRING',
+      sender: 'STRING',
+      label: 'STRING',
+      payload: 'FLOAT64',
+      index: 'INT64',
+      created_at: 'STRING',
+      updated_at: 'STRING'
     }
   };
 
@@ -43,7 +59,8 @@ export async function insertEvent(event: EventsSchema, id: string) {
     const [job] = await bigquery.createQueryJob(options);
     await job.getQueryResults();
   } catch (reason) {
-    console.error('reason', JSON.stringify((reason as { errors?: unknown }).errors));
+    console.error('BigQuery insert error:', (reason as Error).message);
+    console.error('Error details:', JSON.stringify((reason as { errors?: unknown }).errors));
   }
 }
 
