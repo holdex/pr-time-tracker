@@ -38,25 +38,21 @@
   const onSubmit: CardProps['onSubmit'] = (submission, number, isUpdate) => async () => {
     $snackbar = { text: 'Please, wait...', type: 'busy' };
 
-    const payload = {
-      ...submission,
-      updated_at: new Date().toISOString()
-    };
     try {
       const response = await axios[isUpdate ? 'patch' : 'post']<{ data: SubmissionSchema }>(
         `/submissions`,
-        payload
+        submission
       );
 
-      if (!isUpdate || isContributorContext) prs = prs.filter((pr) => pr.id !== payload.item_id);
+      if (!isUpdate || isContributorContext) prs = prs.filter((pr) => pr.id !== submission.item_id);
       invalidateCache = true;
       $snackbar = {
         text: `Successfully ${
           isContributorContext
-            ? `${payload.approval === Approval.APPROVED ? '' : 'dis'}approved`
+            ? `${submission.approval === Approval.APPROVED ? '' : 'dis'}approved`
             : 'submitted'
-        } #${number} ${isContributorContext ? 'of' : 'with'} "${payload.hours} hour${
-          Number(payload.hours) === 1 ? '' : 's'
+        } #${number} ${isContributorContext ? 'of' : 'with'} "${submission.hours} hour${
+          Number(submission.hours) === 1 ? '' : 's'
         }" of efficiency.`,
         type: 'success'
       };
