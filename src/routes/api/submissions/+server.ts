@@ -112,7 +112,6 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
     const pr = await items.getOne({ id: body!.item_id });
     if (pr) {
       const createdAtDate = validateDate(body!.created_at as string);
-      const updatedAtDate = validateDate(body!.updated_at as string);
 
       // store these events in gcloud
       let eventAction: EventType;
@@ -136,7 +135,7 @@ export const PATCH: RequestHandler = async ({ request, cookies, url }) => {
         title: pr.title,
         payload: body!.hours,
         created_at: Math.round(createdAtDate.getTime() / 1000).toFixed(0),
-        updated_at: Math.round(updatedAtDate.getTime() / 1000).toFixed(0)
+        updated_at: Math.round(new Date().getTime() / 1000).toFixed(0)
       };
 
       // Use submission _id + action + updated_at for unique tracking of each update event
